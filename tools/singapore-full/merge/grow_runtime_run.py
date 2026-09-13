@@ -33,6 +33,22 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def peak_working_set_bytes(process_handle):
+    """Read the actual process lifetime RSS peak, including after process exit."""
+    class Counters(ctypes.Structure):
+        _fields_ = [("cb", wintypes.DWORD), ("pageFaults", wintypes.DWORD)] + [
+            (name, ctypes.c_size_t) for name in
+            ("peakWorking", "working", "peakPaged", "paged", "peakNonpaged", "nonpaged", "pagefile", "peakPagefile")]
+    psapi = ctypes.WinDLL("psapi", use_last_error=True)
+    psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+    psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+    counters = Counters()
+    counters.cb = ctypes.sizeof(counters)
+    if not psapi.GetProcessMemoryInfo(process_handle, ctypes.byref(counters), counters.cb):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return counters.peakWorking
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True)
@@ -83,15 +99,29 @@ def main():
     console_path = attempt_root / "console.log"
     command = [str(JAVA), "-Xms256M", "-Xmx3072M", "-XX:ActiveProcessorCount=1", "-jar", "server.jar", "nogui"]
     state = {"status": "STARTING", "command": command, "startedUtc": datetime.now(timezone.utc).isoformat(),
-             "minimumFreeMemoryBytes": before["freeRam"], "sourceHash": plan["candidate_before"]["sha256"]}
+             "minimumFreeMemoryBytes": before["freeRam"], "sourceHash": plan["candidate_before"]["sha256"],
+             "javaPeakWorkingSetBytes": None, "javaPeakWorkingSetSamples": 0, "javaPeakWorkingSetErrors": 0}
     process = None
     guard = queue.ChildGuard(3)
     started = time.monotonic()
+    def sample_java_peak():
+        if process is None:
+            return
+        try:
+            observed = peak_working_set_bytes(int(process._handle))
+            state["javaPeakWorkingSetBytes"] = max(state["javaPeakWorkingSetBytes"] or 0, observed)
+            state["javaPeakWorkingSetSamples"] += 1
+        except OSError as error:
+            # Telemetry failure stays explicit; it must not invent a zero peak.
+            state["javaPeakWorkingSetErrors"] += 1
+            state["javaPeakWorkingSetLastError"] = str(error)
     def log():
         return console_path.read_text(encoding="utf-8", errors="replace") if console_path.exists() else ""
     def wait_for(predicate, timeout):
         until = min(started + 180, time.monotonic() + timeout)
+        sample_java_peak()
         while not predicate(log()):
+            sample_java_peak()
             if process.poll() is not None:
                 raise RuntimeError("Minecraft exited before expected runtime marker")
             resources = queue.resource_snapshot(FULL)
@@ -99,6 +129,7 @@ def main():
             if resources["freeRam"] < 8 * 1024 ** 3 or time.monotonic() >= until:
                 raise TimeoutError("runtime marker deadline or memory floor")
             time.sleep(.2)
+        sample_java_peak()
     try:
         with console_path.open("wb") as console:
             process = subprocess.Popen(command, cwd=attempt_root, stdin=subprocess.PIPE,
@@ -110,6 +141,7 @@ def main():
                 raise OSError("Could not set runtime CPU offset8")
             state["owner"] = queue.identity(process.pid)
             state["status"] = "RUNNING"
+            sample_java_peak()
             write(attempt_root / "runtime-state.json", state)
             print(json.dumps(state), flush=True)
             wait_for(lambda text: ")! For help, type" in text and "Done (" in text, 60)
@@ -120,6 +152,7 @@ def main():
                 for command_text in plan["chunk_commands"]:
                     transcript.send(process.stdin, command_text)
                 time.sleep(.25)
+                sample_java_peak()
                 if all(marker in log() for marker in plan["expected_chunk_markers"]):
                     break
             wait_for(lambda text: all(marker in text for marker in plan["expected_chunk_markers"]), 5)
@@ -143,6 +176,7 @@ def main():
         if process is not None and process.poll() is None:
             guard.terminate(process)
             process.wait(timeout=10)
+        sample_java_peak()
         guard.close()
         transcript.close()
         state["elapsedSeconds"] = time.monotonic() - started
@@ -156,9 +190,15 @@ def main():
             "observed_alive": process.poll() is None, "observed_at_utc": state["finishedUtc"]},
         "max_heap_mib": 3072, "active_processor_count": 1, "cpu_affinity_mask": 256,
         "free_memory_before_bytes": before["freeRam"], "minimum_free_memory_bytes": state["minimumFreeMemoryBytes"],
+        "java_peak_working_set_bytes": state["javaPeakWorkingSetBytes"],
         "jar_path": str(JAR), "expected_jar_sha256": JAR_SHA, "minecraft_version": "26.1.2", "java_identity": java_identity, "port": 25579}
     write(attempt_root / "runtime-spec.json", runtime_spec)
     receipt = verify_grow_runtime(runtime_spec, plan, transcript_path)
+    receipt["javaPeakWorkingSetBytes"] = state["javaPeakWorkingSetBytes"]
+    receipt["javaMemoryTelemetry"] = {"metric": "GetProcessMemoryInfo.PeakWorkingSetSize",
+        "samples": state["javaPeakWorkingSetSamples"], "errors": state["javaPeakWorkingSetErrors"]}
+    receipt["runtimeState"] = {"path": str(attempt_root / "runtime-state.json"),
+        **package._file_record(attempt_root / "runtime-state.json")}
     write(attempt_root / "runtime-receipt.json", receipt)
     if not receipt["runtimeLoadAccepted"]:
         raise RuntimeError("Runtime gate failed: " + json.dumps(receipt["issues"]))
