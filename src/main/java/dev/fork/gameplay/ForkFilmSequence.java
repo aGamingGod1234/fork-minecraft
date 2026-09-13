@@ -1,6 +1,7 @@
 package dev.fork.gameplay;
 
 import java.util.*;
+import dev.fork.core.ForkContract;
 
 /** Client orchestration observes server commits; it never computes or supplies role outcomes. */
 public final class ForkFilmSequence {
@@ -40,7 +41,7 @@ public final class ForkFilmSequence {
     public List<Action> stop(){phase="done";return List.of(new Action("abort","Film stopped. Completed LIVE receipts remain saved."));}
     public List<Action> update(ForkView v,long version,long now,boolean cameraActive){
         if(!active())return List.of();
-        if(now>deadline&&preparing&&phase.equals("round")&&!retried&&owns(v)){retried=true;return command("round","fork retry",version,now,26000);}
+        if(now>deadline&&preparing&&phase.equals("round")&&!retried&&owns(v)){retried=true;return command("round","fork retry",version,now,((ForkContract.TOTAL_ATTEMPT_SECONDS+6)*1000L));}
         if(now>deadline)return fail("Timed out during "+phase+". "+(v==null?"No FORK server status received.":v.issue()));
         if(v==null)return List.of();
         if(v.state().mode()!=ForkEngine.Mode.LIVE||!v.canControl())return fail("LIVE session or control permission changed.");
@@ -76,7 +77,7 @@ public final class ForkFilmSequence {
                 if(fresh&&v.state().round()==expected&&v.state().revision()==revision+1&&!v.pending()&&v.effects().size()==3&&v.roundPower().size()==expected){
                     phase="round_hold";after=now+2500;deadline=now+10000;return List.of();
                 }
-                if(fresh&&!v.pending()&&v.state().round()<expected&&!v.issue().equals(issue)&&!v.issue().isBlank()){if(preparing&&!retried){retried=true;issue=v.issue();return command("round","fork retry",version,now,26000);}return fail("LIVE round did not commit: "+v.issue());}
+                if(fresh&&!v.pending()&&v.state().round()<expected&&!v.issue().equals(issue)&&!v.issue().isBlank()){if(preparing&&!retried){retried=true;issue=v.issue();return command("round","fork retry",version,now,((ForkContract.TOTAL_ATTEMPT_SECONDS+6)*1000L));}return fail("LIVE round did not commit: "+v.issue());}
                 break;
             case "round_hold":
                 if(v.state().round()!=expected||v.state().revision()!=revision+1)return fail("Round state changed outside the film.");
@@ -102,6 +103,6 @@ public final class ForkFilmSequence {
     }
     private List<Action> advance(ForkView v,long version,long now){
         retried=false;expected=v.state().round()+1;revision=v.state().revision();issue=v.issue();
-        return command("round","fork advance",version,now,26000);
+        return command("round","fork advance",version,now,((ForkContract.TOTAL_ATTEMPT_SECONDS+6)*1000L));
     }
 }

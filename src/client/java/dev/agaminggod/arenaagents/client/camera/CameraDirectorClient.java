@@ -48,7 +48,10 @@ public final class CameraDirectorClient {
 	private static final int MAX_PATHS = 64;
 	private static final int MIN_PLAYBACK_TICKS = 1;
 	private static final Map<String, CameraPath> PATHS = new LinkedHashMap<>();
-	private static Recording recording;
+	private static dev.fork.gameplay.ForkCaptureTimeline captureTimeline;
+    private static long presentationFrames;
+    private static java.util.function.DoubleConsumer takeFrameListener;
+    private static Recording recording;
 	private static Playback playback;
 	private static Marker cameraAnchor;
 	private static Entity previousCamera;
@@ -291,15 +294,22 @@ public final class CameraDirectorClient {
         var paths=names.stream().map(n->{var p=PATHS.get(n);if(p==null)throw new IllegalArgumentException("Missing corrected camera preset: "+n);return p;}).toList();
         new CameraReel(paths,durations);
     }
+    public static dev.fork.gameplay.ForkCaptureTimeline captureTimeline() { if(captureTimeline==null)throw new IllegalStateException("Install the exact narration camera timeline before recording."); validateTimedTake(captureTimeline.paths(),captureTimeline.durations()); return captureTimeline; }
+    public static PresentationClock primeTimedTake(List<String> names,List<Integer> durations) { return playTimedTakeAt(names,durations,Long.MAX_VALUE); }
+    public static boolean firstFrameReady(PresentationClock clock) { return ownsTimedTake(clock)&&presentationFrames>=3&&Minecraft.getInstance().levelRenderer.hasRenderedAllSections(); }
+    public static void armTimedTake(PresentationClock clock,long startNanos) { if(!ownsTimedTake(clock))throw new IllegalStateException("Camera ownership lost before arming");clock.armAt(startNanos); }
+    public static void setTakeFrameListener(PresentationClock clock,java.util.function.DoubleConsumer listener) { if(!ownsTimedTake(clock))throw new IllegalStateException("Camera ownership lost");takeFrameListener=listener; }
+    public static void stopOwnedTake(PresentationClock clock) { if(ownsTimedTake(clock))stopPlayback(Minecraft.getInstance()); }
     public static boolean ownsTimedTake(PresentationClock clock) { return playback!=null&&playback.clock()==clock; }
-    public static PresentationClock playTimedTake(List<String> names,List<Integer> durations) {
+    public static PresentationClock playTimedTake(List<String> names,List<Integer> durations) { return playTimedTakeAt(names,durations,System.nanoTime()); }
+    public static PresentationClock playTimedTakeAt(List<String> names,List<Integer> durations,long startsAtNanos) {
         var client=Minecraft.getInstance();
         if(client.level==null||client.player==null)throw new IllegalStateException("Join the Singapore world first");
         var paths=names.stream().map(n->{var p=PATHS.get(n);if(p==null)throw new IllegalArgumentException("Missing camera preset: "+n);return p;}).toList();
         var reel=new CameraReel(paths,durations);
         stopPlayback(client);previousCamera=client.getCameraEntity();previousCameraType=client.options.getCameraType();captureAndHidePresentation(client);
-        var clock=new PresentationClock(System.nanoTime(),client.isPaused());
-        playback=new Playback(reel,client.level,client.player,clock,false);apply(client,reel.sample(0));return clock;
+        var clock=new PresentationClock(startsAtNanos,client.isPaused());
+        presentationFrames=0;playback=new Playback(reel,client.level,client.player,clock,false);apply(client,reel.sample(0));return clock;
     }
     /** Hard cuts between immutable authored paths, with one elapsed clock for the whole reel. */
     public static final class CameraReel {
@@ -405,17 +415,24 @@ public final class CameraDirectorClient {
 			}
 			elapsed %= duration;
 		}
-		apply(client, playback.reel().sample(elapsed));
+		apply(client, playback.reel().sample(elapsed)); presentationFrames++;
+        if(takeFrameListener!=null)takeFrameListener.accept(elapsed);
 	}
 
 	/** Monotonic presentation time in authored 20 Hz ticks; independent of simulation/daylight. */
 	public static final class PresentationClock {
 		private long previousNanos;
+        private long notBeforeNanos;
+        private boolean armed;
 		private long elapsedNanos;
 		private boolean previouslyPaused;
-		public PresentationClock(long now, boolean paused) { previousNanos = now; previouslyPaused = paused; }
-		public double advance(long now, boolean paused) {
-			long delta = now - previousNanos;
+		public PresentationClock(long now, boolean paused) { previousNanos = now; notBeforeNanos = now; armed=now!=Long.MAX_VALUE; previouslyPaused = paused; }
+		public void armAt(long startNanos) { if(armed)throw new IllegalStateException("Clock already armed"); previousNanos=startNanos;notBeforeNanos=startNanos;previouslyPaused=false;armed=true; }
+        public double elapsedTicks() { return elapsedNanos / 50_000_000.0D; }
+        public double advance(long now, boolean paused) {
+			if(!armed)return 0;
+            if(now<notBeforeNanos){previousNanos=notBeforeNanos;previouslyPaused=paused;return 0;}
+            long delta = now - previousNanos;
 			if (!paused && !previouslyPaused && delta > 0) elapsedNanos += delta;
 			previousNanos = now;
 			previouslyPaused = paused;
@@ -453,7 +470,7 @@ public final class CameraDirectorClient {
 
 	private static void stopPlayback(Minecraft client) {
 		if (playback == null && cameraAnchor == null && previousCamera == null && previousCameraType == null && previousHideGui == null) return;
-		playback = null;
+		playback = null;takeFrameListener=null;
 		// Restore before touching the camera entity, including disconnect/world-loss paths.
 		if(previousHideGui != null) { client.options.hideGui=previousHideGui; previousHideGui=null; }
 		if(previousChatVisibility != null) { client.options.chatVisibility().set(previousChatVisibility); previousChatVisibility=null; }
@@ -481,8 +498,8 @@ public final class CameraDirectorClient {
 	}
 
 	private static void load(Minecraft client) {
-		PATHS.clear();
-		Path file = storageFile(client);
+		PATHS.clear(); captureTimeline=null;
+        Path file = storageFile(client);
 		if (!Files.isRegularFile(file)) return;
 		try (Reader reader = Files.newBufferedReader(file)) {
 			JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -498,12 +515,21 @@ public final class CameraDirectorClient {
 				}
 				CameraPath path = new CameraPath(pathObject.get("name").getAsString(), frames);
 				PATHS.put(path.name(), path);
-			}
+            }
+            if(root.has("forkCaptureTimeline")) {
+                var cues=new ArrayList<dev.fork.gameplay.ForkCaptureTimeline.Cue>();
+                for(var element:root.getAsJsonArray("forkCaptureTimeline")) {
+                    var cue=element.getAsJsonObject();
+                    cues.add(new dev.fork.gameplay.ForkCaptureTimeline.Cue(cue.get("startSeconds").getAsDouble(),cue.get("path").getAsString()));
+                }
+                captureTimeline=new dev.fork.gameplay.ForkCaptureTimeline(root.get("forkCaptureDurationSeconds").getAsDouble(),root.get("forkCaptureLeadOutSeconds").getAsDouble(),cues);
+                validateTimedTake(captureTimeline.paths(),captureTimeline.durations());
+            }
 		} catch (IOException | JsonParseException | IllegalArgumentException | NullPointerException
 				| IllegalStateException | ClassCastException | UnsupportedOperationException exception) {
 			LOGGER.warn("Could not load Arena Agents camera paths; starting with an empty library", exception);
-			PATHS.clear();
-		}
+			PATHS.clear();captureTimeline=null;
+        }
 	}
 
 	private static void save(Minecraft client, Map<String, CameraPath> library) throws IOException {
@@ -512,6 +538,15 @@ public final class CameraDirectorClient {
 		try {
 			Files.createDirectories(file.getParent());
 			JsonObject root = new JsonObject();
+            if(captureTimeline!=null) {
+                root.addProperty("forkCaptureDurationSeconds",captureTimeline.durationTicks()/20.0);
+                root.addProperty("forkCaptureLeadOutSeconds",captureTimeline.leadOutTicks()/20.0);
+                var timeline=new JsonArray();
+                for(var cue:captureTimeline.cues()) {
+                    var item=new JsonObject();item.addProperty("startSeconds",cue.startSeconds());item.addProperty("path",cue.path());timeline.add(item);
+                }
+                root.add("forkCaptureTimeline",timeline);
+            }
 			JsonArray paths = new JsonArray();
 			for (CameraPath path : library.values()) {
 				JsonObject pathObject = new JsonObject();

@@ -11,6 +11,25 @@ public final class ForkCameraTimingVerification {
         if (Math.abs(actual - expected) > 0.000001) throw new AssertionError(actual + " != " + expected);
     }
     public static void main(String[] args) {
+        var parked=new PresentationClock(Long.MAX_VALUE,false);
+        equal(parked.advance(1_000_000_000L,false),0);
+        equal(parked.elapsedTicks(),0);
+        parked.armAt(4_000_000_000L);
+        equal(parked.advance(3_999_000_000L,false),0);
+        equal(parked.advance(4_000_000_000L,false),0);
+        equal(parked.advance(4_016_666_667L,false),0.33333334);
+        equal(parked.elapsedTicks(),0.33333334); // observation does not move time
+        boolean rearmed=false;
+        try { parked.armAt(5_000_000_000L); } catch(IllegalStateException expected){rearmed=true;}
+        if(!rearmed)throw new AssertionError("A running clock cannot be rearmed");
+        var cues=java.util.stream.IntStream.range(0,30).mapToObj(i->new ForkCaptureTimeline.Cue(ForkCaptureTimeline.PHRASE_TICKS.get(i)/20.0,"s"+i)).toList();
+        var timeline=new ForkCaptureTimeline(90,3,cues);
+        var spoken=java.util.stream.IntStream.range(0,30).mapToObj(i->new CameraPath("s"+i,List.of(new CameraKeyframe(0,i*100,1,0,0,0),new CameraKeyframe(100,i*100+10,1,0,0,0)))).toList();
+        var timed=new dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.CameraReel(spoken,timeline.durations());
+        equal(timed.durationTicks(),1860);
+        for(int i=1;i<30;i++){equal(timed.sample(timeline.starts().get(i)).x(),i*100);if(timed.sample(timeline.starts().get(i)-.001).x()>=i*100)throw new AssertionError("Narration crosscut");}
+        if(timed.sample(1859.9).x()<=timed.sample(1859.5).x())throw new AssertionError("Closing leadout must keep moving");
+        System.out.println("PASS parked first frame, future arm, render-only observation, all30 exact cuts and moving93s leadout");
         PresentationClock clock = new PresentationClock(0, false);
         equal(clock.advance(16_666_667, false), 0.33333334);
         equal(clock.advance(33_333_334, false), 0.66666668);
