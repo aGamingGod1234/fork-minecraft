@@ -17,9 +17,9 @@ public final class ForkFilmClient {
     private static boolean owned;
     public static void acceptView(){version++;}
     public static void register(){
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(ClientCommands.literal("fork").then(ClientCommands.literal("film")
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(ClientCommands.literal("camera").then(ClientCommands.literal("film")
             .then(ClientCommands.literal("start").executes(c->{
-                if(sequence.active()){notice("Film is already running. /fork film stop cancels it.");return 0;}
+                if(sequence.active()){notice("Film is already running. /camera film stop cancels it.");return 0;}
                 var client=c.getSource().getClient();if(client.player==null||client.level==null)return 0;
                 source=c.getSource();level=client.level;player=client.player;owned=false;
                 clock=new CameraDirectorClient.PresentationClock(System.nanoTime(),client.isPaused());

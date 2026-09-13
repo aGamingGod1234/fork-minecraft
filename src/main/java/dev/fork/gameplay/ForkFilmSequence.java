@@ -18,10 +18,10 @@ public final class ForkFilmSequence {
     private List<Action> command(String phase,String command,long version,long now,long wait){this.phase=phase;serial=version;deadline=now+wait;return List.of(new Action("command",command));}
     private List<Action> fail(String message){phase="error";return List.of(new Action("abort",message));}
     public List<Action> start(ForkView v,long version,long now){
-        if(active()) return List.of(new Action("notice","Film is already running. /fork film stop cancels it."));
+        if(active()) return List.of(new Action("notice","Film is already running. /camera film stop cancels it."));
         a=null;b=null;workshop=false;branch=v==null?"":v.state().branch();epoch=v==null?0:v.state().epoch();
         if(v==null)return command("session","fork new live",version,now,25000);
-        if(v.state().mode()!=ForkEngine.Mode.LIVE)return fail("Film needs a LIVE session. Restart this world and run /fork film start; Fixture footage is never substituted.");
+        if(v.state().mode()!=ForkEngine.Mode.LIVE)return fail("Film needs a LIVE session. Restart this world and run /camera film start; Fixture footage is never substituted.");
         if(!v.canControl())return fail("This player cannot control FORK.");
         var actions=new ArrayList<Action>();if(v.pending())actions.add(new Action("command","fork cancel"));
         actions.addAll(command("return","fork return",version,now,15000));return actions;
