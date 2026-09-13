@@ -1,32 +1,33 @@
 {
-	"schemaVersion": 1,
-	"id": "arenaagents",
-	"version": "${version}",
-	"name": "Arena Agents",
-	"description": "Summon configurable Codex-powered humanoid agents that can act autonomously in Minecraft.",
-	"icon": "assets/arenaagents/icon.png",
-	"license": "All-Rights-Reserved",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"dev.agaminggod.arenaagents.ArenaAgents"
-		],
-		"client": [
-			"dev.agaminggod.arenaagents.client.ArenaAgentsClient"
-		]
-	},
-	"mixins": [
-		"arenaagents.mixins.json",
-		{
-			"config": "arenaagents.client.mixins.json",
-			"environment": "client"
-		}
-	],
-	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.1.2",
-		"java": ">=25",
-		"fabric-api": "*",
-		"carpet": ">=26.1 <26.2"
-	}
+    "schemaVersion":  1,
+    "id":  "arenaagents",
+    "version":  "${version}",
+    "name":  "FORK",
+    "description":  "One Singapore neighbourhood, one generator, six rounds, two futures. Power, rewind and compare.",
+    "icon":  "assets/arenaagents/icon.png",
+    "license":  "All-Rights-Reserved",
+    "environment":  "*",
+    "entrypoints":  {
+                        "main":  [
+                                     "dev.agaminggod.arenaagents.ArenaAgents",
+                                     "dev.fork.integration.ForkEntrypoint"
+                                 ],
+                        "client":  [
+                                       "dev.agaminggod.arenaagents.client.ArenaAgentsClient"
+                                   ]
+                    },
+    "mixins":  [
+                   "arenaagents.mixins.json",
+                   {
+                       "config":  "arenaagents.client.mixins.json",
+                       "environment":  "client"
+                   }
+               ],
+    "depends":  {
+                    "fabricloader":  "\u003e=0.19.3",
+                    "minecraft":  "~26.1.2",
+                    "java":  "\u003e=25",
+                    "fabric-api":  "*",
+                    "carpet":  "\u003e=26.1 \u003c26.2"
+                }
 }

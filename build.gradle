@@ -356,7 +356,8 @@ tasks.register('packageWindowsDistribution', Zip) {
 
 def entrypointClassFiles = [
 	layout.buildDirectory.file('classes/java/main/dev/agaminggod/arenaagents/ArenaAgents.class'),
-	layout.buildDirectory.file('classes/java/client/dev/agaminggod/arenaagents/client/ArenaAgentsClient.class')
+	layout.buildDirectory.file('classes/java/client/dev/agaminggod/arenaagents/client/ArenaAgentsClient.class'),
+    layout.buildDirectory.file('classes/java/main/dev/fork/integration/ForkEntrypoint.class')
 ]
 
 tasks.register('verifyEntrypoints') {
@@ -507,4 +508,18 @@ publishing {
 
 	repositories {
 	}
+}
+
+// FORK's immutable court specification is packaged with the mod.
+processResources {
+    from('data/fork-world') { into 'data/fork/world' }
+}
+
+
+tasks.register('verifyFork', JavaExec) {
+    group = 'verification'
+    description = 'Verifies FORK arithmetic, atomic rounds and bounded checkpoint invariants.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('dev.fork.gameplay.ForkEngineVerification')
 }
