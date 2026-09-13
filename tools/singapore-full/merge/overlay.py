@@ -148,7 +148,11 @@ def state_tag(state):
     return compound(result)
 
 
-def make_chunk(cx, cz, columns, data_version, report):
+def make_chunk(cx, cz, columns, data_version, report, *, base_scope=None):
+    scope_classes = base_scope.chunk(cx, cz) if base_scope else None
+    if scope_classes is not None:
+        from base_scope import record_classes
+        record_classes(report, scope_classes)
     states = [AIR]
     state_ids = {AIR: 0}
     sections = {}
@@ -173,8 +177,19 @@ def make_chunk(cx, cz, columns, data_version, report):
     for z in range(16):
         for x in range(16):
             gx, gz = cx * 16 + x, cz * 16 + z
-            column = [Run(gx, gz, low, high, state, 10, "provisional-flat-ground", "ground", "provisional") for low, high, state in GROUND]
-            column.extend(columns.get((gx, gz), []))
+            classification = scope_classes[z * 16 + x] if scope_classes is not None else "land"
+            automatic_ground = GROUND if classification == "land" else GROUND[:2] if classification == "sea" else ()
+            explicit_runs = columns.get((gx, gz), [])
+            if classification in ("outside", "foreign") and any(run.state[0] not in AIR_NAMES for run in explicit_runs):
+                raise ValueError(f"occupied run outside base scope ({classification}) at {gx},{gz}")
+            column = [Run(gx, gz, low, high, state, 10, "provisional-flat-ground", "ground", "provisional") for low, high, state in automatic_ground]
+            column.extend(explicit_runs)
+            if base_scope is not None and classification == "sea":
+                has_water = any(run.layer == LAYERS["water"] and run.low <= 0 < run.high
+                                and run.state[0] == "minecraft:water" for run in explicit_runs)
+                field = "seaColumnsWithWaterLayerAtY0" if has_water else "seaColumnsMissingWaterLayerAtY0"
+                report["baseScope"][field] = report["baseScope"].get(field, 0) + 1
+                report["baseScope"]["mappedSeaSurfaceCoverageComplete"] = report["baseScope"].get("seaColumnsMissingWaterLayerAtY0", 0) == 0
             # Explicit terrain runs replace automatic provisional ground at matching heights.
             explicit_terrain = [run for run in column if run.layer == 10 and run.feature != "provisional-flat-ground"]
             if explicit_terrain:
@@ -309,7 +324,7 @@ def spool_inputs(spool, runs_paths, bounds):
     return sources, source_classes, input_count
 
 
-def write_streamed_regions(spool, stage_world, bounds, data_version, report):
+def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, base_scope=None):
     region_directory = stage_world / report["regionDirectory"]
     region_directory.mkdir(parents=True)
     cx0, cz0, cx1, cz1 = bounds[0] // 16, bounds[1] // 16, bounds[2] // 16, bounds[3] // 16
@@ -329,15 +344,18 @@ def write_streamed_regions(spool, stage_world, bounds, data_version, report):
                             run = parse_run(payload, bounds)
                             columns[(run.x, run.z)].append(run)
                         max_buffered_runs = max(max_buffered_runs, buffered)
-                        chunk = make_chunk(cx, cz, columns, data_version, report)
+                        chunk = make_chunk(cx, cz, columns, data_version, report, base_scope=base_scope)
                         del columns
+                        spawn_classes = base_scope.chunk(cx, cz) if base_scope else None
                         surface = chunk.root.value["Heightmaps"].value["WORLD_SURFACE"].value
+                        floor_heights = chunk.root.value["Heightmaps"].value["OCEAN_FLOOR"].value
                         for z in range(16):
                             for x in range(16):
                                 index = z * 16 + x
                                 height = ((surface[index // 7] & ((1 << 64) - 1)) >> ((index % 7) * 9)) & 511
                                 feet = height + MIN_Y
-                                if 1 <= feet < MAX_Y - 2:
+                                solid_top = ((floor_heights[index // 7] & ((1 << 64) - 1)) >> ((index % 7) * 9)) & 511
+                                if 1 <= feet < MAX_Y - 2 and (spawn_classes is None or (spawn_classes[index] == "land" and solid_top == height)):
                                     gx, gz = cx * 16 + x, cz * 16 + z
                                     candidate = (feet != 1, (gx - center_x) ** 2 + (gz - center_z) ** 2, gx, feet, gz)
                                     if best_spawn is None or candidate < best_spawn:
@@ -359,8 +377,12 @@ def write_streamed_regions(spool, stage_world, bounds, data_version, report):
     return best_spawn
 
 
-def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None):
+def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None, base_scope=None):
     validate_bounds(bounds)
+    if base_scope is not None:
+        from base_scope import BaseScope
+        if not isinstance(base_scope, BaseScope):
+            base_scope = BaseScope(base_scope)
     world, allowed_root = Path(world).resolve(), Path(allowed_root).resolve()
     lease_receipt = validate_job_lease(job_lease, world) if job_lease else None
     if not lease_receipt and (world == allowed_root or allowed_root not in world.parents):
@@ -407,9 +429,13 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
               "templateDependencies": ([{"path": "data/minecraft/world_gen_settings.dat", "sha256": digest(settings_path)}] if external_settings else []),
               "regionDirectory": "dimensions/minecraft/overworld/region" if external_settings else "region",
               "levelTemplateSha256": digest(level_template), "crossLayerOverwrittenBlocks": defaultdict(int), "outputs": []}
+    if base_scope is not None:
+        report["baseScope"] = base_scope.receipt()
+        report["groundProfileId"] = report["baseScope"]["profileId"]
+        report["terrain"] = "country-coast-scoped-flat-provisional"
     # One source chunk and one output chunk at a time; final world remains absent on failure.
     with RunSpool(spool_path, create=False) as spool:
-        best_spawn = write_streamed_regions(spool, stage_world, bounds, data_version, report)
+        best_spawn = write_streamed_regions(spool, stage_world, bounds, data_version, report, base_scope=base_scope)
     # Keep only world configuration; never carry source player/server state or per-tile map IDs.
     data.value.pop("Player", None)
     data.value.pop("DragonFight", None)
@@ -463,6 +489,7 @@ def main():
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--max-chunks", type=int, default=512)
     parser.add_argument("--job-lease", help="Coordinator-approved immutable Desktop queue/run attempt lease")
+    parser.add_argument("--base-scope", help="Optional pinned country/foreign/coast descriptor for provisional default terrain")
     args = parser.parse_args()
     manifest = Path(args.manifest).resolve()
     world = Path(args.world).resolve()
@@ -470,7 +497,7 @@ def main():
         parser.error("manifest must be a new path outside the output world")
     if PROJECT_ROOT.resolve() not in manifest.parents:
         parser.error("manifest must remain within the private full-Singapore project")
-    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease)
+    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease, base_scope=args.base_scope)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     with manifest.open("x", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2, sort_keys=True)
