@@ -330,6 +330,20 @@ class GrowContractTests(unittest.TestCase):
             result = _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
         self.assertEqual(result["standalone_status"], "NOT_STANDALONE")
         self.assertFalse(result["component_spawn_accepted"])
+        for name, accepted in (("validate-ring-world-gate.mjs", True), ("unapproved-world-gate.mjs", False)):
+            validator = writer.parent / name
+            validator.write_text("// bounded pinned loader fixture\n")
+            gate["evidence"]["gateModule"] = {"path": str(validator), "bytes": validator.stat().st_size, "sha256": digest(validator)}
+            with self.subTest(loader=name), patch("grow_contract.shutil.which", return_value="node"), patch("grow_contract.subprocess.run") as run:
+                run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(loaded), stderr="")
+                if accepted:
+                    result = _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
+                    self.assertEqual(result["component_validator_path"], str(validator))
+                    self.assertIn("loadEastWorldGate", run.call_args.args[0][4])
+                else:
+                    with self.assertRaisesRegex(GrowContractError, "loader code changed"):
+                        _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
+                    run.assert_not_called()
         gate["finalAssembledSafeSpawnRequired"] = False
         with self.assertRaisesRegex(GrowContractError, "geometry-only role"):
             _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
@@ -341,7 +355,8 @@ class GrowContractTests(unittest.TestCase):
         for marker in ({"standaloneStatus": "NOT_STANDALONE"},
                        {"finalAssembledSafeSpawnRequired": True},
                        {"componentSpawnAccepted": False},
-                       {"evidence": {"gateModule": {"path": "validate-east-world-gate.mjs"}}}):
+                       {"evidence": {"gateModule": {"path": "validate-east-world-gate.mjs"}}},
+                       {"evidence": {"gateModule": {"path": "validate-ring-world-gate.mjs"}}}):
             for role in (None, "standalone"):
                 gate = {**original, **marker}
                 if role is not None:

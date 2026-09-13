@@ -13,6 +13,7 @@ SHA = re.compile(r"^[0-9a-fA-F]{64}$")
 REGION_DIRECTORY = "dimensions/minecraft/overworld/region"
 WORLD_SETTINGS = "data/minecraft/world_gen_settings.dat"
 REGION = re.compile(r"^dimensions/minecraft/overworld/region/r\.-?\d+\.-?\d+\.mca$")
+COMPONENT_LOADERS = frozenset(("validate-east-world-gate.mjs", "validate-ring-world-gate.mjs"))
 
 
 class GrowContractError(ValueError):
@@ -190,7 +191,7 @@ def _component_role(gate, source, core, world, writer_path):
     record = gate["evidence"]["gateModule"]
     validator = Path(record["path"]).resolve(strict=True)
     validator_hash = _sha(record["sha256"], "assembly component loader")
-    if validator.name != "validate-east-world-gate.mjs" or digest(validator) != validator_hash or validator.stat().st_size != record["bytes"]:
+    if validator.name not in COMPONENT_LOADERS or digest(validator) != validator_hash or validator.stat().st_size != record["bytes"]:
         raise GrowContractError("actual assembly component loader code changed")
     node = shutil.which("node")
     if not node:
@@ -281,11 +282,11 @@ def _structural(gate, writer_hash, outputs, core, source=None, world=None, write
         if name in gate and (type(gate[name]) is not int or gate[name] != 0):
             raise GrowContractError(f"structural gate reports {name}")
     gate_module = gate.get("evidence", {}).get("gateModule", {})
-    east_module = Path(gate_module.get("path", "")).name == "validate-east-world-gate.mjs"
+    component_module = Path(gate_module.get("path", "")).name in COMPONENT_LOADERS
     if (gate.get("role") == "assembly-component" or gate.get("standaloneStatus") == "NOT_STANDALONE"
             or gate.get("finalAssembledSafeSpawnRequired") is True
             or gate.get("componentSpawnAccepted") is False
-            or east_module):
+            or component_module):
         # Typed component proof cannot downgrade into the legacy generic path
         # by removing/changing only its role discriminator.
         return _component_role(gate, source, core, world, writer_path)
