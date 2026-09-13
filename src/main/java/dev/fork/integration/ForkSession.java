@@ -40,8 +40,10 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     private boolean bodyFailure;
     private final Map<UUID,Travel> travel = new HashMap<>();
     private final Set<UUID> visitors = new HashSet<>();
+    private final Set<UUID> explorers = new HashSet<>();
+    private final Set<BlockPos> protectedSentinels = new HashSet<>();
     private final Map<UUID,String> travelMessages = new HashMap<>();
-    private record Travel(Vec3 target, boolean returning, long deadline,
+    private record Travel(Vec3 target, boolean returning, boolean exploring, long deadline,
             net.minecraft.server.level.TicketType ticket, net.minecraft.world.level.ChunkPos chunk) {}
     public static boolean hasSavedRun(MinecraftServer server) {
         return Files.exists(server.getWorldPath(LevelResource.ROOT).resolve("fork/epoch.txt"));
@@ -86,7 +88,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var sentinelCells=new ArrayList<ForkCheckpoint.Cell>();
         for(var el:layout.getAsJsonArray("outsideSentinels")) { var c=el.getAsJsonArray(); sentinelCells.add(new ForkCheckpoint.Cell(c.get(0).getAsInt(),c.get(1).getAsInt(),c.get(2).getAsInt())); }
         var outsideBefore=new LinkedHashMap<ForkCheckpoint.Cell,BlockState>();
-        for(var c:sentinelCells) outsideBefore.put(c,read(c.x(),c.y(),c.z()));
+        for(var c:sentinelCells) { outsideBefore.put(c,read(c.x(),c.y(),c.z())); protectedSentinels.add(origin.offset(c.x(),c.y(),c.z())); }
         for(int y=0;y<16;y++) for(int z=0;z<16;z++) for(int x=0;x<16;x++) write(x,y,z,Blocks.AIR.defaultBlockState());
         planned.forEach((pos,state)->write(pos.getX(),pos.getY(),pos.getZ(),state));
         projectBlocks(adapter.engine().state());
@@ -236,7 +238,9 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var weather=level.getWeatherData(); weather.setClearWeatherTime(6000); weather.setRaining(false); weather.setThundering(false);
         boolean show=++broadcasts%40==0;
         for(var p:server.getPlayerList().getPlayers()) {
-            p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); p.setInvulnerable(true);
+            if(explorers.contains(p.getUUID())) p.setGameMode(GameType.CREATIVE);
+            else { p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); }
+            p.setInvulnerable(true);
             if(show) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(ForkPresentation.compact(e.state(),e.paused(),pending))));
             if(broadcasts%20==0) sync(p);
         }
@@ -249,7 +253,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             && v.y>=origin.getY() && v.y<origin.getY()+16 && v.z>=origin.getZ() && v.z<origin.getZ()+16;
     }
     public void requireCourt(net.minecraft.server.level.ServerPlayer p) {
-        if(!human(p)||!atCourt(p)||!visitors.isEmpty()||!travel.isEmpty()) throw new IllegalStateException("Return to court before changing this branch");
+        if(!human(p)||!atCourt(p)||!visitors.isEmpty()||!explorers.isEmpty()||!travel.isEmpty()) throw new IllegalStateException("Return to court before changing this branch");
     }
     private boolean travelWindow() {
         var e=adapter.engine(); return (e.state().round()==0||e.state().complete()) && e.pending()==null && !e.paused() && ready();
@@ -281,15 +285,52 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     public String visit(net.minecraft.server.level.ServerPlayer p,String id) {
         if(!human(p)||!atCourt(p)||!travelWindow()||!travel.isEmpty()) throw new IllegalStateException("Visit requires court, round 0/6, three bodies and no pending work");
         var place=acceptedPlaces().stream().filter(x->x.get("id").getAsString().equals(id)).findFirst().orElseThrow(()->new IllegalArgumentException("Place is not accepted by World/Main"));
-        beginTravel(p,destination(place),false); return "Checking accepted arrival (10s maximum). Cancel or Return stays available.";
+        beginTravel(p,destination(place),false,false); return "Checking accepted arrival (10s maximum). Cancel or Return stays available.";
+    }
+    public String explore(net.minecraft.server.level.ServerPlayer p) {
+        if(!human(p)||!atCourt(p)||!travelWindow()||!travel.isEmpty()) throw new IllegalStateException("Explore requires court, round 0/6, three bodies and no pending work");
+        var places=acceptedPlaces();
+        var place=places.stream().filter(x->x.get("id").getAsString().equals("market-street-view")).findFirst()
+            .orElseGet(()->places.stream().findFirst().orElseThrow(()->new IllegalStateException("No accepted city arrival")));
+        beginTravel(p,destination(place),false,true);
+        return "Opening Singapore for Creative flight and building. Safe arrival check: up to 10 seconds. /fork return restores the agent scenario.";
+    }
+    private void equipExplorer(net.minecraft.server.level.ServerPlayer p) {
+        p.getInventory().clearContent();
+        for(var block:List.of(Blocks.SMOOTH_STONE,Blocks.WHITE_CONCRETE,Blocks.CYAN_CONCRETE,Blocks.GLASS,Blocks.OAK_PLANKS,Blocks.BRICKS,Blocks.SEA_LANTERN,Blocks.GRASS_BLOCK,Blocks.STONE_BRICKS))
+            p.getInventory().add(new net.minecraft.world.item.ItemStack(block,64));
+    }
+    public boolean mayExploreEdit(net.minecraft.world.entity.player.Player p,BlockPos pos) {
+        if(!explorers.contains(p.getUUID())||p.level()!=level||travel.containsKey(p.getUUID())) return false;
+        // Reserve a collar around the immutable court and every accepted sentinel.
+        if(pos.getX()>=origin.getX()-2&&pos.getX()<=origin.getX()+17
+            &&pos.getY()>=origin.getY()-2&&pos.getY()<=origin.getY()+17
+            &&pos.getZ()>=origin.getZ()-2&&pos.getZ()<=origin.getZ()+17) return false;
+        return protectedSentinels.stream().noneMatch(s->Math.abs((long)s.getX()-pos.getX())<=2
+            &&Math.abs((long)s.getY()-pos.getY())<=2&&Math.abs((long)s.getZ()-pos.getZ())<=2);
+    }
+    public boolean mayExplorePlace(net.minecraft.world.entity.player.Player p,net.minecraft.world.InteractionHand hand,net.minecraft.world.phys.BlockHitResult hit) {
+        if(!mayExploreEdit(p,hit.getBlockPos())||!mayExploreEdit(p,hit.getBlockPos().relative(hit.getDirection()))) return false;
+        var item=p.getItemInHand(hand).getItem();
+        if(!(item instanceof net.minecraft.world.item.BlockItem blockItem)) return false;
+        // Inert blocks cannot create explosions, fluid flow, falling blocks or moving machinery.
+        return Set.of(Blocks.SMOOTH_STONE,Blocks.WHITE_CONCRETE,Blocks.CYAN_CONCRETE,Blocks.GLASS,Blocks.OAK_PLANKS,
+            Blocks.BRICKS,Blocks.SEA_LANTERN,Blocks.GRASS_BLOCK,Blocks.STONE_BRICKS,Blocks.STONE,Blocks.DIRT,
+            Blocks.SMOOTH_QUARTZ,Blocks.ORANGE_CONCRETE,Blocks.YELLOW_CONCRETE,Blocks.BLACK_CONCRETE).contains(blockItem.getBlock());
+    }
+    public void stop() {
+        cancel();
+        for(var id:explorers) { var p=server.getPlayerList().getPlayer(id); if(p!=null) { p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); } }
+        explorers.clear();
     }
     public String returnToCourt(net.minecraft.server.level.ServerPlayer p) {
         if(!human(p)) throw new IllegalStateException("Human travel only");
         finishTravel(p.getUUID(),"Previous travel cancelled");
         if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel pending round before return");
-        beginTravel(p,courtArrival(),true); return "Returning to court after safe arrival check (10s maximum).";
+        explorers.remove(p.getUUID()); p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent();
+        beginTravel(p,courtArrival(),true,false); return "Returning to court after safe arrival check (10s maximum).";
     }
-    private void beginTravel(net.minecraft.server.level.ServerPlayer p,Vec3 target,boolean returning) {
+    private void beginTravel(net.minecraft.server.level.ServerPlayer p,Vec3 target,boolean returning,boolean exploring) {
         if(!Double.isFinite(target.x)||!Double.isFinite(target.y)||!Double.isFinite(target.z)) throw new IllegalArgumentException("Invalid arrival");
         var pos=BlockPos.containing(target);
         if(!level.getWorldBorder().isWithinBounds(pos)||target.y<level.getMinY()+1||target.y>=level.getMaxY()-2) throw new IllegalArgumentException("Arrival outside world bounds");
@@ -297,7 +338,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var ticket=new net.minecraft.server.level.TicketType(200,net.minecraft.server.level.TicketType.FLAG_LOADING);
         var chunk=new net.minecraft.world.level.ChunkPos(pos.getX() >> 4,pos.getZ() >> 4);
         level.getChunkSource().addTicketWithRadius(ticket,chunk,2);
-        travel.put(p.getUUID(),new Travel(target,returning,System.nanoTime()+10_000_000_000L,ticket,chunk));
+        travel.put(p.getUUID(),new Travel(target,returning,exploring,System.nanoTime()+10_000_000_000L,ticket,chunk));
         travelMessages.put(p.getUUID(),"Checking arrival; Cancel or Return available");
     }
     private void finishTravel(UUID id,String message) {
@@ -307,6 +348,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     }
     private void tickTravel() {
         visitors.removeIf(id->server.getPlayerList().getPlayer(id)==null);
+        explorers.removeIf(id->server.getPlayerList().getPlayer(id)==null);
         for(var id:new ArrayList<>(travel.keySet())) {
             var t=travel.get(id);var p=server.getPlayerList().getPlayer(id);
             if(p==null||System.nanoTime()>=t.deadline()) { finishTravel(id,"Travel timed out; position preserved");continue; }
@@ -321,8 +363,9 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             if(!safe) { finishTravel(id,"Unsafe arrival; position preserved. Return remains available.");continue; }
             stopCamera(p);
             p.teleportTo(level,t.target().x,t.target().y,t.target().z,Set.of(),180,0,true);p.setDeltaMovement(Vec3.ZERO);
-            if(t.returning()) visitors.remove(id);else visitors.add(id);
-            finishTravel(id,t.returning()?"At court":"Visiting accepted place; branch and actors preserved");
+            if(t.returning()) { visitors.remove(id); explorers.remove(id); } else visitors.add(id);
+            if(t.exploring()) { explorers.add(id); p.setGameMode(GameType.CREATIVE); equipExplorer(p); p.sendSystemMessage(Component.literal("Explore Singapore: double-tap Space to fly; build with your palette. /fork return brings you back to the three agents. City builds survive court rewind.")); }
+            finishTravel(id,t.returning()?"At court":t.exploring()?"EXPLORE | Double-tap Space to fly; build with the supplied palette. /fork return for agents. City edits survive court rewind.":"Visiting accepted place; branch and actors preserved");
         }
     }
     private void stopCamera(net.minecraft.server.level.ServerPlayer p) {

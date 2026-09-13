@@ -529,7 +529,7 @@ public final class AgentControlScreen extends Screen {
 			visit.active=serverCanControl()&&v.canTravel()&&!places.isEmpty();addRenderableWidget(visit);
 			var back=consoleButton("Return",l.contentLeft()+3*(w+GAP),l.contentTop(),w,ROW_HEIGHT,false,()->sendForkCommand("fork return"));back.active=serverCanControl();addRenderableWidget(back);
 			addRenderableWidget(consoleButton("Cancel travel",l.contentLeft(),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork cancel")));
-			addRenderableWidget(consoleButton("Locator details",l.contentLeft()+2*(w+GAP),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork locator")));
+			var explore=consoleButton("Explore / build",l.contentLeft()+2*(w+GAP),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork explore")); explore.active=serverCanControl()&&v.canTravel()&&!places.isEmpty();addRenderableWidget(explore);
 		} else {
 			String[] labels={"Clinic","Workshop","Advance","Cancel","Rewind","Inspect","Compare","Retry"};
 			String[] commands={"power clinic","power workshop","advance","cancel","rewind","inspect","compare","retry"};
@@ -548,7 +548,7 @@ public final class AgentControlScreen extends Screen {
 	}
 	private int forkVisibleLines() { return Math.max(1,(layout().contentHeight()-74)/12); }
 	private List<String> forkLines() {
-		var v=ForkClient.view();var source=forkCamera?List.of("Camera presets installed by Cinematic",forkPreset.isEmpty()?"No presets installed; Main must install the accepted camera-paths.json before launch.":"Selected: "+forkPreset,"Choose a preset, then Play. No manual flying is needed.","Return and Rewind stop playback and restore the human camera."):forkLocator?List.of("Singapore locator",v.locator(),"Travel: human only, round 0 or 6, no pending work.","Court and all three roles stay unchanged during visits.",v.issue()):ForkPresentation.details(v);
+		var v=ForkClient.view();var source=forkCamera?List.of("Camera presets installed by Cinematic",forkPreset.isEmpty()?"No presets installed; Main must install the accepted camera-paths.json before launch.":"Selected: "+forkPreset,"Choose a preset, then Play. No manual flying is needed.","Return and Rewind stop playback and restore the human camera."):forkLocator?List.of("Singapore locator",v.locator(),"Travel: human only, round 0 or 6, no pending work.","Explore / build: Creative flight and a building palette. Double-tap Space to fly.","Return restores Adventure. City builds survive court rewind; all three roles remain at court.",v.issue()):ForkPresentation.details(v);
 		var lines=new ArrayList<String>();
 		for(String raw:source) {
 			String rest=raw;
@@ -937,7 +937,7 @@ public final class AgentControlScreen extends Screen {
 
 	private void sendForkCommand(String command) {
 		if(minecraft==null||minecraft.getConnection()==null||!serverCanControl()) return;
-		if(command.equals("fork rewind")||command.equals("fork return")||command.startsWith("fork visit")) dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.stopPlaybackFromGui();
+		if(command.equals("fork rewind")||command.equals("fork return")||command.startsWith("fork visit")||command.equals("fork explore")) dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.stopPlaybackFromGui();
 		// FORK owns its own receipts; do not wait on an unrelated Arena roster revision.
 		minecraft.getConnection().sendCommand(command);
 		minecraft.setScreen(null);

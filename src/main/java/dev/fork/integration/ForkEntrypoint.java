@@ -52,6 +52,7 @@ public final class ForkEntrypoint implements ModInitializer {
             root.then(Commands.literal("recover").executes(c -> run(c.getSource(), () -> require(c.getSource()).recoverBodies())));
             root.then(Commands.literal("rewind").executes(c -> run(c.getSource(), () -> require(c.getSource()).rewind(c.getSource().getPlayerOrException()))));
             root.then(Commands.literal("locator").executes(c -> run(c.getSource(), () -> require(c.getSource()).locator())));
+            root.then(Commands.literal("explore").executes(c -> run(c.getSource(), () -> require(c.getSource()).explore(c.getSource().getPlayerOrException()))));
             root.then(Commands.literal("return").executes(c -> run(c.getSource(), () -> require(c.getSource()).returnToCourt(c.getSource().getPlayerOrException()))));
             root.then(Commands.literal("visit").then(Commands.argument("place",com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> run(c.getSource(), () -> require(c.getSource()).visit(c.getSource().getPlayerOrException(),com.mojang.brigadier.arguments.StringArgumentType.getString(c,"place"))))));
             root.then(Commands.literal("inspect").executes(c -> run(c.getSource(), () -> require(c.getSource()).inspect())));
@@ -60,14 +61,14 @@ public final class ForkEntrypoint implements ModInitializer {
             dispatcher.register(root);
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> { var s=session(server); if(s!=null) s.tick(); });
-        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { var s=session(server); if(s!=null) s.cancel(); });
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> { var s=session(server); if(s!=null) s.stop(); });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> SESSIONS.remove(server));
-        UseBlockCallback.EVENT.register((player,world,hand,hit) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) ? InteractionResult.FAIL : InteractionResult.PASS);
+        UseBlockCallback.EVENT.register((player,world,hand,hit) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) && !session(l.getServer()).mayExplorePlace(player,hand,hit) ? InteractionResult.FAIL : InteractionResult.PASS);
         UseItemCallback.EVENT.register((player,world,hand) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) ? InteractionResult.FAIL : InteractionResult.PASS);
         UseEntityCallback.EVENT.register((player,world,hand,entity,hit) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) ? InteractionResult.FAIL : InteractionResult.PASS);
         AttackEntityCallback.EVENT.register((player,world,hand,entity,hit) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) ? InteractionResult.FAIL : InteractionResult.PASS);
-        AttackBlockCallback.EVENT.register((player,world,hand,pos,direction) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) ? InteractionResult.FAIL : InteractionResult.PASS);
-        PlayerBlockBreakEvents.BEFORE.register((world,player,pos,state,entity) -> !active(world.getServer()));
+        AttackBlockCallback.EVENT.register((player,world,hand,pos,direction) -> world instanceof net.minecraft.server.level.ServerLevel l && active(l.getServer()) && !session(l.getServer()).mayExploreEdit(player,pos) ? InteractionResult.FAIL : InteractionResult.PASS);
+        PlayerBlockBreakEvents.BEFORE.register((world,player,pos,state,entity) -> !active(world.getServer()) || session(world.getServer()).mayExploreEdit(player,pos));
     }
     private static ForkSession require(CommandSourceStack source) {
         var s=session(source.getServer()); if(s==null) throw new IllegalStateException("Use /fork start fixture or /fork start live"); return s;
@@ -76,7 +77,7 @@ public final class ForkEntrypoint implements ModInitializer {
         var s=require(source);s.requireCourt(source.getPlayerOrException());return s;
     }
     private static int help(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal("FORK | start fixture/live (first run) | new fixture/live (explicit restart) | power clinic/workshop | advance | retry | cancel | rewind | recover | inspect | compare | demolish"), false); return 1;
+        source.sendSuccess(() -> Component.literal("FORK | start fixture/live (first run) | new fixture/live (explicit restart) | power clinic/workshop | advance | retry | cancel | rewind | recover | inspect | compare | demolish | explore (fly/build city) | return"), false); return 1;
     }
     private interface Operation { String run() throws Exception; }
     private static int run(CommandSourceStack source, Operation action) {
