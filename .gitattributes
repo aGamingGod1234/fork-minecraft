@@ -2,3 +2,4 @@ maps/selections/**/*.json text eol=lf
 src/main/resources/data/arenaagents/arena_modules/**/*.json text eol=lf
 maps/licenses/**/*.txt text eol=lf
 media/edit/camera-paths-narration-rc9.json -text
+media/edit/camera-paths-narration-rc10.json -text

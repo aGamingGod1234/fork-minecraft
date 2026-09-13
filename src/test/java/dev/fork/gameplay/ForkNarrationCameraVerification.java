@@ -22,7 +22,7 @@ public final class ForkNarrationCameraVerification {
             for(var frame:value.getAsJsonArray("keyframes")){
                 var f=frame.getAsJsonObject();frames.add(new CameraKeyframe(f.get("tick").getAsInt(),f.get("x").getAsDouble(),f.get("y").getAsDouble(),f.get("z").getAsDouble(),f.get("yaw").getAsFloat(),f.get("pitch").getAsFloat()));
             }
-            var path=new CameraPath(value.get("name").getAsString(),frames);
+            var path=new CameraPath(value.get("name").getAsString(),frames,value.has("interpolation")?value.get("interpolation").getAsString():"catmull_rom");
             if(library.put(path.name(),path)!=null)throw new AssertionError("Duplicate path name");
         }
         var paths=timeline.paths().stream().map(library::get).toList();

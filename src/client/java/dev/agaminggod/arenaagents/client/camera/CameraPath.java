@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Objects;
 
 /** A bounded, sorted camera timeline with smooth Catmull-Rom position interpolation. */
-public record CameraPath(String name, List<CameraKeyframe> keyframes) {
+public record CameraPath(String name, List<CameraKeyframe> keyframes, String interpolation) {
+    public CameraPath(String name, List<CameraKeyframe> keyframes) { this(name,keyframes,"catmull_rom"); }
 	public static final int MAX_KEYFRAMES = 512;
 	public static final int MAX_DURATION_TICKS = 20 * 60 * 60;
 
 	public CameraPath {
 		name = requireName(name);
+        if (!"catmull_rom".equals(interpolation) && !"smootherstep".equals(interpolation)) throw new IllegalArgumentException("Unsupported camera interpolation");
 		Objects.requireNonNull(keyframes, "keyframes must not be null");
 		if (keyframes.isEmpty()) throw new IllegalArgumentException("a camera path needs at least one keyframe");
 		if (keyframes.size() > MAX_KEYFRAMES) throw new IllegalArgumentException("a camera path may contain at most " + MAX_KEYFRAMES + " keyframes");
@@ -36,7 +38,7 @@ public record CameraPath(String name, List<CameraKeyframe> keyframes) {
 		ArrayList<CameraKeyframe> next = new ArrayList<>(keyframes);
 		if (frame.tick() == next.getLast().tick()) next.set(next.size() - 1, frame);
 		else next.add(frame);
-		return new CameraPath(name, next);
+		return new CameraPath(name, next, interpolation);
 	}
 
 	/** Samples this path in ticks. Position is smoothed; angles use shortest-turn interpolation. */
@@ -49,7 +51,14 @@ public record CameraPath(String name, List<CameraKeyframe> keyframes) {
 		CameraKeyframe b = keyframes.get(right);
 		CameraKeyframe a = keyframes.get(right - 1);
 		double amount = (tick - a.tick()) / (double) (b.tick() - a.tick());
-		double smooth = amount * amount * (3.0D - 2.0D * amount);
+		if (interpolation.equals("smootherstep")) {
+            // Zero velocity and acceleration at each authored endpoint, without overshoot.
+            double ramp = amount * amount * amount * (amount * (amount * 6.0D - 15.0D) + 10.0D);
+            return new CameraPose(a.x()+(b.x()-a.x())*ramp, a.y()+(b.y()-a.y())*ramp,
+                a.z()+(b.z()-a.z())*ramp, interpolateAngle(a.yaw(),b.yaw(),(float)ramp),
+                lerp(a.pitch(),b.pitch(),(float)ramp));
+        }
+        double smooth = amount * amount * (3.0D - 2.0D * amount);
 		CameraKeyframe before = right >= 2 ? keyframes.get(right - 2) : a;
 		CameraKeyframe after = right + 1 < keyframes.size() ? keyframes.get(right + 1) : b;
 		return new CameraPose(

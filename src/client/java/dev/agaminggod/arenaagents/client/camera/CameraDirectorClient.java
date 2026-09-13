@@ -521,7 +521,7 @@ public final class CameraDirectorClient {
 					JsonObject frame = frameElement.getAsJsonObject();
 					frames.add(new CameraKeyframe(frame.get("tick").getAsInt(), frame.get("x").getAsDouble(), frame.get("y").getAsDouble(), frame.get("z").getAsDouble(), frame.get("yaw").getAsFloat(), frame.get("pitch").getAsFloat()));
 				}
-				CameraPath path = new CameraPath(pathObject.get("name").getAsString(), frames);
+				CameraPath path = new CameraPath(pathObject.get("name").getAsString(), frames, pathObject.has("interpolation") ? pathObject.get("interpolation").getAsString() : "catmull_rom");
 				PATHS.put(path.name(), path);
             }
             if(root.has("forkCaptureTimeline")) {
@@ -559,6 +559,7 @@ public final class CameraDirectorClient {
 			for (CameraPath path : library.values()) {
 				JsonObject pathObject = new JsonObject();
 				pathObject.addProperty("name", path.name());
+                if (!path.interpolation().equals("catmull_rom")) pathObject.addProperty("interpolation", path.interpolation());
 				JsonArray frames = new JsonArray();
 				for (CameraKeyframe frame : path.keyframes()) {
 					JsonObject frameObject = new JsonObject();
