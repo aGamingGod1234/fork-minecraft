@@ -13,6 +13,7 @@ import socket
 import subprocess
 import threading
 import time
+from anvil import read_region
 
 ROOT = Path(r"C:\Users\User\AppData\Local\FORK-Tools\fork-singapore-full\runtime-check")
 
@@ -57,6 +58,72 @@ def peak_rss(process):
     return None
 
 
+def select_sentinels(runs_path, source, writer, bounds):
+    """Choose source-run states also proven present in the frozen source chunks."""
+    if sha(runs_path) not in {record["sha256"] for record in writer["inputs"]}:
+        raise ValueError("Runtime sentinel run source does not match writer input hash")
+    chunks = {}
+    for path in (source / writer["regionDirectory"]).glob("r.*.mca"):
+        chunks.update(read_region(path))
+    section_cache = {}
+    def block(x, y, z):
+        key = (x // 16, z // 16, y // 16)
+        if key not in section_cache:
+            root = chunks[key[:2]].root.value
+            section = next(item.value for item in root["sections"].value.items if item.value["Y"].value == key[2])
+            section_cache[key] = section["block_states"].value
+        states = section_cache[key]
+        palette = states["palette"].value.items
+        offset = (y % 16) * 256 + (z % 16) * 16 + x % 16
+        if len(palette) == 1:
+            index = 0
+        else:
+            bits = max(4, (len(palette) - 1).bit_length())
+            per = 64 // bits
+            index = ((states["data"].value[offset // per] & ((1 << 64) - 1)) >> ((offset % per) * bits)) & ((1 << bits) - 1)
+        state = palette[index].value
+        properties = {name: value.value for name, value in state.get("Properties", type("Empty", (), {"value": {}})()).value.items()}
+        return state["Name"].value, properties
+    min_x, min_z, max_x, max_z = bounds
+    mid_x, mid_z = (min_x + max_x) // 2, (min_z + max_z) // 2
+    chosen = {}
+    with Path(runs_path).open(encoding="utf-8-sig") as stream:
+        for line in stream:
+            run = json.loads(line)
+            if run["yMax"] <= 1 or run["block"] in {"minecraft:air", "minecraft:cave_air", "minecraft:void_air"}:
+                continue
+            x, z, y = run["x"], run["z"], max(1, run["yMin"])
+            core = ("N" if z < mid_z else "S") + ("W" if x < mid_x else "E")
+            kind = "GLASS" if "glass" in run["block"] else "ROOF" if run["geometryKind"] == "roof" else "WALL"
+            keys = [core + "_" + kind]
+            if x == mid_x - 1:
+                keys.append("SEAM_X_LEFT")
+            if x == mid_x:
+                keys.append("SEAM_X_RIGHT")
+            if z == mid_z - 1:
+                keys.append("SEAM_Z_NORTH")
+            if z == mid_z:
+                keys.append("SEAM_Z_SOUTH")
+            keys = [key for key in keys if key not in chosen]
+            if not keys or block(x, y, z) != (run["block"], run.get("properties", {})):
+                continue
+            properties = run.get("properties", {})
+            command_state = run["block"] + ("[" + ",".join(f"{key}={value}" for key, value in sorted(properties.items())) + "]" if properties else "")
+            for key in keys:
+                chosen[key] = {"marker": f"FORK_RUNTIME_BLOCK_{key}_OK", "pos": [x, y, z], "state": command_state,
+                               "featureId": run["featureId"], "geometryKind": run["geometryKind"], "sourceClass": run["sourceClass"]}
+    required = {core + "_" + kind for core in ("NW", "NE", "SW", "SE") for kind in ("WALL", "GLASS", "ROOF")}
+    if not required <= set(chosen):
+        raise ValueError("Missing source-proven non-ground block sentinels: " + str(sorted(required - set(chosen))))
+    for key, x, z in (("SEAM_X_LEFT", mid_x - 1, mid_z), ("SEAM_X_RIGHT", mid_x, mid_z), ("SEAM_Z_NORTH", mid_x, mid_z - 1), ("SEAM_Z_SOUTH", mid_x, mid_z)):
+        if key not in chosen:
+            name, properties = block(x, 0, z)
+            state = name + ("[" + ",".join(f"{key}={value}" for key, value in sorted(properties.items())) + "]" if properties else "")
+            chosen[key] = {"marker": f"FORK_RUNTIME_BLOCK_{key}_OK", "pos": [x, 0, z], "state": state,
+                           "featureId": "source-oracle-default-ground", "geometryKind": "seam-ground", "sourceClass": "provisional"}
+    return [chosen[key] for key in sorted(chosen)]
+
+
 def run(args):
     attempt, source = Path(args.attempt).resolve(), Path(args.candidate).resolve()
     if ROOT.resolve() not in attempt.parents:
@@ -81,6 +148,7 @@ def run(args):
     if sha(writer_path).lower() != str(gate.get("writerManifestSha256")).lower():
         raise ValueError("Candidate writer manifest differs from independent gate binding")
     writer = json.loads(writer_path.read_text(encoding="utf-8-sig"))
+    sentinels = select_sentinels(args.runs, source, writer, args.bounds)
     free_before = free_memory()
     if free_before < 8 * 1024 ** 3:
         raise RuntimeError("Less than 8 GiB free; runtime lease cannot start")
@@ -111,6 +179,7 @@ def run(args):
              "jar_path": str(attempt / "server.jar"), "expected_jar_sha256": sha(attempt / "server.jar"), "java_identity": identity,
              "port": args.port, "max_heap_mib": 3072, "log_path": str(log_path), "expected_level_name": "world",
              "expected_chunk_markers": sorted(expected), "lease_sha256": sha(lease_path), "gate_sha256": sha(gate_path),
+             "expected_block_markers": [item["marker"] for item in sentinels], "block_sentinels": sentinels, "sentinel_runs_sha256": sha(args.runs),
              "free_memory_before_bytes": free_before, "command": command, "startedUtc": datetime.now(timezone.utc).isoformat(),
              "runtimeLoadAccepted": False, "visualAccepted": False, "aiAccepted": False}
     process = subprocess.Popen(command, cwd=attempt, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -128,6 +197,7 @@ def run(args):
     reader.start()
     started = time.monotonic()
     seen, text_log = set(), []
+    seen_blocks = set()
     ready = False
     peak = 0
     def drain():
@@ -138,6 +208,7 @@ def run(args):
                 break
             text_log.append(line)
             seen.update(marker for marker in re.findall(r"FORK_RUNTIME_CHUNK_-?\d+_-?\d+_OK", line) if marker in expected)
+            seen_blocks.update(re.findall(r"FORK_RUNTIME_BLOCK_[A-Z_]+_OK", line))
     def send(command_text):
         process.stdin.write(command_text + "\n")
         process.stdin.flush()
@@ -163,6 +234,15 @@ def run(args):
                 time.sleep(0.1)
         if len(seen) != len(expected):
             raise RuntimeError(f"Only {len(seen)}/{len(expected)} requested core chunks confirmed loaded")
+        for sentinel in sentinels:
+            x, y, z = sentinel["pos"]
+            send(f"execute if block {x} {y} {z} {sentinel['state']} run say {sentinel['marker']}")
+        until = min(started + 158, time.monotonic() + 5)
+        while time.monotonic() < until and process.poll() is None and len(seen_blocks) < len(sentinels):
+            drain()
+            time.sleep(0.1)
+        if len(seen_blocks) != len(sentinels):
+            raise RuntimeError(f"Only {len(seen_blocks)}/{len(sentinels)} actual source block sentinels matched")
         send("save-all flush")
         until = min(started + 160, time.monotonic() + 10)
         while time.monotonic() < until and process.poll() is None:
@@ -187,6 +267,7 @@ def run(args):
         drain()
         state.update({"exit_code": process.returncode, "process_alive": process.poll() is None, "peak_rss_bytes": peak,
                       "loaded_chunk_marker_count": len(seen), "elapsed_java_seconds": round(time.monotonic() - started, 3),
+                      "matched_block_marker_count": len(seen_blocks),
                       "candidate_after": snapshot(source), "copied_world_after": snapshot(world), "finishedUtc": datetime.now(timezone.utc).isoformat()})
         state["process"] = {"pid": process.pid, "exit_code": process.returncode, "observed_alive": process.poll() is None,
                             "observed_at_utc": state["finishedUtc"]}
@@ -202,6 +283,7 @@ if __name__ == "__main__":
     parser.add_argument("--java", required=True)
     parser.add_argument("--lease", required=True)
     parser.add_argument("--gate", required=True)
+    parser.add_argument("--runs", required=True)
     parser.add_argument("--bounds", type=lambda value: tuple(map(int, value.split(","))), required=True)
     parser.add_argument("--port", type=int, default=25579)
     run(parser.parse_args())
