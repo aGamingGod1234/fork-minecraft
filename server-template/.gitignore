@@ -1,0 +1,14 @@
+*.jar
+.fabric/
+libraries/
+logs/
+mods/
+world*/
+crash-reports/
+eula.txt
+template-manifest.json
+usercache.json
+whitelist.json
+ops.json
+banned-*.json
+*.log

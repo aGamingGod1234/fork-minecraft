@@ -1,0 +1,57 @@
+{
+	"schemaVersion": 1,
+	"bridge": {
+		"host": "127.0.0.1",
+		"port": 25570,
+		"secretEnvironmentVariable": "ARENA_AGENT_BRIDGE_SECRET",
+		"reconnectDelayMs": 500,
+		"maxReconnectDelayMs": 5000
+	},
+	"voice": {
+		"port": 8766,
+		"maxConcurrent": 5,
+		"profileAssignmentsPath": "runtime/voice-profile-assignments.json",
+		"fishApiKeyEnvironmentVariable": "FISH_AUDIO_API_KEY",
+		"deepgramApiKeyEnvironmentVariable": "DEEPGRAM_API_KEY"
+	},
+	"codex": {
+		"controlProtocol": "native_tools",
+		"planningTimeoutMs": 120000,
+		"catalogTtlMs": 60000,
+		"serviceTier": "priority",
+		"launchProfile": {
+			"model": "gpt-5.6-luna",
+			"reasoningEffort": "xhigh",
+			"serviceTier": "fast"
+		}
+	},
+	"kimi": {
+		"models": ["kimi-code/k3", "kimi-code/k3-256k", "kimi-code/kimi-for-coding", "kimi-code/kimi-for-coding-highspeed"],
+		"reasoningEfforts": ["low", "high", "max"],
+		"modelReasoningEfforts": {
+			"kimi-code/k3": ["low", "high", "max"],
+			"kimi-code/k3-256k": ["low", "high", "max"],
+			"kimi-code/kimi-for-coding": ["high"],
+			"kimi-code/kimi-for-coding-highspeed": ["high"]
+		},
+		"planningTimeoutMs": 120000
+	},
+	"cursor": {
+		"models": ["composer-2.5", "grok-4.5", "grok-4.6"],
+		"modelReasoningEfforts": {
+			"composer-2.5": ["high"],
+			"grok-4.5": ["low", "medium", "high"],
+			"grok-4.6": ["low", "medium", "high", "xhigh"]
+		},
+		"planningTimeoutMs": 120000,
+		"catalogDiscovery": true
+	},
+	"limits": {
+		"agentCap": 16,
+		"goalQueueCap": 32,
+		"planningConcurrency": 16,
+		"planningMode": "fixed",
+		"urgentReserve": 0,
+		"invalidDecisionRetries": 1
+	}
+}

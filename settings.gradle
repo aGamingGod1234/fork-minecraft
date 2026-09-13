@@ -1,0 +1,17 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+			mavenContent { releasesOnly() }
+			content {
+				includeGroupByRegex 'net\\.fabricmc(\\..*)?'
+			}
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'arena-agents'
+include 'voice-addon'

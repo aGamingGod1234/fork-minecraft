@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "brandSkins": [
+    {
+      "key": "openai",
+      "label": "ChatGPT / OpenAI",
+      "variants": [
+        {"texturePath": "arenaagents:textures/entity/brand_openai_agent_0.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_openai_agent_1.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_openai_agent_2.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_openai_agent_3.png"}
+      ]
+    },
+    {
+      "key": "claude",
+      "label": "Claude",
+      "variants": [
+        {"texturePath": "arenaagents:textures/entity/brand_claude_agent_0.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_claude_agent_1.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_claude_agent_2.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_claude_agent_3.png"}
+      ]
+    },
+    {
+      "key": "deepseek",
+      "label": "DeepSeek",
+      "variants": [
+        {"texturePath": "arenaagents:textures/entity/brand_deepseek_agent_0.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_deepseek_agent_1.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_deepseek_agent_2.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_deepseek_agent_3.png"}
+      ]
+    },
+    {
+      "key": "gemini",
+      "label": "Gemini",
+      "variants": [
+        {"texturePath": "arenaagents:textures/entity/brand_gemini_agent_0.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_gemini_agent_1.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_gemini_agent_2.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_gemini_agent_3.png"}
+      ]
+    },
+    {
+      "key": "kimi",
+      "label": "Kimi",
+      "variants": [
+        {"texturePath": "arenaagents:textures/entity/brand_kimi_agent_0.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_kimi_agent_1.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_kimi_agent_2.png"},
+        {"texturePath": "arenaagents:textures/entity/brand_kimi_agent_3.png"}
+      ]
+    }
+  ],
+  "providers": [
+    {
+      "key": "codex",
+      "chassis": "codex",
+      "glyph": "⌁",
+      "fallbackFamily": "spark",
+      "families": [
+        {
+          "key": "sol",
+          "models": ["gpt-5.6-sol", "gpt-5.6-sol-wm"],
+          "shortLabel": "Sol",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/codex_sol_agent_0.png", "transportCode": "c00"},
+            {"texturePath": "arenaagents:textures/entity/codex_sol_agent_1.png", "transportCode": "c01"},
+            {"texturePath": "arenaagents:textures/entity/codex_sol_agent_2.png", "transportCode": "c02"},
+            {"texturePath": "arenaagents:textures/entity/codex_sol_agent_3.png", "transportCode": "c03"}
+          ]
+        },
+        {
+          "key": "terra",
+          "models": ["gpt-5.6-terra", "gpt-5.5", "gpt-5.4"],
+          "shortLabel": "Terra",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/codex_terra_agent_0.png", "transportCode": "c10"},
+            {"texturePath": "arenaagents:textures/entity/codex_terra_agent_1.png", "transportCode": "c11"},
+            {"texturePath": "arenaagents:textures/entity/codex_terra_agent_2.png", "transportCode": "c12"},
+            {"texturePath": "arenaagents:textures/entity/codex_terra_agent_3.png", "transportCode": "c13"}
+          ]
+        },
+        {
+          "key": "luna",
+          "models": ["gpt-5.6-luna", "gpt-5.4-mini"],
+          "shortLabel": "Luna",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/codex_luna_agent_0.png", "transportCode": "c20"},
+            {"texturePath": "arenaagents:textures/entity/codex_luna_agent_1.png", "transportCode": "c21"},
+            {"texturePath": "arenaagents:textures/entity/codex_luna_agent_2.png", "transportCode": "c22"},
+            {"texturePath": "arenaagents:textures/entity/codex_luna_agent_3.png", "transportCode": "c23"}
+          ]
+        },
+        {
+          "key": "spark",
+          "models": ["gpt-5.3-codex-spark", "codex-auto-review"],
+          "shortLabel": "Spark",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/codex_spark_agent_0.png", "transportCode": "c30"},
+            {"texturePath": "arenaagents:textures/entity/codex_spark_agent_1.png", "transportCode": "c31"},
+            {"texturePath": "arenaagents:textures/entity/codex_spark_agent_2.png", "transportCode": "c32"},
+            {"texturePath": "arenaagents:textures/entity/codex_spark_agent_3.png", "transportCode": "c33"}
+          ]
+        }
+      ]
+    },
+    {
+      "key": "gemini",
+      "chassis": "gemini",
+      "glyph": "✦",
+      "fallbackFamily": "oss",
+      "families": [
+        {
+          "key": "pro",
+          "models": ["gemini-3.1-pro"],
+          "shortLabel": "3.1 Pro",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/gemini_pro_agent_0.png", "transportCode": "g00"},
+            {"texturePath": "arenaagents:textures/entity/gemini_pro_agent_1.png", "transportCode": "g01"},
+            {"texturePath": "arenaagents:textures/entity/gemini_pro_agent_2.png", "transportCode": "g02"},
+            {"texturePath": "arenaagents:textures/entity/gemini_pro_agent_3.png", "transportCode": "g03"}
+          ]
+        },
+        {
+          "key": "flash",
+          "models": ["gemini-3.6-flash", "gemini-3.5-flash"],
+          "shortLabel": "Flash",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/gemini_flash_agent_0.png", "transportCode": "g10"},
+            {"texturePath": "arenaagents:textures/entity/gemini_flash_agent_1.png", "transportCode": "g11"},
+            {"texturePath": "arenaagents:textures/entity/gemini_flash_agent_2.png", "transportCode": "g12"},
+            {"texturePath": "arenaagents:textures/entity/gemini_flash_agent_3.png", "transportCode": "g13"}
+          ]
+        },
+        {
+          "key": "claude",
+          "models": ["claude-sonnet-4-6", "claude-opus-4-6"],
+          "shortLabel": "Claude",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/gemini_claude_agent_0.png", "transportCode": "g20"},
+            {"texturePath": "arenaagents:textures/entity/gemini_claude_agent_1.png", "transportCode": "g21"},
+            {"texturePath": "arenaagents:textures/entity/gemini_claude_agent_2.png", "transportCode": "g22"},
+            {"texturePath": "arenaagents:textures/entity/gemini_claude_agent_3.png", "transportCode": "g23"}
+          ]
+        },
+        {
+          "key": "oss",
+          "models": ["gpt-oss-120b"],
+          "shortLabel": "GPT OSS",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/gemini_oss_agent_0.png", "transportCode": "g30"},
+            {"texturePath": "arenaagents:textures/entity/gemini_oss_agent_1.png", "transportCode": "g31"},
+            {"texturePath": "arenaagents:textures/entity/gemini_oss_agent_2.png", "transportCode": "g32"},
+            {"texturePath": "arenaagents:textures/entity/gemini_oss_agent_3.png", "transportCode": "g33"}
+          ]
+        }
+      ]
+    },
+    {
+      "key": "kimi",
+      "chassis": "kimi",
+      "glyph": "☾",
+      "fallbackFamily": "coding_fast",
+      "families": [
+        {
+          "key": "k3",
+          "models": ["kimi-code/k3"],
+          "shortLabel": "K3",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_agent_0.png", "transportCode": "k00"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_agent_1.png", "transportCode": "k01"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_agent_2.png", "transportCode": "k02"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_agent_3.png", "transportCode": "k03"}
+          ]
+        },
+        {
+          "key": "k3_long",
+          "models": ["kimi-code/k3-256k"],
+          "shortLabel": "K3 256K",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_long_agent_0.png", "transportCode": "k10"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_long_agent_1.png", "transportCode": "k11"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_long_agent_2.png", "transportCode": "k12"},
+            {"texturePath": "arenaagents:textures/entity/kimi_k3_long_agent_3.png", "transportCode": "k13"}
+          ]
+        },
+        {
+          "key": "coding",
+          "models": ["kimi-code/kimi-for-coding"],
+          "shortLabel": "K2.7 Coding",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_agent_0.png", "transportCode": "k20"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_agent_1.png", "transportCode": "k21"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_agent_2.png", "transportCode": "k22"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_agent_3.png", "transportCode": "k23"}
+          ]
+        },
+        {
+          "key": "coding_fast",
+          "models": ["kimi-code/kimi-for-coding-highspeed"],
+          "shortLabel": "K2.7 Fast",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_fast_agent_0.png", "transportCode": "k30"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_fast_agent_1.png", "transportCode": "k31"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_fast_agent_2.png", "transportCode": "k32"},
+            {"texturePath": "arenaagents:textures/entity/kimi_coding_fast_agent_3.png", "transportCode": "k33"}
+          ]
+        }
+      ]
+    },
+    {
+      "key": "cursor",
+      "chassis": "cursor",
+      "glyph": "➤",
+      "fallbackFamily": "cursor_next",
+      "families": [
+        {
+          "key": "composer",
+          "models": ["composer-2.5"],
+          "shortLabel": "Composer",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/cursor_composer_agent_0.png", "transportCode": "r00"},
+            {"texturePath": "arenaagents:textures/entity/cursor_composer_agent_1.png", "transportCode": "r01"},
+            {"texturePath": "arenaagents:textures/entity/cursor_composer_agent_2.png", "transportCode": "r02"},
+            {"texturePath": "arenaagents:textures/entity/cursor_composer_agent_3.png", "transportCode": "r03"}
+          ]
+        },
+        {
+          "key": "grok_45",
+          "models": ["grok-4.5"],
+          "shortLabel": "Grok 4.5",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_45_agent_0.png", "transportCode": "r10"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_45_agent_1.png", "transportCode": "r11"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_45_agent_2.png", "transportCode": "r12"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_45_agent_3.png", "transportCode": "r13"}
+          ]
+        },
+        {
+          "key": "grok_46",
+          "models": ["grok-4.6"],
+          "shortLabel": "Grok 4.6",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_46_agent_0.png", "transportCode": "r20"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_46_agent_1.png", "transportCode": "r21"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_46_agent_2.png", "transportCode": "r22"},
+            {"texturePath": "arenaagents:textures/entity/cursor_grok_46_agent_3.png", "transportCode": "r23"}
+          ]
+        },
+        {
+          "key": "cursor_next",
+          "models": [],
+          "shortLabel": "Cursor",
+          "variants": [
+            {"texturePath": "arenaagents:textures/entity/cursor_next_agent_0.png", "transportCode": "r30"},
+            {"texturePath": "arenaagents:textures/entity/cursor_next_agent_1.png", "transportCode": "r31"},
+            {"texturePath": "arenaagents:textures/entity/cursor_next_agent_2.png", "transportCode": "r32"},
+            {"texturePath": "arenaagents:textures/entity/cursor_next_agent_3.png", "transportCode": "r33"}
+          ]
+        }
+      ]
+    }
+  ]
+}

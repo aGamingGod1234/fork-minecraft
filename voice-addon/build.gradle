@@ -1,0 +1,96 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = 'arena-agents-voice'
+}
+
+repositories {
+	maven {
+		url = 'https://maven.maxhenkel.de/repository/public'
+		mavenContent { releasesOnly() }
+		content { includeGroup 'de.maxhenkel.voicechat' }
+	}
+	maven {
+		name = 'Modrinth'
+		url = 'https://api.modrinth.com/maven'
+		content { includeGroup 'maven.modrinth' }
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation project(':')
+	implementation "de.maxhenkel.voicechat:voicechat-api:2.6.20"
+	runtimeOnly "maven.modrinth:9eGKb6K1:BvX8YEGO"
+	runtimeOnly "de.maxhenkel.voicechat:voicechat-api:2.6.20:fabric-stub"
+}
+
+processResources {
+	inputs.property 'version', project.version
+	inputs.property 'voicechatApiVersion', '2.6.20'
+	filesMatching('fabric.mod.json') {
+		expand version: project.version, voicechatApiVersion: '2.6.20'
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.release = 25
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+sourceSets {
+	legacyCoreTest {
+		java.srcDir 'src/legacyCoreTest/java'
+		compileClasspath = sourceSets.main.compileClasspath
+	}
+}
+
+tasks.named('test') {
+	failOnNoDiscoveredTests = false
+}
+
+tasks.named('compileTestJava') {
+	options.compilerArgs += ['--add-modules', 'jdk.httpserver']
+}
+
+def voiceAddonVerificationMainClass = 'dev.agaminggod.arenaagents.voiceaddon.VoiceAddonVerificationMain'
+def voiceAddonVerificationClassFile = layout.buildDirectory.file(
+	"classes/java/test/${voiceAddonVerificationMainClass.replace('.', '/')}.class"
+)
+
+tasks.register('verifyVoiceAddon', JavaExec) {
+	group = 'verification'
+	description = 'Runs the required headless voice-addon verification main.'
+	dependsOn tasks.named('testClasses'), tasks.named('legacyCoreTestClasses')
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass.set(voiceAddonVerificationMainClass)
+	jvmArgs '--add-modules', 'jdk.httpserver'
+	workingDir rootProject.projectDir
+
+	doFirst {
+		systemProperty 'arenaagents.legacyCoreClasses',
+				sourceSets.legacyCoreTest.output.classesDirs.singleFile.absolutePath
+		def verificationMain = voiceAddonVerificationClassFile.get().asFile
+		if (!verificationMain.isFile()) {
+			throw new GradleException(
+				"Required voice-addon verification main is missing: ${project.relativePath(verificationMain)}"
+			)
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyVoiceAddon')
+}

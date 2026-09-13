@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "benchmarkVersion": "latency-ab-v1",
+  "protocolVersion": 2,
+  "fixedSeeds": [20260821, 20260822],
+  "agentLoads": [1, 4, 8, 16],
+  "trials": [
+    {
+      "id": "instant-stone-tools-load-1",
+      "mode": "instant",
+      "scenarioId": "stone-tool-gathering",
+      "seed": 20260821,
+      "agentLoad": 1,
+      "providerProfile": {
+        "provider": "instant",
+        "model": "deterministic-v1",
+        "reasoningEffort": "fixed",
+        "serviceTier": "local"
+      },
+      "repetitions": 5,
+      "turnBudgetMs": 5000,
+      "trialBudgetMs": 30000,
+      "turnCap": 8,
+      "providerAvailabilityRequired": true
+    },
+    {
+      "id": "instant-stone-tools-load-4",
+      "mode": "instant",
+      "scenarioId": "stone-tool-gathering",
+      "seed": 20260821,
+      "agentLoad": 4,
+      "providerProfile": {
+        "provider": "instant",
+        "model": "deterministic-v1",
+        "reasoningEffort": "fixed",
+        "serviceTier": "local"
+      },
+      "repetitions": 5,
+      "turnBudgetMs": 5000,
+      "trialBudgetMs": 30000,
+      "turnCap": 8,
+      "providerAvailabilityRequired": true
+    },
+    {
+      "id": "instant-stone-tools-load-8",
+      "mode": "instant",
+      "scenarioId": "stone-tool-gathering",
+      "seed": 20260821,
+      "agentLoad": 8,
+      "providerProfile": {
+        "provider": "instant",
+        "model": "deterministic-v1",
+        "reasoningEffort": "fixed",
+        "serviceTier": "local"
+      },
+      "repetitions": 5,
+      "turnBudgetMs": 5000,
+      "trialBudgetMs": 30000,
+      "turnCap": 8,
+      "providerAvailabilityRequired": true
+    },
+    {
+      "id": "instant-stone-tools-load-16",
+      "mode": "instant",
+      "scenarioId": "stone-tool-gathering",
+      "seed": 20260821,
+      "agentLoad": 16,
+      "providerProfile": {
+        "provider": "instant",
+        "model": "deterministic-v1",
+        "reasoningEffort": "fixed",
+        "serviceTier": "local"
+      },
+      "repetitions": 5,
+      "turnBudgetMs": 5000,
+      "trialBudgetMs": 30000,
+      "turnCap": 8,
+      "providerAvailabilityRequired": true
+    }
+  ]
+}

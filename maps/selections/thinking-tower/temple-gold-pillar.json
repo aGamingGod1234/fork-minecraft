@@ -1,0 +1,48 @@
+{
+  "allowedTransforms": [
+    "identity",
+    "rotate_90",
+    "rotate_180",
+    "rotate_270"
+  ],
+  "anchors": [
+    {
+      "id": "base",
+      "position": [1, 0, 1],
+      "type": "connection"
+    },
+    {
+      "id": "cap",
+      "position": [1, 6, 1],
+      "type": "connection"
+    }
+  ],
+  "archiveEvidence": {
+    "path": "re-structured.zip.sha256.json",
+    "sha256": "4b552b9100bebf8dece5faf1bedd586be318a03d7279d2ae10b4a53b000a1d33"
+  },
+  "bounds": {
+    "max": [2, 6, 2],
+    "min": [0, 0, 0]
+  },
+  "containerPolicy": "none",
+  "curation": {
+    "cropNotes": "Full 3x7x3 structure template; no crop or block edits.",
+    "intendedMechanic": "A high-contrast convergence landmark for the final adaptive route.",
+    "transformationNotes": "Upgraded from DataVersion 3953 with Minecraft 26.1.2 STRUCTURE DFU; four rotations retained for composition."
+  },
+  "difficulty": 5,
+  "expectedRemoved": {
+    "blockEntities": 0,
+    "entities": 0
+  },
+  "id": "temple-gold-pillar",
+  "input": {
+    "path": "upgraded/pillar_large_2.nbt",
+    "sha256": "5947843a29f14590f8432d941633e3434b4b6b1b26d2d45f41664e7d3582c6f1"
+  },
+  "schemaVersion": 1,
+  "sourceKey": "re-structured",
+  "spectatorPolicy": "separated",
+  "version": 1
+}

@@ -1,0 +1,24 @@
+{
+	"schemaVersion": 1,
+	"id": "arenaagents_voice",
+	"version": "${version}",
+	"name": "Arena Agents Voice",
+	"description": "Optional spatial voice transport for Arena Agents using Simple Voice Chat.",
+	"license": "All-Rights-Reserved",
+	"environment": "*",
+	"entrypoints": {
+		"arenaagents_voice": [
+			"dev.agaminggod.arenaagents.voiceaddon.ArenaAgentsVoiceProvider"
+		],
+		"voicechat": [
+			"dev.agaminggod.arenaagents.voiceaddon.ArenaAgentsVoiceProvider"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"arenaagents": ">=0.1.0",
+		"voicechat_api": ">=${voicechatApiVersion}"
+	}
+}

@@ -1,0 +1,48 @@
+{
+  "allowedTransforms": [
+    "identity",
+    "rotate_90",
+    "rotate_180",
+    "rotate_270"
+  ],
+  "anchors": [
+    {
+      "id": "base",
+      "position": [1, 0, 1],
+      "type": "connection"
+    },
+    {
+      "id": "cap",
+      "position": [1, 6, 1],
+      "type": "connection"
+    }
+  ],
+  "archiveEvidence": {
+    "path": "re-structured.zip.sha256.json",
+    "sha256": "4b552b9100bebf8dece5faf1bedd586be318a03d7279d2ae10b4a53b000a1d33"
+  },
+  "bounds": {
+    "max": [2, 6, 2],
+    "min": [0, 0, 0]
+  },
+  "containerPolicy": "none",
+  "curation": {
+    "cropNotes": "Full 3x7x3 structure template; no crop or block edits.",
+    "intendedMechanic": "A wider emerald landmark for precision-waypoint and resource-gate compositions.",
+    "transformationNotes": "Upgraded from DataVersion 3953 with Minecraft 26.1.2 STRUCTURE DFU; four rotations retained for composition."
+  },
+  "difficulty": 4,
+  "expectedRemoved": {
+    "blockEntities": 0,
+    "entities": 0
+  },
+  "id": "temple-emerald-pillar",
+  "input": {
+    "path": "upgraded/pillar_large_1.nbt",
+    "sha256": "75e8b7a190aa123a7af602fe401d93be81ce4023e0ea3347c4cb4a4bdc149da6"
+  },
+  "schemaVersion": 1,
+  "sourceKey": "re-structured",
+  "spectatorPolicy": "separated",
+  "version": 1
+}

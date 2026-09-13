@@ -1,0 +1,24 @@
+{
+	"name": "arena-agents-coordinator",
+	"private": true,
+	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"start": "node src/dynamic-main.mjs",
+		"start:dynamic": "node src/dynamic-main.mjs",
+		"headless:matrix": "node src/headless-matrix.mjs",
+		"task9:simulator": "node src/benchmark/task9-harness-cli.mjs",
+		"benchmark:latency": "node src/benchmark/latency-runner-cli.mjs",
+		"benchmark:latency:accept": "node src/benchmark/latency-acceptance-cli.mjs",
+		"benchmark:latency:instrumentation": "node src/benchmark/instrumentation-comparison-cli.mjs",
+		"benchmark:arena-script-canonicalization": "node src/benchmark/arena-script-canonicalization-benchmark.mjs",
+		"benchmark:jsonl-fragmentation": "node src/benchmark/jsonl-fragmentation-benchmark.mjs",
+		"test": "node --test --test-concurrency=4 --test-timeout=60000",
+		"test:portable": "node --test --test-concurrency=4 --test-timeout=60000 test/acp-service.test.mjs test/arena-script-parser.test.mjs test/fact-ledger.test.mjs test/local-speech-provider.test.mjs test/planning-scheduler.test.mjs test/program-runtime-manager.test.mjs test/protocol-v2.test.mjs test/voice.test.mjs test/voice-bootstrap.test.mjs test/voice-edge-cases.test.mjs test/voice-supervisor.test.mjs"
+	},
+	"dependencies": {
+		"acorn": "8.18.0"
+	}
+}

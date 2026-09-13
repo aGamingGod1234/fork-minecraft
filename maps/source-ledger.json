@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "researchRoot": "runtime/map-research",
+  "policy": {
+    "bundledGeometryRequiresRetainedPermissionText": true,
+    "rawArchivesTracked": false,
+    "provisionalSourcesMayProduceBundledGeometry": false
+  },
+  "sources": {
+    "project-owned-fixtures": {
+      "title": "Arena Agents deterministic map fixtures",
+      "author": "Arena Agents contributors",
+      "platform": "project-owned",
+      "verifiedAt": "2026-08-19",
+      "origin": "project-owned",
+      "licenseStatus": "project-owned",
+      "bundleEligible": true,
+      "license": {
+        "spdx": "LicenseRef-Project-Owned",
+        "retainedText": "LICENSE"
+      },
+      "archive": null,
+      "declaredMinecraftVersions": [
+        "26.1.2"
+      ],
+      "originalDataVersion": 4790,
+      "inspectionReport": "maps/selections/fixtures/tiny-owned-room.json",
+      "derivedModules": [
+        "tiny-owned-room"
+      ]
+    },
+    "re-structured": {
+      "title": "Re-Structured",
+      "author": "RonosMods",
+      "platform": "modrinth",
+      "projectId": "ShB7QWuY",
+      "versionId": "NNsq5KuW",
+      "version": "1.2",
+      "officialLandingUrl": "https://modrinth.com/datapack/re-structured/version/NNsq5KuW",
+      "repositoryUrl": "https://github.com/RonosMods/Re-Structured",
+      "metadataApiUrls": [
+        "https://api.modrinth.com/v2/project/ShB7QWuY",
+        "https://api.modrinth.com/v2/version/NNsq5KuW",
+        "https://api.github.com/repos/RonosMods/Re-Structured/contents/LICENSE?ref=main"
+      ],
+      "verifiedAt": "2026-08-19",
+      "licenseStatus": "verified",
+      "bundleEligible": true,
+      "license": {
+        "spdx": "MIT",
+        "sourceUrl": "https://raw.githubusercontent.com/RonosMods/Re-Structured/main/LICENSE",
+        "sourceBlobSha1": "f4410372b4b8c6922d48be9bbaf967c24127bc9c",
+        "retainedText": "maps/licenses/re-structured-MIT.txt",
+        "sha256": "a6814afbcf66038d02c80d905d4969b944f1d89b872bf89bc9699c7d1391ef31"
+      },
+      "archive": {
+        "url": "https://cdn.modrinth.com/data/ShB7QWuY/versions/NNsq5KuW/re-structured.zip",
+        "filename": "re-structured.zip",
+        "size": 97543,
+        "sha1": "a84fae627045ba7d48ef0a4bfd018ce29c66083e",
+        "sha512": "c1743d9738410c0a3448e7e6ad99259f6f26943a95d55725dadf96b12a1efbc456352f7a8117d6ef899ba0a141e4eb84159bafbd57a82dc0e0cf4ce34f83e897",
+        "sha256": "4b552b9100bebf8dece5faf1bedd586be318a03d7279d2ae10b4a53b000a1d33",
+        "retrievedAtUtc": "2026-08-19T15:43:44.5906137Z"
+      },
+      "declaredMinecraftVersions": [
+        "1.21",
+        "1.21.1"
+      ],
+      "originalDataVersion": 3953,
+      "upgradedDataVersion": 4790,
+      "inspectionReport": {
+        "inspectedAtUtc": "2026-08-19T16:10:00Z",
+        "archiveEvidencePath": "runtime/map-research/re-structured/re-structured.zip.sha256.json",
+        "structureTemplates": 63,
+        "entityFreeTemplates": 61,
+        "upgradeMethod": "Minecraft 26.1.2 DataFixTypes.STRUCTURE",
+        "eligibleTemplates": [
+          {
+            "sourcePath": "extracted/data/re-structured/structure/jungle_temple/pillar/pillar_small_1.nbt",
+            "sourceSha256": "a24276dc915efcd9831d29cf9b3024c8fc3bc1d4352f1d13e7582bd3e99fe8ca",
+            "upgradedPath": "upgraded/pillar_small_1.nbt",
+            "upgradedSha256": "bdca3a8b5b8d8f4acd8492aa9cabfa3f1985d1b5c5d9a6792f2723e45010c5e6"
+          },
+          {
+            "sourcePath": "extracted/data/re-structured/structure/jungle_temple/pillar/pillar_small_2.nbt",
+            "sourceSha256": "76c934d6f9d73777183d7d89a1b983d198e12fe2e84657a38e90f78c650fd0a5",
+            "upgradedPath": "upgraded/pillar_small_2.nbt",
+            "upgradedSha256": "b87c96f935604c339161aa11609784d8b1a0d69eed01c6249701f5828fc19cfe"
+          },
+          {
+            "sourcePath": "extracted/data/re-structured/structure/jungle_temple/pillar/pillar_large_1.nbt",
+            "sourceSha256": "960c9b900f64e333f5e8adb94804662efdbd0a4e32bbfda679b1530455efa4d8",
+            "upgradedPath": "upgraded/pillar_large_1.nbt",
+            "upgradedSha256": "75e8b7a190aa123a7af602fe401d93be81ce4023e0ea3347c4cb4a4bdc149da6"
+          },
+          {
+            "sourcePath": "extracted/data/re-structured/structure/jungle_temple/pillar/pillar_large_2.nbt",
+            "sourceSha256": "cf5feb16494907cafe91a1d0858fc76ad89b7b889d23e08633e246ad7c5f34cf",
+            "upgradedPath": "upgraded/pillar_large_2.nbt",
+            "upgradedSha256": "5947843a29f14590f8432d941633e3434b4b6b1b26d2d45f41664e7d3582c6f1"
+          }
+        ],
+        "rejectedTemplates": {
+          "withEntities": 2,
+          "withControlBlocks": 55,
+          "withForbiddenLootBlockEntities": 2
+        }
+      },
+      "derivedModules": [
+        "temple-step-marker",
+        "temple-overhang-marker",
+        "temple-emerald-pillar",
+        "temple-gold-pillar"
+      ]
+    },
+    "parkour-masters": {
+      "title": "Parkour Masters",
+      "author": "Nordic_Studios",
+      "platform": "curseforge",
+      "projectId": "1020454",
+      "fileId": "5353095",
+      "officialLandingUrl": "https://www.curseforge.com/minecraft/worlds/parkour-masters/files/5353095",
+      "verifiedAt": "2026-08-19",
+      "declaredPlatformLicense": "MIT",
+      "licenseStatus": "declared-platform-awaiting-retained-text",
+      "bundleEligible": false,
+      "license": null,
+      "archive": {
+        "url": null,
+        "filename": null,
+        "sha256": null,
+        "retrievedAtUtc": null
+      },
+      "originalDataVersion": null,
+      "inspectionReport": null,
+      "derivedModules": []
+    },
+    "minegpt-worlds": {
+      "title": "BigYous' MineGPT worlds",
+      "author": "YOUSY0US3F",
+      "platform": "curseforge",
+      "projectId": "1092626",
+      "fileId": "5798831",
+      "officialLandingUrl": "https://www.curseforge.com/minecraft/worlds/bigyous-minegpt-worlds/files/5798831",
+      "verifiedAt": "2026-08-19",
+      "declaredPlatformLicense": "MIT",
+      "licenseStatus": "declared-platform-awaiting-retained-text",
+      "bundleEligible": false,
+      "license": null,
+      "archive": {
+        "url": null,
+        "filename": null,
+        "sha256": null,
+        "retrievedAtUtc": null
+      },
+      "originalDataVersion": null,
+      "inspectionReport": null,
+      "derivedModules": []
+    },
+    "bunker-survival": {
+      "title": "Bunker Survival",
+      "author": "Nordic_Studios",
+      "platform": "curseforge",
+      "projectId": "1010696",
+      "fileId": "5300058",
+      "officialLandingUrl": "https://www.curseforge.com/minecraft/worlds/bunker-survival/files/5300058",
+      "verifiedAt": "2026-08-19",
+      "declaredPlatformLicense": "MIT",
+      "licenseStatus": "declared-platform-awaiting-retained-text",
+      "bundleEligible": false,
+      "license": null,
+      "archive": {
+        "url": null,
+        "filename": null,
+        "sha256": null,
+        "retrievedAtUtc": null
+      },
+      "originalDataVersion": null,
+      "inspectionReport": null,
+      "derivedModules": []
+    }
+  }
+}

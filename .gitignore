@@ -1,0 +1,75 @@
+# Gradle and Java build outputs
+.gradle/
+build/
+dist/
+out/
+classes/
+bin/
+
+# IDE metadata
+.idea/
+.settings/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.launch
+.classpath
+.project
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Python tooling
+__pycache__/
+*.py[cod]
+
+# Fabric development runtime and generated launcher state
+run/
+runtime/*
+!runtime/README.md
+runtime/map-research/
+.worktrees/
+
+# Logs, traces, crash reports, and diagnostics
+logs/
+traces/
+evidence/
+coordinator/.runtime/
+*.pid
+*.port
+*.log
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# Credentials and local secrets
+.env
+.env.*
+!.env.example
+credentials/
+secrets/
+*.key
+*.pem
+
+# Agent-local work ledgers and tool state
+.superpowers/
+.claude/
+
+# Operating-system metadata
+*.DS_Store
+Thumbs.db
+Desktop.ini
+launcher_profiles.*.backup.json
+
+# Private FORK coordination and large immutable artifacts
+.work/
+*.tar
+*.bundle
+media/source/
+media/output/
+media/edit/cache/
+assets/fork-world/artifacts/
+

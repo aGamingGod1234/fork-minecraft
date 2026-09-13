@@ -1,0 +1,55 @@
+{
+  "allowedTransforms": [
+    "identity",
+    "rotate_90",
+    "rotate_180",
+    "rotate_270"
+  ],
+  "anchors": [
+    {
+      "id": "spawn-1",
+      "position": [
+        0,
+        1,
+        0
+      ],
+      "type": "spawn"
+    },
+    {
+      "id": "goal-1",
+      "position": [
+        1,
+        1,
+        1
+      ],
+      "type": "goal"
+    }
+  ],
+  "bounds": {
+    "max": [
+      1,
+      1,
+      1
+    ],
+    "min": [
+      0,
+      0,
+      0
+    ]
+  },
+  "containerPolicy": "none",
+  "difficulty": 1,
+  "expectedRemoved": {
+    "blockEntities": 0,
+    "entities": 0
+  },
+  "id": "tiny-owned-room",
+  "input": {
+    "path": "tiny-owned-room.nbt",
+    "sha256": "55c56f586dc6513237ccfdc3cd571e9f15d3402f419d4b0ed671a79e1146cb29"
+  },
+  "schemaVersion": 1,
+  "sourceKey": "project-owned-fixtures",
+  "spectatorPolicy": "separated",
+  "version": 1
+}

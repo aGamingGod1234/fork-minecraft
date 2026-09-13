@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "latency-live-load-1",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "xhigh",
+      "serviceTier": "fast",
+      "task": "Gather wood and craft a wooden pickaxe",
+      "timeoutMs": 240000,
+      "rosterSize": 1,
+      "repetitions": 1,
+      "requireFactualSuccess": true,
+      "assert": [
+        { "type": "lifecycle", "state": "COMPLETED" },
+        { "type": "rcon", "command": "data get entity {agent} Inventory", "match": "minecraft:wooden_pickaxe" }
+      ]
+    },
+    {
+      "id": "latency-live-load-8",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "xhigh",
+      "serviceTier": "fast",
+      "task": "Gather wood and craft a wooden pickaxe",
+      "timeoutMs": 240000,
+      "rosterSize": 8,
+      "repetitions": 1,
+      "requireFactualSuccess": true,
+      "assert": [
+        { "type": "lifecycle", "state": "COMPLETED" },
+        { "type": "rcon", "command": "data get entity {agent} Inventory", "match": "minecraft:wooden_pickaxe" }
+      ]
+    },
+    {
+      "id": "latency-live-load-16",
+      "provider": "codex",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "xhigh",
+      "serviceTier": "fast",
+      "task": "Gather wood and craft a wooden pickaxe",
+      "timeoutMs": 240000,
+      "rosterSize": 16,
+      "repetitions": 1,
+      "requireFactualSuccess": true,
+      "assert": [
+        { "type": "lifecycle", "state": "COMPLETED" },
+        { "type": "rcon", "command": "data get entity {agent} Inventory", "match": "minecraft:wooden_pickaxe" }
+      ]
+    }
+  ]
+}

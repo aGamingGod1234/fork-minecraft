@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "minimumSpeedup": 2,
+  "requiredLoads": [1, 8, 16],
+  "requiredSessionStates": ["cold", "warm"],
+  "minimumSamplesPerCell": 5,
+  "maximumTickP95Ms": 50,
+  "minimumFactualSuccessRate": 1,
+  "requireLiveProviderEvidence": true,
+  "requireInstrumentationComparison": true,
+  "maximumInstrumentationP95Ratio": 1.05
+}

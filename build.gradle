@@ -1,0 +1,510 @@
+import java.security.MessageDigest
+
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+allprojects {
+	dependencyLocking {
+		lockAllConfigurations()
+		lockMode = LockMode.STRICT
+	}
+}
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+}
+
+configurations {
+	standaloneFabricApi
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	def developmentBridgeSecret = layout.projectDirectory.file('runtime/bridge-secret.txt').asFile.absolutePath
+	runs {
+		server {
+			vmArg "-Darenaagents.bridgeSecretFile=${developmentBridgeSecret}"
+		}
+	}
+
+	mods {
+		"arenaagents" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	compileOnly "net.java.dev.jna:jna:5.17.0"
+	compileOnly files("libs/fabric-carpet-${project.carpet_version}.jar")
+	testRuntimeOnly files("libs/fabric-carpet-${project.carpet_version}.jar")
+	standaloneFabricApi("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}") {
+		transitive = false
+	}
+}
+
+def carpetJarName = "fabric-carpet-${project.carpet_version}.jar"
+def carpetDependency = layout.projectDirectory.file("libs/${carpetJarName}")
+def voicechatJarName = "voicechat-fabric-${project.voicechat_version}.jar"
+def voicechatDependency = layout.projectDirectory.file("libs/${voicechatJarName}")
+def localDependencyChecksums = layout.projectDirectory.file('libs/checksums.sha256')
+def localDependencyJars = fileTree(layout.projectDirectory.dir('libs')) {
+	include '*.jar'
+}
+
+tasks.register('verifyLocalDependencies') {
+	group = 'verification'
+	description = 'Verifies tracked local dependency hashes against the reviewed provenance record.'
+	inputs.files(localDependencyJars, localDependencyChecksums)
+
+	doLast {
+		def checksumFile = localDependencyChecksums.asFile
+		def libsDir = checksumFile.parentFile
+		def records = checksumFile.readLines('UTF-8')
+			.collect { it.trim() }
+			.findAll { !it.isEmpty() && !it.startsWith('#') }
+		if (records.isEmpty()) {
+			throw new GradleException("Expected local dependency checksums in ${project.relativePath(checksumFile)}.")
+		}
+
+		records.each { line ->
+			def matcher = line =~ /^([0-9a-fA-F]{64})\s+\*?([^\/\\]+)$/
+			if (!matcher.matches()) {
+				throw new GradleException("Invalid checksum record in ${project.relativePath(checksumFile)}: ${line}")
+			}
+			def expectedHash = matcher.group(1).toLowerCase(Locale.ROOT)
+			def jarFile = new File(libsDir, matcher.group(2))
+			if (!jarFile.isFile()) {
+				throw new GradleException("Missing local dependency: ${project.relativePath(jarFile)}")
+			}
+			def actualHash = MessageDigest.getInstance('SHA-256')
+				.digest(jarFile.bytes)
+				.encodeHex()
+				.toString()
+			if (actualHash != expectedHash) {
+				throw new GradleException("Local dependency checksum mismatch: ${project.relativePath(jarFile)}")
+			}
+		}
+	}
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	dependsOn tasks.named('verifyLocalDependencies')
+	options.release = 25
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+def coordinatorRuntimeIncludes = [
+	'package.json',
+	'package-lock.json',
+	'config/**',
+	'src/**',
+	'node_modules/acorn/**',
+]
+def coordinatorRuntimeExcludes = [
+	'**/__pycache__/**',
+	'**/*.pyc',
+	// Keep benchmark, simulator, headless and native-tool experiments in the
+	// repository, but do not ship them in the production coordinator runtime.
+	'config/headless-provider-matrix.json',
+	'config/latency-acceptance.json',
+	'config/latency-experiment-matrix.json',
+	'config/latency-headless-matrix.json',
+	'config/latency-matrix.json',
+	'config/task9-performance-matrix.json',
+	'src/benchmark/**',
+	'src/simulator/**',
+	'src/headless-matrix.mjs',
+	'src/headless-rcon.mjs',
+	'src/headless-world.mjs',
+	'src/headless-world-spawn.mjs',
+	'src/headless-config.mjs',
+	'src/headless-capabilities.mjs',
+	'src/player-capability-probe.mjs',
+	'src/native-tool-ab-runner.mjs',
+	'src/native-tool-ab-trial.mjs',
+	'src/native-tool-cli-boundary.mjs',
+	'src/native-tool-load-probe.mjs',
+	'src/native-tool-probe.mjs',
+]
+def coordinatorDirectory = layout.projectDirectory.dir('coordinator')
+def coordinatorPackageJson = coordinatorDirectory.file('package.json')
+def coordinatorPackageLock = coordinatorDirectory.file('package-lock.json')
+def coordinatorAcornDirectory = coordinatorDirectory.dir('node_modules/acorn')
+def coordinatorAcornPackage = coordinatorDirectory.file('node_modules/acorn/package.json')
+def coordinatorAcornModule = coordinatorDirectory.file('node_modules/acorn/dist/acorn.mjs')
+def coordinatorManifest = layout.buildDirectory.file('generated/coordinator/coordinator-manifest.txt')
+def isWindowsHost = System.getProperty('os.name', '').toLowerCase(Locale.ROOT).contains('win')
+def nodeRuntimeInstaller = layout.projectDirectory.file('scripts/install-node-runtime.ps1')
+def bundledNodeRuntime = layout.projectDirectory.dir('runtime/toolchains/node')
+
+tasks.register('assembleWindowsNodeRuntime', Exec) {
+	group = 'build setup'
+	description = 'Downloads and verifies the pinned Windows Node.js runtime for the standalone distribution.'
+	onlyIf { isWindowsHost }
+	commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+			nodeRuntimeInstaller.asFile.absolutePath, '-ProjectRoot', layout.projectDirectory.asFile.absolutePath
+	inputs.file(nodeRuntimeInstaller)
+	outputs.dir(bundledNodeRuntime)
+}
+
+if (isWindowsHost) {
+	tasks.named('build') {
+		dependsOn tasks.named('assembleWindowsNodeRuntime')
+	}
+}
+
+tasks.register('installCoordinatorProductionDependencies', Exec) {
+	group = 'build setup'
+	description = 'Installs the coordinator production dependencies exactly as locked for packaging.'
+	workingDir coordinatorDirectory
+	def isWindows = isWindowsHost
+	def npmExecutable = isWindows ? 'npm.cmd' : 'npm'
+	commandLine npmExecutable, 'ci', '--ignore-scripts', '--omit=dev'
+	ignoreExitValue = true
+	inputs.files(coordinatorPackageJson, coordinatorPackageLock)
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+	outputs.dir(coordinatorAcornDirectory)
+
+	doFirst {
+		def path = System.getenv('PATH')
+		def available = path != null && path
+				.split(java.util.regex.Pattern.quote(File.pathSeparator))
+				.find { entry ->
+					def executable = new File(entry, npmExecutable)
+					!entry.isBlank() && executable.isFile() && (isWindows || executable.canExecute())
+				}
+		if (!available) {
+			throw new GradleException(
+					'Coordinator packaging requires npm on PATH to install locked production dependencies.'
+			)
+		}
+	}
+
+	doLast {
+		if (executionResult.get().exitValue != 0) {
+			throw new GradleException('Coordinator packaging failed because npm ci did not complete successfully.')
+		}
+		def missing = [coordinatorAcornPackage, coordinatorAcornModule]
+				.collect { it.asFile }
+				.findAll { !it.isFile() }
+		if (!missing.isEmpty()) {
+			throw new GradleException(
+					'Coordinator packaging failed because npm ci did not install the required Acorn runtime.'
+			)
+		}
+	}
+}
+
+tasks.register('generateCoordinatorManifest') {
+	group = 'build'
+	description = 'Generates the deterministic runtime coordinator file manifest.'
+	dependsOn tasks.named('installCoordinatorProductionDependencies')
+	inputs.files(fileTree(coordinatorDirectory) {
+		coordinatorRuntimeIncludes.each { include it }
+		coordinatorRuntimeExcludes.each { exclude it }
+	}).withPathSensitivity(PathSensitivity.RELATIVE)
+	outputs.file(coordinatorManifest)
+
+	doLast {
+		def coordinatorRoot = coordinatorDirectory.asFile
+		def files = fileTree(coordinatorRoot) {
+			coordinatorRuntimeIncludes.each { include it }
+			coordinatorRuntimeExcludes.each { exclude it }
+		}.files
+		def prefixLength = coordinatorRoot.absolutePath.length() + 1
+		def entries = files
+			.collect {
+				def path = it.absolutePath.substring(prefixLength).replaceAll('\\\\', '/')
+				def hash = MessageDigest.getInstance('SHA-256').digest(it.bytes).encodeHex().toString()
+				"${hash} ${path}"
+			}
+			.sort()
+		def output = coordinatorManifest.get().asFile
+		output.parentFile.mkdirs()
+		output.text = entries.join('\n') + '\n'
+	}
+}
+
+jar {
+	def archiveName = project.archives_base_name
+	inputs.property "archiveName", archiveName
+	dependsOn tasks.named('generateCoordinatorManifest')
+
+	from("LICENSE") {
+		rename { "${it}_${archiveName}" }
+	}
+	from("NOTICE-FONTS.md")
+	from("coordinator") {
+		into "arena-agents/coordinator"
+		coordinatorRuntimeIncludes.each { include it }
+		coordinatorRuntimeExcludes.each { exclude it }
+	}
+	from(coordinatorManifest) {
+		into "arena-agents/coordinator"
+		rename { 'coordinator-manifest.txt' }
+	}
+}
+
+def standaloneDistributionName = "arena-agents-modpack-${project.version}"
+def stagedStandaloneDistribution = layout.buildDirectory.dir("standalone/${standaloneDistributionName}")
+def distributionMetadata = layout.buildDirectory.file('generated/distribution/distribution.properties')
+
+tasks.register('generateDistributionMetadata') {
+	group = 'distribution'
+	description = 'Writes the package versions consumed by the standalone installer.'
+	inputs.property 'modVersion', project.version
+	inputs.property 'minecraftVersion', project.minecraft_version
+	inputs.property 'loaderVersion', project.loader_version
+	inputs.property 'fabricApiVersion', project.fabric_api_version
+	inputs.property 'carpetVersion', project.carpet_version
+	inputs.property 'voicechatVersion', project.voicechat_version
+	inputs.property 'voiceAddonVersion', project.version
+	outputs.file distributionMetadata
+
+	doLast {
+		def output = distributionMetadata.get().asFile
+		output.parentFile.mkdirs()
+		output.setText([
+				"mod_version=${project.version}",
+				"minecraft_version=${project.minecraft_version}",
+				"loader_version=${project.loader_version}",
+				"fabric_api_version=${project.fabric_api_version}",
+				"carpet_version=${project.carpet_version}",
+				"voicechat_version=${project.voicechat_version}",
+				"voice_addon_version=${project.version}",
+		].join('\n') + '\n', 'UTF-8')
+	}
+}
+
+tasks.register('stageWindowsDistribution', Sync) {
+	group = 'distribution'
+	description = 'Stages the self-contained Windows mod pack with its verified Node.js runtime.'
+	dependsOn tasks.named('jar'), project(':voice-addon').tasks.named('jar'), tasks.named('assembleWindowsNodeRuntime'), tasks.named('installCoordinatorProductionDependencies'), tasks.named('generateCoordinatorManifest'), tasks.named('generateDistributionMetadata')
+	onlyIf { isWindowsHost }
+	into stagedStandaloneDistribution
+
+	from(tasks.named('jar').flatMap { it.archiveFile }) {
+		into 'mods'
+		rename { "arena-agents-${project.version}.jar" }
+	}
+	from(project(':voice-addon').tasks.named('jar').flatMap { it.archiveFile }) {
+		into 'mods'
+		rename { "arena-agents-voice-${project.version}.jar" }
+	}
+	from(configurations.standaloneFabricApi) { into 'mods' }
+	from(carpetDependency) { into 'mods' }
+	from(voicechatDependency) { into 'mods' }
+	from('coordinator') {
+		into 'coordinator'
+		coordinatorRuntimeIncludes.each { include it }
+		coordinatorRuntimeExcludes.each { exclude it }
+	}
+	from(coordinatorManifest) {
+		into 'coordinator'
+		rename { '.arena-agents-bundle-manifest' }
+	}
+	from(bundledNodeRuntime) { into 'runtime/toolchains/node' }
+	from('scripts') {
+		into 'scripts'
+		include 'distribution-runtime.ps1', 'install-distribution.ps1', 'verify-startup-packaging.ps1'
+	}
+	from(distributionMetadata)
+	from('docs/distribution/README.md') { rename { 'README.md' } }
+	from('LICENSE', 'NOTICE-FONTS.md')
+}
+
+tasks.register('packageWindowsDistribution', Zip) {
+	group = 'distribution'
+	description = 'Builds the self-contained Windows mod-pack archive.'
+	dependsOn tasks.named('stageWindowsDistribution')
+	onlyIf { isWindowsHost }
+	from stagedStandaloneDistribution
+	archiveFileName = "${standaloneDistributionName}.zip"
+	destinationDirectory = layout.buildDirectory.dir('distributions')
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+
+def entrypointClassFiles = [
+	layout.buildDirectory.file('classes/java/main/dev/agaminggod/arenaagents/ArenaAgents.class'),
+	layout.buildDirectory.file('classes/java/client/dev/agaminggod/arenaagents/client/ArenaAgentsClient.class')
+]
+
+tasks.register('verifyEntrypoints') {
+	group = 'verification'
+	description = 'Verifies that every Fabric entrypoint declared by the baseline is compiled.'
+	dependsOn tasks.named('compileJava'), tasks.named('compileClientJava')
+
+	doLast {
+		def missingEntrypoints = entrypointClassFiles
+			.collect { it.get().asFile }
+			.findAll { !it.isFile() }
+
+		if (!missingEntrypoints.isEmpty()) {
+			def relativePaths = missingEntrypoints.collect { project.relativePath(it) }.join(', ')
+			throw new GradleException("Missing compiled Fabric entrypoints: ${relativePaths}")
+		}
+	}
+}
+
+def coreVerificationMainClass = 'dev.agaminggod.arenaagents.verification.VerificationMain'
+def coreVerificationClassFile = layout.buildDirectory.file(
+	"classes/java/test/${coreVerificationMainClass.replace('.', '/')}.class"
+)
+
+tasks.register('verifyCore', JavaExec) {
+	group = 'verification'
+	description = 'Runs the required dependency-free core verification main.'
+	dependsOn tasks.named('testClasses')
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass.set(coreVerificationMainClass)
+	jvmArgs '--enable-native-access=ALL-UNNAMED'
+
+	doFirst {
+		def verificationMain = coreVerificationClassFile.get().asFile
+		if (!verificationMain.isFile()) {
+			throw new GradleException(
+				"Required core verification main is missing: ${project.relativePath(verificationMain)}"
+			)
+		}
+	}
+}
+
+tasks.named('test') {
+	failOnNoDiscoveredTests = false
+}
+
+tasks.register('verifyCameraMixin', JavaExec) {
+	group = 'verification'
+	description = 'Verifies camera accessor transformation in Fabric without starting client main or a world.'
+	dependsOn tasks.named('testClasses'), tasks.named('clientClasses'), tasks.named('processResources'), tasks.named('processClientResources')
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.client.camera.CameraMixinVerification')
+	systemProperty 'java.awt.headless', 'true'
+	systemProperty 'fabric.development', 'true'
+	systemProperty 'fabric.defaultModDistributionNamespace', 'official'
+
+	doFirst {
+		['fabric.gameJarPath': 'minecraft-common-', 'fabric.gameJarPath.client': 'minecraft-clientOnly-'].each { property, prefix ->
+			def jars = classpath.files.findAll { it.name.startsWith(prefix) && it.name.endsWith('.jar') }
+			if (jars.size() != 1) throw new GradleException("Camera mixin verification requires exactly one ${prefix}*.jar; found ${jars.size()}.")
+			systemProperty property, jars.first().absolutePath
+		}
+		systemProperty 'fabric.classPathGroups', (sourceSets.main.output.files + sourceSets.client.output.files)
+			.collect { it.absolutePath }.join(File.pathSeparator)
+		def gameDirectory = layout.buildDirectory.dir('camera-mixin-verification').get().asFile
+		java.nio.file.Files.createDirectories(gameDirectory.toPath())
+		setArgs(['--gameDir', gameDirectory.absolutePath])
+	}
+}
+
+def mapBlockStateCatalog = layout.projectDirectory.file('maps/registries/minecraft-26.1.2-block-states.json')
+def mapCatalogExporterClasses = layout.buildDirectory.dir('classes/java/mapCatalogExporter')
+def mapStructureDataFixerClasses = layout.buildDirectory.dir('classes/java/mapStructureDataFixer')
+
+tasks.register('compileMapBlockStateCatalogExporter', JavaCompile) {
+	dependsOn tasks.named('classes')
+	source = files('src/test/java/dev/agaminggod/arenaagents/scenario/MapBlockStateCatalogExporter.java')
+	classpath = sourceSets.test.compileClasspath + sourceSets.main.output
+	destinationDirectory.set(mapCatalogExporterClasses)
+	options.release = 25
+}
+
+tasks.register('exportMapBlockStateCatalog', JavaExec) {
+	group = 'verification'
+	description = 'Exports the exact Minecraft 26.1.2 vanilla block-state catalog.'
+	dependsOn tasks.named('compileMapBlockStateCatalogExporter')
+	classpath = files(mapCatalogExporterClasses) + sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.scenario.MapBlockStateCatalogExporter')
+	args mapBlockStateCatalog.asFile.absolutePath
+}
+
+tasks.register('verifyMapBlockStateCatalog', JavaExec) {
+	group = 'verification'
+	description = 'Checks the pinned map block-state catalog against Minecraft 26.1.2.'
+	dependsOn tasks.named('compileMapBlockStateCatalogExporter')
+	classpath = files(mapCatalogExporterClasses) + sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.scenario.MapBlockStateCatalogExporter')
+	args mapBlockStateCatalog.asFile.absolutePath, '--check'
+}
+
+tasks.register('exportOwnedMapFixture', JavaExec) {
+	group = 'verification'
+	description = 'Exports the deterministic project-owned structure-template fixture.'
+	dependsOn tasks.named('compileMapBlockStateCatalogExporter')
+	classpath = files(mapCatalogExporterClasses) + sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.scenario.MapBlockStateCatalogExporter')
+	args '--owned-fixture', layout.projectDirectory.file('maps/selections/fixtures/tiny-owned-room.nbt').asFile.absolutePath
+}
+
+tasks.register('compileMapStructureDataFixer', JavaCompile) {
+	dependsOn tasks.named('classes')
+	source = files('src/test/java/dev/agaminggod/arenaagents/scenario/MapStructureDataFixer.java')
+	classpath = sourceSets.test.compileClasspath + sourceSets.main.output
+	destinationDirectory.set(mapStructureDataFixerClasses)
+	options.release = 25
+}
+
+tasks.register('verifyMapStructureDataFixer', JavaExec) {
+	group = 'verification'
+	description = 'Verifies the bounded Minecraft structure-template DataFixer seam.'
+	dependsOn tasks.named('compileMapStructureDataFixer')
+	classpath = files(mapStructureDataFixerClasses) + sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.scenario.MapStructureDataFixer')
+	args '--self-test'
+}
+
+tasks.register('upgradeMapStructure', JavaExec) {
+	group = 'verification'
+	description = 'Upgrades one ignored structure-template NBT with Minecraft STRUCTURE DataFixerUpper.'
+	dependsOn tasks.named('compileMapStructureDataFixer')
+	classpath = files(mapStructureDataFixerClasses) + sourceSets.main.runtimeClasspath + configurations.testRuntimeClasspath
+	mainClass.set('dev.agaminggod.arenaagents.scenario.MapStructureDataFixer')
+	if (project.hasProperty('mapInput') && project.hasProperty('mapOutput')) {
+		args project.property('mapInput'), project.property('mapOutput')
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyCore'), tasks.named('verifyCameraMixin'), tasks.named('verifyEntrypoints'), tasks.named('verifyMapBlockStateCatalog'), tasks.named('verifyMapStructureDataFixer'), ':voice-addon:check'
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+
+	repositories {
+	}
+}

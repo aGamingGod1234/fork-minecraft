@@ -1,0 +1,24 @@
+{
+  "schema": "fork-ownership-1",
+  "sourceCommit": "f220557a3a63a930d90e56734d7a97cdc38e0745",
+  "writers": {
+    "Main": ["root/build/manifests", "src/main/java/dev/fork/core/**", "coordination/**", "release/install tooling", "otherwise unassigned paths"],
+    "Gameplay": ["src/main/java/dev/fork/gameplay/**", "src/client/java/dev/fork/gameplay/**", "src/main/java/dev/fork/integration/**", "coordinator/src/fork/**", "src/test/java/dev/fork/gameplay/**", "src/test/java/dev/fork/integration/**", "coordinator/test/fork/**", "docs/fork-gameplay/**"],
+    "World": ["tools/fork-world/**", "data/fork-world/**", "assets/fork-world/**", "docs/fork-world/**"],
+    "Cinematic": ["tools/fork-cinematic/**", "media/source/**", "media/edit/**", "media/output/**", "docs/fork-cinematic/**"]
+  },
+  "exclusiveExistingGameplayLeases": [
+    "src/main/java/dev/agaminggod/arenaagents/server/CodexAgentServerRuntime.java",
+    "src/main/java/dev/agaminggod/arenaagents/server/bridge/MultiplexedServerBridge.java",
+    "src/client/java/dev/agaminggod/arenaagents/client/gui/AgentControlScreen.java",
+    "src/client/java/dev/agaminggod/arenaagents/client/presentation/ArenaHudPresentation.java",
+    "coordinator/src/dynamic-main.mjs",
+    "coordinator/src/codex-app-server.mjs",
+    "coordinator/src/codex-service.mjs",
+    "coordinator/src/provider-session.mjs",
+    "coordinator/src/minecraft-agent-workspace.mjs",
+    "coordinator/src/model-notebook.mjs",
+    "coordinator/src/runtime-memory-context.mjs"
+  ],
+  "rules": ["One writer and index per branch/worktree", "Main alone pushes and accepts integration", "Request additional exact file leases before editing", "Only World launches generation", "No descendants without Main allocation", "At most seven build sessions total", "Escalate after five minutes or two failed fixes", "No active-world copies"]
+}

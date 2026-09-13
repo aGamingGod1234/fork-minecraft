@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "package": "dev.agaminggod.arenaagents.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "CachedUserNameToIdResolverAccessor",
+    "CarpetBoatInputMixin",
+    "EntityPlayerActionInvoker",
+    "EntityPlayerActionPackAccessor",
+    "EntityPlayerActionPackMixin",
+    "EntityPlayerMPFakeMixin",
+    "LevelMutationRevisionMixin",
+    "LevelChunkMutationRevisionMixin",
+    "ShulkerShapeRevisionMixin",
+    "PistonShapeRevisionMixin",
+    "MsgCommandMixin",
+    "PlayerObservationEventsMixin",
+    "ServerPlayerGameModeBreakAccessor",
+    "ServerPlayerGameModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
