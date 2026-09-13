@@ -1,0 +1,185 @@
+{
+  "schema": "fork-scene-contract-1",
+  "status": "Current court contract frozen; mandatory real-Singapore scene not yet accepted",
+  "productAcceptance": false,
+  "requiredOutcome": "Real map data at one block per metre, real building positions, heights and appearance checked against real Singapore photographs. No compressed scale or fictional-final fallback.",
+  "court": {
+    "layoutId": "fork-court-v1",
+    "path": "data/fork-world/court-v1.json",
+    "sha256": "538149df807a946101e7f8a14806aa3464b874ad4b3ae626451291ca2f3d9e14",
+    "dimension": "minecraft:overworld",
+    "origin": [
+      0,
+      64,
+      0
+    ],
+    "size": [
+      16,
+      16,
+      16
+    ],
+    "absoluteInclusiveBounds": [
+      0,
+      64,
+      0,
+      15,
+      79,
+      15
+    ],
+    "groundY": 64,
+    "geographicAnchor": null,
+    "transformMutableDuringRun": false
+  },
+  "locator": {
+    "path": "assets/fork-world/locator/singapore-locator.svg",
+    "sha256": "1915b3dffc084c49d75bf84b823cae001ecfc55e165a591692b63b6600225085",
+    "role": "Separate generalized main-island locator; not evidence of playable geography",
+    "courtMarker": false,
+    "source": "Natural Earth Admin0 v5.1.1",
+    "offshoreInset": false
+  },
+  "travel": {
+    "geographicVisits": [],
+    "returnToCourt": {
+      "dimension": "minecraft:overworld",
+      "arrivalCell": [
+        8,
+        65,
+        14
+      ],
+      "safeFeetCenter": [
+        8.5,
+        65,
+        14.5
+      ]
+    },
+    "allowedRounds": [
+      0,
+      6
+    ],
+    "pendingWorkAllowed": false,
+    "humanOnly": true,
+    "preserveActorsResourcesBranchResults": true,
+    "returnAvailableDuringLoad": true,
+    "loadedSafeArrivalRequired": true,
+    "failedTravel": "Preserve last accepted view and leave return available.",
+    "liveTravelProof": "UNRUN"
+  },
+  "cameras": {
+    "worldHash": null,
+    "dimension": "minecraft:overworld",
+    "origin": [
+      0,
+      64,
+      0
+    ],
+    "status": "Derived coordinates frozen; actual client path/world-hash binding and collision proof UNRUN",
+    "anchors": {
+      "courtWide": {
+        "position": [
+          8.5,
+          74,
+          14.5
+        ],
+        "lookAt": [
+          8,
+          65,
+          5
+        ]
+      },
+      "clinicEntrance": {
+        "position": [
+          3.5,
+          66.6,
+          7.5
+        ],
+        "lookAt": [
+          3.5,
+          66.6,
+          3.5
+        ]
+      },
+      "workshop": {
+        "position": [
+          11.5,
+          66.6,
+          7.5
+        ],
+        "lookAt": [
+          12.5,
+          66.6,
+          3.5
+        ]
+      },
+      "courier": {
+        "position": [
+          5.5,
+          66.6,
+          13.5
+        ],
+        "lookAt": [
+          3.5,
+          66.6,
+          12.5
+        ]
+      },
+      "powerFork": {
+        "position": [
+          8.5,
+          71,
+          12.5
+        ],
+        "lookAt": [
+          8.5,
+          64,
+          6.5
+        ]
+      }
+    }
+  },
+  "recommendedHumanInspection": {
+    "feet": [
+      8.5,
+      65,
+      7.5
+    ],
+    "yawDegrees": 180,
+    "pitchDegrees": 0,
+    "reason": "Clear central plaza facing north; avoids generator foreground.",
+    "status": "Specification clearance checked; Main must verify actual scene."
+  },
+  "interiors": {
+    "clinic": {
+      "walkIn": true,
+      "relativeDoorCells": [
+        [
+          3,
+          1,
+          5
+        ],
+        [
+          4,
+          1,
+          5
+        ]
+      ],
+      "clearanceBlocks": 3,
+      "authenticFloorplan": false,
+      "liveWalkProof": "UNRUN"
+    },
+    "workshop": {
+      "openSouth": true,
+      "authenticFloorplan": false,
+      "liveWalkProof": "UNRUN"
+    },
+    "allowedMaterials": "Frozen plain-block palette only",
+    "blockEntities": false,
+    "loot": false,
+    "generatedInteriorsAccepted": false,
+    "courierPathProtected": true
+  },
+  "acceptanceEvidence": {
+    "adapter": "Main reports installed Laptop fixture Workshop round1 service1 repair1 charge1 and three bodies at 11:15:10 SGT. This does not prove geographic placement or photographic accuracy.",
+    "scene": "Current diagnostic court is not accepted final visual scope."
+  }
+}

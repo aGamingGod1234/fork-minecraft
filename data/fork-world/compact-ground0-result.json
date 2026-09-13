@@ -1,0 +1,616 @@
+{
+  "status": "Stopped ground0 correction; runtime and photographic acceptance PENDING",
+  "productAcceptance": false,
+  "job": {
+    "job": "compact-ground0",
+    "pid": 35256,
+    "startedUtc": "2026-09-13T03:35:12.586Z",
+    "settingsSha256": "98840aaac942b4100c4d34af32b19ab6c7795aacabc398008f35f3801ff4d64c",
+    "sourceSha256": "e89ce3c667afff96921f243530918123dcf146bbe962568d842ae1e92992317c",
+    "outputPath": "assets/fork-world/artifacts/compact-ground0/world-output",
+    "cachePolicy": "Native caches require explicit Main lease; temporary files in owned cache.",
+    "stopUtc": "2026-09-13T03:36:50.000Z",
+    "exitUtc": "2026-09-13T03:35:12.846Z",
+    "exitCode": 0,
+    "timedOut": false,
+    "writerStopped": true,
+    "elapsedSeconds": 0.26,
+    "signal": null,
+    "outputChildren": [
+      "Arnis World 1"
+    ]
+  },
+  "metadata": {
+    "minMcX": 0,
+    "maxMcX": 255,
+    "minMcZ": 0,
+    "maxMcZ": 255,
+    "minGeoLat": 1.281850162,
+    "maxGeoLat": 1.284149838,
+    "minGeoLon": 103.848849873,
+    "maxGeoLon": 103.851150127,
+    "projection": "local",
+    "scale": 1
+  },
+  "origin": [
+    46,
+    0,
+    22
+  ],
+  "spawn": [
+    54,
+    1,
+    29
+  ],
+  "safeHumanCamera": {
+    "feet": [
+      54.5,
+      1,
+      29.5
+    ],
+    "yaw": 180,
+    "pitch": 0
+  },
+  "courtSiteEvidence": "All 256 output columns have grass_block/dirt at Y0 and no nonair blocks above Y0. No generated road or building is overwritten. Source semantics and gameplay placement require Main acceptance.",
+  "centre": {
+    "x": 128,
+    "z": 128,
+    "topY": 21
+  },
+  "features": [
+    {
+      "osmWay": 393100853,
+      "tags": {
+        "architect": "Toyo Ito",
+        "name": "CapitaGreen",
+        "start_date": "2014",
+        "wikidata": "Q28873262",
+        "office": "yes",
+        "building:levels": "40",
+        "building:colour": "#76838b",
+        "alt_name": "Market Street Tower",
+        "building:part": "yes",
+        "building": "commercial",
+        "old_name": "Market Street Car Park",
+        "height": "242",
+        "wikimedia_commons": "Category:CapitaGreen",
+        "wikipedia": "en:CapitaGreen"
+      },
+      "projectedFootprint": [
+        [
+          136,
+          203
+        ],
+        [
+          100,
+          261
+        ],
+        [
+          102,
+          277
+        ],
+        [
+          147,
+          301
+        ],
+        [
+          160,
+          283
+        ],
+        [
+          158,
+          215
+        ],
+        [
+          136,
+          203
+        ]
+      ],
+      "boundingBoxTopY": 250,
+      "measurementCaveat": "Maximum across projected feature bounding box; may include adjacent roof details. Projection rounding not yet compared in game."
+    },
+    {
+      "osmWay": 694047464,
+      "tags": {
+        "architect": "Bjarke Ingels Group;Carlo Ratti",
+        "addr:street": "Market Street",
+        "name": "CapitaSpring",
+        "start_date": "2021",
+        "addr:city": "Singapore",
+        "wikidata": "Q105702331",
+        "website": "https://www.capitaland.com/sites/capitaspring/",
+        "addr:housenumber": "88",
+        "operator": "CapitaLand",
+        "wikipedia": "en:CapitaSpring",
+        "building": "office",
+        "wikimedia_commons": "Category:CapitaSpring",
+        "layer": "1",
+        "addr:postcode": "048948"
+      },
+      "projectedFootprint": [
+        [
+          99,
+          3
+        ],
+        [
+          97,
+          7
+        ],
+        [
+          99,
+          12
+        ],
+        [
+          102,
+          15
+        ],
+        [
+          99,
+          17
+        ],
+        [
+          128,
+          68
+        ],
+        [
+          134,
+          78
+        ],
+        [
+          136,
+          80
+        ],
+        [
+          139,
+          80
+        ],
+        [
+          141,
+          81
+        ],
+        [
+          144,
+          81
+        ],
+        [
+          146,
+          80
+        ],
+        [
+          149,
+          79
+        ],
+        [
+          151,
+          77
+        ],
+        [
+          153,
+          76
+        ],
+        [
+          155,
+          74
+        ],
+        [
+          156,
+          71
+        ],
+        [
+          156,
+          57
+        ],
+        [
+          156,
+          20
+        ],
+        [
+          156,
+          -22
+        ],
+        [
+          165,
+          -86
+        ],
+        [
+          160,
+          -94
+        ],
+        [
+          152,
+          -96
+        ],
+        [
+          148,
+          -94
+        ],
+        [
+          137,
+          -33
+        ],
+        [
+          134,
+          -14
+        ],
+        [
+          122,
+          -1
+        ],
+        [
+          110,
+          0
+        ],
+        [
+          106,
+          -1
+        ],
+        [
+          102,
+          0
+        ],
+        [
+          99,
+          3
+        ]
+      ],
+      "boundingBoxTopY": 282,
+      "measurementCaveat": "Maximum across projected feature bounding box; may include adjacent roof details. Projection rounding not yet compared in game."
+    },
+    {
+      "osmWay": 1157548671,
+      "tags": {
+        "building:levels": "8",
+        "building:colour": "darkgrey",
+        "roof:material": "grass",
+        "building:material": "metal",
+        "roof:colour": "green",
+        "building:part": "yes"
+      },
+      "projectedFootprint": [
+        [
+          134,
+          78
+        ],
+        [
+          136,
+          80
+        ],
+        [
+          139,
+          80
+        ],
+        [
+          141,
+          81
+        ],
+        [
+          144,
+          81
+        ],
+        [
+          146,
+          80
+        ],
+        [
+          149,
+          79
+        ],
+        [
+          151,
+          77
+        ],
+        [
+          153,
+          76
+        ],
+        [
+          155,
+          74
+        ],
+        [
+          156,
+          71
+        ],
+        [
+          156,
+          57
+        ],
+        [
+          156,
+          20
+        ],
+        [
+          156,
+          -22
+        ],
+        [
+          165,
+          -86
+        ],
+        [
+          160,
+          -94
+        ],
+        [
+          152,
+          -96
+        ],
+        [
+          148,
+          -94
+        ],
+        [
+          137,
+          -33
+        ],
+        [
+          134,
+          -14
+        ],
+        [
+          122,
+          -1
+        ],
+        [
+          110,
+          0
+        ],
+        [
+          106,
+          -1
+        ],
+        [
+          102,
+          0
+        ],
+        [
+          99,
+          3
+        ],
+        [
+          97,
+          7
+        ],
+        [
+          99,
+          12
+        ],
+        [
+          102,
+          15
+        ],
+        [
+          99,
+          17
+        ],
+        [
+          128,
+          68
+        ],
+        [
+          134,
+          78
+        ]
+      ],
+      "boundingBoxTopY": 282,
+      "measurementCaveat": "Maximum across projected feature bounding box; may include adjacent roof details. Projection rounding not yet compared in game."
+    },
+    {
+      "osmWay": 1157548672,
+      "tags": {
+        "height": "280",
+        "building:levels": "51",
+        "building:min_level": "8",
+        "building:colour": "teal",
+        "roof:material": "grass",
+        "building:material": "glass",
+        "roof:colour": "green",
+        "building:part": "yes"
+      },
+      "projectedFootprint": [
+        [
+          136,
+          -7
+        ],
+        [
+          102,
+          15
+        ],
+        [
+          99,
+          17
+        ],
+        [
+          128,
+          68
+        ],
+        [
+          156,
+          57
+        ],
+        [
+          156,
+          20
+        ],
+        [
+          136,
+          -7
+        ]
+      ],
+      "boundingBoxTopY": 282,
+      "measurementCaveat": "Maximum across projected feature bounding box; may include adjacent roof details. Projection rounding not yet compared in game."
+    }
+  ],
+  "limitations": [
+    "Flat ground: native landcover cache creation denied",
+    "OSM heights contain conflicting or missing data",
+    "Photograph matching and exact facade/roof appearance are unproven",
+    "26.1.2 upgrade/reopen and materialized court verification pending"
+  ],
+  "structure": {
+    "status": "STRUCTURAL READ ONLY; no game reopen or placement accepted",
+    "levelDataVersion": 4189,
+    "levelName": "Arnis World 1",
+    "spawn": [
+      54,
+      1,
+      29
+    ],
+    "chunkDataVersions": [
+      3955
+    ],
+    "chunks": 1024,
+    "chunkBounds": [
+      0,
+      0,
+      31,
+      31
+    ],
+    "lowestNonAirY": -64,
+    "highestNonAirY": 285,
+    "solidBlocks": 1859523,
+    "palette": [
+      "minecraft:acacia_leaves",
+      "minecraft:acacia_log",
+      "minecraft:air",
+      "minecraft:andesite",
+      "minecraft:andesite_stairs",
+      "minecraft:azure_bluet",
+      "minecraft:barrel",
+      "minecraft:bedrock",
+      "minecraft:birch_door",
+      "minecraft:birch_leaves",
+      "minecraft:birch_log",
+      "minecraft:black_stained_glass",
+      "minecraft:black_terracotta",
+      "minecraft:black_wool",
+      "minecraft:blackstone",
+      "minecraft:blue_orchid",
+      "minecraft:blue_stained_glass",
+      "minecraft:bricks",
+      "minecraft:brown_concrete",
+      "minecraft:brown_concrete_powder",
+      "minecraft:brown_stained_glass",
+      "minecraft:brown_terracotta",
+      "minecraft:cauldron",
+      "minecraft:cherry_leaves",
+      "minecraft:chiseled_stone_bricks",
+      "minecraft:cobblestone",
+      "minecraft:cobblestone_stairs",
+      "minecraft:cobblestone_wall",
+      "minecraft:cracked_stone_bricks",
+      "minecraft:cyan_terracotta",
+      "minecraft:dandelion",
+      "minecraft:dark_oak_door",
+      "minecraft:dark_oak_leaves",
+      "minecraft:dark_oak_log",
+      "minecraft:daylight_detector",
+      "minecraft:dirt",
+      "minecraft:end_stone_brick_stairs",
+      "minecraft:end_stone_bricks",
+      "minecraft:fern",
+      "minecraft:flower_pot",
+      "minecraft:glass",
+      "minecraft:glowstone",
+      "minecraft:grass_block",
+      "minecraft:gray_concrete",
+      "minecraft:gray_concrete_powder",
+      "minecraft:gray_stained_glass",
+      "minecraft:iron_bars",
+      "minecraft:iron_block",
+      "minecraft:iron_trapdoor",
+      "minecraft:jungle_leaves",
+      "minecraft:jungle_log",
+      "minecraft:light_blue_stained_glass",
+      "minecraft:light_gray_concrete",
+      "minecraft:light_gray_stained_glass",
+      "minecraft:light_gray_wall_banner",
+      "minecraft:lightning_rod",
+      "minecraft:mossy_cobblestone",
+      "minecraft:mossy_stone_bricks",
+      "minecraft:mud",
+      "minecraft:mud_brick_stairs",
+      "minecraft:mud_bricks",
+      "minecraft:nether_bricks",
+      "minecraft:oak_door",
+      "minecraft:oak_fence",
+      "minecraft:oak_leaves",
+      "minecraft:oak_log",
+      "minecraft:oak_planks",
+      "minecraft:oak_slab",
+      "minecraft:oak_stairs",
+      "minecraft:polished_andesite",
+      "minecraft:polished_andesite_stairs",
+      "minecraft:polished_deepslate",
+      "minecraft:poppy",
+      "minecraft:quartz_block",
+      "minecraft:quartz_bricks",
+      "minecraft:quartz_slab",
+      "minecraft:quartz_stairs",
+      "minecraft:rail",
+      "minecraft:redstone_lamp",
+      "minecraft:sandstone",
+      "minecraft:sea_lantern",
+      "minecraft:short_grass",
+      "minecraft:smooth_quartz",
+      "minecraft:smooth_sandstone",
+      "minecraft:smooth_stone",
+      "minecraft:smooth_stone_slab",
+      "minecraft:spruce_leaves",
+      "minecraft:spruce_log",
+      "minecraft:stone",
+      "minecraft:stone_brick_slab",
+      "minecraft:stone_brick_stairs",
+      "minecraft:stone_brick_wall",
+      "minecraft:stone_bricks",
+      "minecraft:tinted_glass",
+      "minecraft:white_concrete",
+      "minecraft:white_stained_glass",
+      "minecraft:white_terracotta",
+      "minecraft:white_wool"
+    ],
+    "bytes": 4492343,
+    "files": [
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/data/0.dat",
+        "bytes": 6791,
+        "sha256": "5abd5376112c9b7fa58fc7463389f382756f8b03936a7dcddbd6676323ec1c03"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/data/idcounts.dat",
+        "bytes": 55,
+        "sha256": "935ae7a9979b1a8f315dc599b07c6518a73f579e4be70ad24c8be573230e7949"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/data/last_id.dat",
+        "bytes": 55,
+        "sha256": "935ae7a9979b1a8f315dc599b07c6518a73f579e4be70ad24c8be573230e7949"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/data/map_0.dat",
+        "bytes": 6791,
+        "sha256": "5abd5376112c9b7fa58fc7463389f382756f8b03936a7dcddbd6676323ec1c03"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/icon.png",
+        "bytes": 3259,
+        "sha256": "b7bde3fcd269fd794446911470c1c4b2e6d5fa55ce10808117b68b6cfc3345fa"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/level.dat",
+        "bytes": 2378,
+        "sha256": "2d611b68aec6d87a9035ed37c2af6ab54b003c9daf149f1dfddb777d6317c9cf"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/metadata.json",
+        "bytes": 182,
+        "sha256": "5333bf995ac24cbb8e13f5e47f910e7cf30818559a5fb778a3510cbc0844e010"
+      },
+      {
+        "path": "assets/fork-world/artifacts/compact-ground0/world-output/Arnis World 1/region/r.0.0.mca",
+        "bytes": 4472832,
+        "sha256": "f850f0cde233b0d2efaada62732b7a9b68243337b091b27bf4e617b86b195f65"
+      }
+    ]
+  }
+}

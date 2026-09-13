@@ -1,0 +1,49 @@
+{
+  "schema": "fork-architecture-references-1",
+  "purpose": "Verification references only; no photograph pixels bundled or used as textures.",
+  "requiredScene": "Market/Cecil/Cross Street CBD at one block per metre, source footprints at actual positions. Not Marina Bay waterfront.",
+  "references": [
+    {
+      "id": "capitagreen-owner",
+      "building": "CapitaGreen",
+      "address": "138 Market Street, Singapore 048946",
+      "osmWay": 393100853,
+      "page": "https://www.capitaland.com/sg/en/lease/commercial-space-listing/capitagreen.html",
+      "factsheet": "https://www.capitaland.com/content/dam/capitaland-media-library/commercial/Singapore/Singapore/CapitaGreen/CapitaGreen-Factsheet.pdf",
+      "publisher": "CapitaLand",
+      "evidence": "Owner page describes a red petal-shaped crown, glass facade with vertical planted areas, and cooling-air intake at 242 metres.",
+      "rights": "Copyright CapitaLand; reference/link only. No permission for texture redistribution inferred.",
+      "osmTags": {
+        "height": "242",
+        "levels": "40",
+        "colour": "#76838b"
+      },
+      "unverified": [
+        "Photographic match of generated facade/crown",
+        "Exact 1m placement versus source features in opened recipient world",
+        "Building height in upgraded world"
+      ]
+    },
+    {
+      "id": "telok-ayer-context",
+      "building": "Telok Ayer shophouses (context outside generated candidate)",
+      "page": "https://commons.wikimedia.org/wiki/File:Telok_Ayer_Street,_Singapore.jpg",
+      "author": "Bahnfrend",
+      "date": "2018-10-05",
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "cameraCoordinates": {
+        "latitude_deg": 1.282083,
+        "longitude_deg": 103.848472
+      },
+      "usage": "Context reference only, not a claim this facade is within accepted candidate. If reused, attribute author/source/license and changes; comply with share-alike.",
+      "bundledImage": false
+    }
+  ],
+  "heightCaveats": [
+    "OSM values are source tags, not independent surveyed proof.",
+    "Some tags lack height and require levels-derived or default geometry; never call these exact.",
+    "Prudential Tower source has height20 and levels30, an unresolved inconsistency.",
+    "Normal-height output reachesY319 at ground64; taller buildings may be clipped. No1:1height acceptance."
+  ]
+}
