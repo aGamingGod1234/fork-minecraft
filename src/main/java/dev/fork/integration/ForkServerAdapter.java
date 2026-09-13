@@ -15,7 +15,8 @@ public final class ForkServerAdapter {
     public ForkEngine engine() { return engine; }
     public ForkEngine.Receipt commit(ForkEngine.Batch batch) {
         var receipt = engine.commit(batch);
-        court.project(receipt.state());
+        // Historical receipts acknowledge old calls; presentation always reflects current authority.
+        court.project(engine.state());
         return receipt;
     }
     public ForkEngine.Receipt advanceFixture() {

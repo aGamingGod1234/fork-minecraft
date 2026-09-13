@@ -48,6 +48,23 @@ public final class ForkEngineVerification {
             check(checkpoint.restore(volume)&&volume.read(15,15,15).equals("AIR")&&volume.read(-1,0,0).equals("SENTINEL"),"Bounded air/sentinel restore "+restore);
         }
         world.put("-1,0,0","WRONG"); check(!checkpoint.restore(volume),"Changed sentinel fails restore");
+        var projected = new ArrayList<State>();
+        var adapterEngine = new ForkEngine(Mode.FIXTURE);
+        var adapter = new dev.fork.integration.ForkServerAdapter(adapterEngine,new dev.fork.integration.ForkServerAdapter.Court() {
+            public void project(State s) { projected.add(s); }
+            public void detachOldWork(long ep) {}
+            public boolean restoreAndVerifyInitial() { return true; }
+        });
+        adapterEngine.power(Power.WORKSHOP);
+        var firstBatch=adapterEngine.fixture(adapterEngine.begin()); adapter.commit(firstBatch); adapter.advanceFixture();
+        var latest=adapterEngine.state(); adapter.commit(firstBatch);
+        check(projected.getLast().equals(latest)&&projected.getLast().round()==2,"Delayed duplicate cannot project round1 over round2");
+        var liveClock=new AtomicLong();var live=new ForkEngine(Mode.LIVE,liveClock::get);live.power(Power.CLINIC);
+        live.begin();liveClock.set(20_000_000_000L);rejects(live::begin);live.begin(true);live.cancel();rejects(()->live.begin(true));rejects(live::begin);
+        for(var outside:List.of(new ForkCheckpoint.Cell(-1,0,0),new ForkCheckpoint.Cell(16,0,15),new ForkCheckpoint.Cell(0,-1,0),new ForkCheckpoint.Cell(15,16,15),new ForkCheckpoint.Cell(0,0,-1),new ForkCheckpoint.Cell(15,0,16))) {
+            var snap=new ForkCheckpoint<>(volume);String key=outside.x()+","+outside.y()+","+outside.z();String before=volume.read(outside.x(),outside.y(),outside.z());world.put(key,"ALTERED");check(!snap.verify(volume),"Each accepted sentinel is checked");world.put(key,before);
+        }
         System.out.println("PASS canonical A/B, next-round grid, conservation, duplicate receipts, incomplete, timeout, illegal wait, reroute, cancel, stale epoch, three 4096-cell AIR/sentinel restores and changed-sentinel rejection");
+        System.out.println("PASS delayed duplicate projection, exact six World sentinels, one explicit Live retry across timeout and cancel");
     }
 }

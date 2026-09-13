@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { ForkRunner } from './fork/runner.mjs';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -107,6 +108,7 @@ const WINDOWS_TTS_FALLBACK_CODES = new Set([
 ]);
 
 export class DynamicCoordinator extends EventEmitter {
+	#forkRunner;
 	#registry;
 	#scheduler;
 	#codexService;
@@ -422,6 +424,11 @@ export class DynamicCoordinator extends EventEmitter {
 	}
 
 	#bindBridge() {
+		this.#forkRunner = new ForkRunner(this.#codexService, (type, payload) => this.#bridge.send(type, 'server', payload));
+		this.#listen('fork_request', (message) => { void this.#forkRunner.request(message.payload).catch(error => this.#emitRuntimeError(error)); });
+		this.#listen('fork_cancel', () => this.#forkRunner.cancel());
+		this.#listen('fork_receipt', (message) => this.#forkRunner.receipt(message.payload));
+		this.#listen('disconnect', () => this.#forkRunner.cancel(), { lifecycle: true });
 		this.#listen('inspection_result', (message) => { this.#inspections.accept(message); });
 		this.#bindProviderRecovery();
 		this.#listen('ready', (connection) => {

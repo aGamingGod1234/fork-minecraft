@@ -138,7 +138,7 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 			"AI agent coordinator is offline; check logs/arena-agents-coordinator-error.log for the startup cause";
 	private static final Logger LOGGER = LoggerFactory.getLogger(MultiplexedServerBridge.class);
 	private static final Set<String> INBOUND_TYPES = Set.of(
-			"auth_challenge", "hello", "catalog_snapshot", "coordinator_status", "agent_ready", "planning_state", "goal_completed", "conversation_wake_ack", "goal_spec_proposal", "request_observation", "inspection_request", "action_command", "action_cancel", "action_result_ack", "agent_error", "verbose_event", "heartbeat"
+			"auth_challenge", "hello", "catalog_snapshot", "coordinator_status", "agent_ready", "planning_state", "goal_completed", "conversation_wake_ack", "goal_spec_proposal", "request_observation", "inspection_request", "action_command", "action_cancel", "action_result_ack", "agent_error", "verbose_event", "heartbeat", "fork_batch"
 	);
 
 	private final CodexAgentManager manager;
@@ -1082,6 +1082,7 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 
 	private void routeAuthenticated(BridgeEnvelope envelope) {
 		switch (envelope.type()) {
+			case "fork_batch" -> send("fork_receipt", "server", dev.fork.integration.ForkEntrypoint.accept(manager.server(), envelope.payload()));
 			case "catalog_snapshot" -> acceptCatalog(envelope.payload());
 			case "coordinator_status" -> acceptCoordinatorStatus(envelope.payload());
 			case "agent_ready", "planning_state" -> plannerReady(envelope);
@@ -1979,6 +1980,7 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 	private void acceptAction(BridgeEnvelope envelope) {
 		boolean durableAccepted = false;
 		try {
+			if (dev.fork.integration.ForkEntrypoint.active(manager.server())) throw new AgentDomainException("FORK_ACTION_FENCED", "FORK permits only complete scored batches; ordinary Arena actions are disabled");
 			ServerActionRequest request = decodeActionRequest(envelope);
 			AgentRecord record = validateActionProvenance(request);
 			if (isDetachedConversationReply(record, request)) {
@@ -2704,6 +2706,12 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 			LOGGER.debug("Terminal action result will retry after coordinator reconnect: {}", exception.getMessage());
 			return false;
 		}
+	}
+
+	public boolean sendFork(String type, JsonObject payload) {
+		if (!Set.of("fork_request", "fork_cancel").contains(type)) throw new IllegalArgumentException("Invalid FORK outbound type");
+		if (!authenticated()) return false;
+		send(type, "server", payload); return true;
 	}
 
 	private void send(String type, String agentId, JsonObject payload) {

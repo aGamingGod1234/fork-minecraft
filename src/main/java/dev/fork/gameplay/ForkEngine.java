@@ -40,6 +40,7 @@ public final class ForkEngine {
     private long epoch;
     private long sequence;
     private boolean paused;
+    private int liveAttempts;
     private final Map<String, Committed> receipts = new LinkedHashMap<>();
     private final List<Archive> archives = new ArrayList<>();
     private final Set<String> actionIds = new HashSet<>();
@@ -76,9 +77,17 @@ public final class ForkEngine {
                 state.batteries, state.courierWaypoint, state.service, history);
     }
     public synchronized Ticket begin() {
+        return begin(false);
+    }
+    public synchronized Ticket begin(boolean explicitRetry) {
         requireIdle();
         if (mode == Mode.RECORDED) throw new IllegalStateException("Recorded mode cannot call or advance");
         if (state.complete() || state.allocation == null) throw new IllegalStateException("Choose power or rewind");
+        if(mode == Mode.LIVE) {
+            if(liveAttempts>0 && (!explicitRetry || liveAttempts>=2)) throw new IllegalStateException("One explicit retry only; rewind after two attempts");
+            if(explicitRetry && liveAttempts==0) throw new IllegalStateException("No failed attempt to retry");
+            liveAttempts++;
+        }
         pending = new Ticket(state.branch, epoch, state.round + 1, state.revision, "request-" + (++sequence));
         deadline = nanos.getAsLong() + ForkContract.TOTAL_ATTEMPT_SECONDS * 1_000_000_000L;
         return pending;
@@ -147,7 +156,7 @@ public final class ForkEngine {
                 delivery ? "clinic" : state.courierWaypoint, state.service + (clinic ? "1" : "0"), state.allocationHistory);
         Receipt receipt = new Receipt(t, next, effects);
         receipts.put(t.requestId, new Committed(batch, receipt)); actionIds.addAll(newIds);
-        state = next; pending = null;
+        state = next; pending = null; liveAttempts = 0;
         return receipt;
     }
     /** Detaches old work before the adapter touches world cells. Epoch is never checkpointed. */
@@ -160,7 +169,7 @@ public final class ForkEngine {
     public synchronized void finishRewind(long expectedEpoch, boolean verified) {
         if (!paused || epoch != expectedEpoch) throw new IllegalStateException("Stale restore");
         if (!verified) throw new IllegalStateException("Restore verification failed; remains paused");
-        state = initial(); paused = false;
+        state = initial(); paused = false; liveAttempts = 0;
     }
     public synchronized Batch fixture(Ticket t) {
         if (mode != Mode.FIXTURE) throw new IllegalStateException("Fixture requested outside Fixture mode");

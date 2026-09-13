@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { normalizeForkPacket } from './fork/protocol.mjs';
 import { EventEmitter } from 'node:events';
 import net from 'node:net';
 
@@ -36,6 +37,7 @@ import { validateRegisteredAgentContract } from './registered-agent-contract.mjs
 const MAX_COORDINATOR_CIRCUITS = 32;
 
 export const COORDINATOR_TO_SERVER_TYPES = Object.freeze([
+	'fork_batch',
 	'auth_challenge',
 	'hello',
 	'catalog_snapshot',
@@ -56,6 +58,7 @@ export const COORDINATOR_TO_SERVER_TYPES = Object.freeze([
 ]);
 
 export const SERVER_TO_COORDINATOR_TYPES = Object.freeze([
+	'fork_request', 'fork_cancel', 'fork_receipt',
 	'auth_response',
 	'hello_ack',
 	'catalog_request',
@@ -195,6 +198,7 @@ export function validateProtocolV2Payload(type, value) {
 
 function normalizeProtocolV2Payload(type, value) {
 	if (!isPlainObject(value)) throw new ProtocolV2Error('INVALID_PAYLOAD', `${type} payload must be an object`);
+	if (type.startsWith('fork_')) return normalizeForkPacket(type, value);
 	switch (type) {
 		case 'auth_challenge':
 			exactKeys(value, ['clientNonce'], ['clientNonce'], type);

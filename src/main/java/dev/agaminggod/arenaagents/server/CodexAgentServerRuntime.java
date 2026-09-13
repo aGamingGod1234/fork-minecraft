@@ -645,6 +645,11 @@ public final class CodexAgentServerRuntime {
 		}
 	}
 
+	public static boolean sendFork(MinecraftServer server, String type, com.google.gson.JsonObject payload) {
+		MultiplexedServerBridge bridge = bridge(server);
+		return bridge != null && bridge.sendFork(type, payload);
+	}
+
 	private static MultiplexedServerBridge bridge(MinecraftServer server) {
 		BridgeSlot slot = BRIDGE_SLOTS.get(server);
 		return slot == null ? null : slot.bridge();
