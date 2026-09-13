@@ -90,8 +90,10 @@ def check_runtime_receipt(spec: dict[str, Any]) -> dict[str, Any]:
         loaded = re.search(r'Preparing level ["\']' + re.escape(level) + r'["\']', log)
         done = re.search(r'Done \([0-9.]+s\)!', log)
         stopping = re.search(r'\bStopping server\b', log)
-        saving = re.search(r'\bSaving chunks\b', log)
-        saved = re.search(r'\bAll dimensions are saved\b', log)
+        # Explicit save-all can occur before stop. Only the shutdown save proves
+        # that the server finished its final writes before the process ended.
+        saving = re.compile(r'\bSaving chunks\b').search(log, stopping.end()) if stopping else None
+        saved = re.compile(r'\bAll dimensions are saved\b').search(log, saving.end()) if saving else None
         startup_version = bool(re.search(r'\bStarting minecraft server version 26\.1\.2\b', log, re.I))
         markers = {"target_level": bool(loaded), "done": bool(done), "stopping_server": bool(stopping),
                    "saving_chunks": bool(saving), "all_dimensions_saved": bool(saved),

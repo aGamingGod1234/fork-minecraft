@@ -83,6 +83,20 @@ class RuntimeReceiptTests(unittest.TestCase):
         self.log.write_text(LOG.replace("All dimensions are saved", "saving incomplete"))
         self.assertFalse(runtime_receipt.check_runtime_receipt(self.spec)["runtimeLoadAccepted"])
 
+    def test_manual_save_before_stop_does_not_mask_clean_shutdown(self):
+        manual_save = ("[Server thread/INFO]: Saving chunks for manual save-all flush\n"
+                       "[Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved\n")
+        self.log.write_text(LOG.replace("[Server thread/INFO]: Stopping server", manual_save + "[Server thread/INFO]: Stopping server"))
+        result = runtime_receipt.check_runtime_receipt(self.spec)
+        self.assertTrue(result["runtimeLoadAccepted"], result["issues"])
+
+    def test_pre_stop_manual_save_cannot_replace_shutdown_save(self):
+        before_stop = LOG.replace("[Server thread/INFO]: Stopping server\n", "")
+        self.log.write_text(before_stop + "[Server thread/INFO]: Stopping server\n")
+        result = runtime_receipt.check_runtime_receipt(self.spec)
+        self.assertFalse(result["runtimeLoadAccepted"])
+        self.assertFalse(result["log_markers"]["saving_chunks"])
+
     def test_errors_rejected(self):
         for line in ("[Server thread/ERROR]: Failed", "[Server thread/FATAL]: Failed", "NBT read exception",
                      "Failed to load chunk", "Chunk deserialize error", "DataFixer error"):
