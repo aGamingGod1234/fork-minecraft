@@ -13,7 +13,7 @@ import time
 import zipfile
 
 import package
-from grow_runtime import ATTEMPT_ROOT, prepare_runtime_plan, StdinTranscript, verify_grow_runtime
+from grow_runtime import prepare_runtime_plan, StdinTranscript, verify_grow_runtime
 from grow_sentinels import select_sentinels
 
 BASE = Path(r"C:\Users\User\AppData\Local\FORK-Tools")
@@ -21,6 +21,12 @@ FULL = BASE / "fork-singapore-full"
 JAVA = BASE / "java/jdk-25.0.4.1+1/bin/java.exe"
 JAR = BASE / "minecraft-server-26.1.2/server.jar"
 JAR_SHA = "cd47e7c38328f64768fd17af8fcd8b22496b40b63d4ffee81e71ae059fedcb42"
+DISTRICTS = {
+    "lim-chu-kang-v1": ("grow-lim-chu-kang-v1", "FORK-Lim-Chu-Kang-1024", "Lim Chu Kang"),
+    "changi-v1": ("grow-changi-v1", "FORK-Changi-1024", "Changi"),
+    "cbd-east-v1": ("grow-cbd-east-v1", "FORK-CBD-East-v1", "Singapore CBD"),
+    "cbd-east-v2": ("grow-cbd-east-v2", "FORK-CBD-East-v2", "Singapore CBD and adjoining east district"),
+}
 
 
 def write(path, value):
@@ -31,30 +37,38 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--runs", action="append", required=True)
+    parser.add_argument("--district", choices=sorted(DISTRICTS), default="lim-chu-kang-v1")
     args = parser.parse_args()
     candidate = Path(args.candidate).resolve()
-    expected = FULL / "merged/grow-lim-chu-kang-v1/world"
-    if candidate != expected.resolve() or ATTEMPT_ROOT.exists():
-        raise ValueError("requires exact immutable rural candidate and brand-new runtime attempt")
+    snapshot_name, package_name, location = DISTRICTS[args.district]
+    expected = FULL / "merged" / snapshot_name / "world"
+    attempt_root = FULL / "runtime-check" / args.district
+    if candidate != expected.resolve() or attempt_root.exists():
+        raise ValueError("requires exact approved district candidate and brand-new runtime attempt")
+    manifest = json.loads((candidate.parent / "grow-manifest.json").read_text(encoding="utf-8-sig"))
+    if (manifest.get("kind") != "exact-core-grown-world" or manifest.get("assemblyAccepted") is not True
+            or manifest.get("verification", {}).get("status") != "PASS"
+            or package.snapshot_tree(candidate) != manifest["verification"]["hash_manifest"]):
+        raise ValueError("runtime candidate lacks its unchanged accepted crop receipt")
     if package._file_record(JAR)["sha256"] != JAR_SHA:
         raise ValueError("Minecraft server JAR changed")
-    bounds = [13312, 13312, 14336, 14336]
+    bounds = manifest["extent"]
     sentinels = select_sentinels(candidate, bounds, args.runs)
-    plan = prepare_runtime_plan(candidate, bounds, sentinels)
-    ATTEMPT_ROOT.mkdir(parents=True)
-    write(ATTEMPT_ROOT / "runtime-plan.json", plan)
-    definitions = ATTEMPT_ROOT / "sentinel-definitions.json"
+    plan = prepare_runtime_plan(candidate, bounds, sentinels, attempt_root=attempt_root)
+    attempt_root.mkdir(parents=True)
+    write(attempt_root / "runtime-plan.json", plan)
+    definitions = attempt_root / "sentinel-definitions.json"
     write(definitions, plan["sentinels"])
-    shutil.copytree(candidate, ATTEMPT_ROOT / "world")
-    if package.snapshot_tree(ATTEMPT_ROOT / "world") != plan["candidate_before"]:
+    shutil.copytree(candidate, attempt_root / "world")
+    if package.snapshot_tree(attempt_root / "world") != plan["candidate_before"]:
         raise ValueError("runtime copy differs from immutable candidate")
-    shutil.copyfile(JAR, ATTEMPT_ROOT / "server.jar")
-    shutil.copyfile(BASE / "fork-build-20260913/world-validation-1216/eula.txt", ATTEMPT_ROOT / "eula.txt")
-    (ATTEMPT_ROOT / "server.properties").write_text("\n".join([
+    shutil.copyfile(JAR, attempt_root / "server.jar")
+    shutil.copyfile(BASE / "fork-build-20260913/world-validation-1216/eula.txt", attempt_root / "eula.txt")
+    (attempt_root / "server.properties").write_text("\n".join([
         "server-ip=127.0.0.1", "server-port=25579", "level-name=world", "online-mode=true",
         "enable-rcon=false", "enable-query=false", "enable-status=false", "max-players=1",
         "view-distance=2", "simulation-distance=2", "spawn-protection=0", "sync-chunk-writes=true",
-        "max-tick-time=60000", "motd=FORK Lim Chu Kang isolated runtime check", ""]), encoding="ascii")
+        "max-tick-time=60000", "motd=FORK district isolated runtime check", ""]), encoding="ascii")
     spec_module = importlib.util.spec_from_file_location("fork_growth_queue", BASE / "fork-minecraft-worktrees/full-singapore-queue/tools/singapore-full/queue/queue.py")
     queue = importlib.util.module_from_spec(spec_module)
     sys.modules[spec_module.name] = queue
@@ -64,9 +78,9 @@ def main():
         raise ValueError("runtime requires 8GiB free RAM floor")
     java_identity = subprocess.run([str(JAVA), "-version"], capture_output=True, text=True, timeout=15).stderr.strip()
     commands = plan["forceload_commands"] + plan["chunk_commands"] + plan["block_commands"] + plan["finish_commands"]
-    transcript_path = ATTEMPT_ROOT / "stdin-transcript.txt"
+    transcript_path = attempt_root / "stdin-transcript.txt"
     transcript = StdinTranscript(transcript_path, commands)
-    console_path = ATTEMPT_ROOT / "console.log"
+    console_path = attempt_root / "console.log"
     command = [str(JAVA), "-Xms256M", "-Xmx3072M", "-XX:ActiveProcessorCount=1", "-jar", "server.jar", "nogui"]
     state = {"status": "STARTING", "command": command, "startedUtc": datetime.now(timezone.utc).isoformat(),
              "minimumFreeMemoryBytes": before["freeRam"], "sourceHash": plan["candidate_before"]["sha256"]}
@@ -87,7 +101,7 @@ def main():
             time.sleep(.2)
     try:
         with console_path.open("wb") as console:
-            process = subprocess.Popen(command, cwd=ATTEMPT_ROOT, stdin=subprocess.PIPE,
+            process = subprocess.Popen(command, cwd=attempt_root, stdin=subprocess.PIPE,
                 stdout=console, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
             guard.assign(process)
             kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -96,7 +110,7 @@ def main():
                 raise OSError("Could not set runtime CPU offset8")
             state["owner"] = queue.identity(process.pid)
             state["status"] = "RUNNING"
-            write(ATTEMPT_ROOT / "runtime-state.json", state)
+            write(attempt_root / "runtime-state.json", state)
             print(json.dumps(state), flush=True)
             wait_for(lambda text: ")! For help, type" in text and "Done (" in text, 60)
             for command_text in plan["forceload_commands"]:
@@ -136,27 +150,34 @@ def main():
         state["status"] = "PROCESS_EXITED" if process is not None and process.returncode == 0 else "PROCESS_FAILED"
         state["finishedUtc"] = datetime.now(timezone.utc).isoformat()
         state["processAlive"] = process is not None and process.poll() is None
-        write(ATTEMPT_ROOT / "runtime-state.json", state)
-    runtime_spec = {"copied_world_path": str(ATTEMPT_ROOT / "world"), "sentinel_definitions_path": str(definitions),
+        write(attempt_root / "runtime-state.json", state)
+    runtime_spec = {"copied_world_path": str(attempt_root / "world"), "sentinel_definitions_path": str(definitions),
         "log_path": str(console_path), "process": {"pid": process.pid, "exit_code": process.returncode,
             "observed_alive": process.poll() is None, "observed_at_utc": state["finishedUtc"]},
         "max_heap_mib": 3072, "active_processor_count": 1, "cpu_affinity_mask": 256,
         "free_memory_before_bytes": before["freeRam"], "minimum_free_memory_bytes": state["minimumFreeMemoryBytes"],
         "jar_path": str(JAR), "expected_jar_sha256": JAR_SHA, "minecraft_version": "26.1.2", "java_identity": java_identity, "port": 25579}
-    write(ATTEMPT_ROOT / "runtime-spec.json", runtime_spec)
+    write(attempt_root / "runtime-spec.json", runtime_spec)
     receipt = verify_grow_runtime(runtime_spec, plan, transcript_path)
-    write(ATTEMPT_ROOT / "runtime-receipt.json", receipt)
+    write(attempt_root / "runtime-receipt.json", receipt)
     if not receipt["runtimeLoadAccepted"]:
         raise RuntimeError("Runtime gate failed: " + json.dumps(receipt["issues"]))
-    target = candidate.parent / "FORK-Lim-Chu-Kang-1024.zip"
-    readme = "FORK - Lim Chu Kang\n\nMinecraft Java 26.1.2 save. Extract the FORK-Lim-Chu-Kang folder into your saves folder.\n\nThis is a 1024m x 1024m Lim Chu Kang map core at one block per horizontal metre, with mapped building and road geometry. Ground is flat provisional Y0; building heights include declared estimates and quarantined omissions. It is not the whole of Singapore, an exact visual replica, or an AI-agent gameplay build.\n\nAll 4096 owned chunks passed independent structural/source validation. The isolated Minecraft runtime checked representative building, road, terrain and safe-spawn blocks; it did not load every chunk. Client visual review is pending.\n"
+    target = candidate.parent / (package_name + ".zip")
+    width, depth = bounds[2] - bounds[0], bounds[3] - bounds[1]
+    readme = (f"FORK - {location}\n\nMinecraft Java 26.1.2 save. Extract the {package_name} folder into your saves folder.\n\n"
+        f"This mapped district spans {width}m x {depth}m at one block per horizontal metre, with mapped building and road geometry. "
+        "Ground is flat provisional Y0; building heights include declared estimates and quarantined omissions. "
+        "It is not the whole of Singapore, an exact visual replica, or an AI-agent gameplay build.\n\n"
+        f"All {manifest['expectedChunks']} owned chunks passed independent structural/source validation. "
+        "The isolated Minecraft runtime checked representative building, road, terrain and safe-spawn blocks; "
+        "it did not load every chunk. Client visual review is pending.\n")
     with zipfile.ZipFile(target, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for path in sorted(candidate.rglob("*")):
             if path.is_file():
-                archive.write(path, "FORK-Lim-Chu-Kang/" + path.relative_to(candidate).as_posix())
+                archive.write(path, package_name + "/" + path.relative_to(candidate).as_posix())
         archive.writestr("README.txt", readme)
-    output = {"package": str(target), **package._file_record(target), "runtimeReceipt": str(ATTEMPT_ROOT / "runtime-receipt.json"),
-        "runtimeReceiptSha256": package._file_record(ATTEMPT_ROOT / "runtime-receipt.json")["sha256"],
+    output = {"package": str(target), **package._file_record(target), "runtimeReceipt": str(attempt_root / "runtime-receipt.json"),
+        "runtimeReceiptSha256": package._file_record(attempt_root / "runtime-receipt.json")["sha256"],
         "world": str(candidate), "worldHash": package.snapshot_tree(candidate)["sha256"], "runtimeLoadAccepted": True}
     write(candidate.parent / "delivery.json", output)
     print(json.dumps(output), flush=True)
