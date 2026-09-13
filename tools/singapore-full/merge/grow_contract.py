@@ -5,6 +5,8 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath
 import re
+import shutil
+import subprocess
 
 FRAME = {"crs": "EPSG:3414", "x": "easting", "z": "60000-northing", "blocksPerMeter": 1}
 SHA = re.compile(r"^[0-9a-fA-F]{64}$")
@@ -91,7 +93,95 @@ def _outputs(writer, world):
     return sorted(verified, key=lambda item: item["path"])
 
 
-def _structural(gate, writer_hash, outputs, core):
+def _benchmark_structural(gate, source, writer_hash, outputs, core, world, writer_path):
+    """Reuse the actual hash-pinned read-only validator; never relabel its gate."""
+    primary = Path(source["structural_gate_path"]).resolve(strict=True)
+    summary_path = Path(source.get("benchmark_summary_path", primary.parent / "summary.json")).resolve(strict=True)
+    summary = load(summary_path)
+    if gate.get("kind") == "measured-independent-benchmark-validation":
+        if primary != summary_path:
+            raise GrowContractError("measured summary must be the supplied summary evidence")
+        gate_path = Path(source.get("benchmark_gate_path", primary.parent / "gate.json")).resolve(strict=True)
+        gate = load(gate_path)
+    else:
+        gate_path = primary
+    if (summary.get("schemaVersion") != 1 or summary.get("kind") != "measured-independent-benchmark-validation"
+            or summary.get("status") != "PASS" or summary.get("metrics", {}).get("exitCode") != 0
+            or summary.get("metrics", {}).get("timedOut") is not False
+            or summary.get("metrics", {}).get("parentExited") is not False):
+        raise GrowContractError("actual measured independent validation summary must PASS")
+    if digest(gate_path) != _sha(summary.get("gateSha256"), "measured gate"):
+        raise GrowContractError("measured summary binds a different gate")
+    if (gate.get("schemaVersion") != 1 or gate.get("kind") != "independent-benchmark-result-gate"
+            or gate.get("status") != "PASS" or gate.get("comparisonScope") != "full-volume"
+            or _bounds(gate.get("comparisonBounds"), "benchmark core") != core
+            or core[2] - core[0] != 1024 or core[3] - core[1] != 1024
+            or type(gate.get("comparedCells")) is not int or gate["comparedCells"] != 402653184
+            or type(gate.get("mismatchedCells")) is not int or gate["mismatchedCells"] != 0
+            or gate.get("fileHashErrors") != []
+            or any(gate.get("checks", {}).get(k) is not True for k in ("globalChunkCoordinates", "metadata", "heightmaps"))):
+        raise GrowContractError("actual benchmark gate must cover every 1024-core cell without mismatches")
+    receipt_path = Path(source.get("benchmark_receipt_path", summary["receiptPath"])).resolve(strict=True)
+    if receipt_path != Path(summary["receiptPath"]).resolve(strict=True):
+        raise GrowContractError("benchmark receipt path differs from measured summary")
+    receipt_hash = digest(receipt_path)
+    if receipt_hash != _sha(summary.get("benchmarkReceiptSha256"), "summary receipt") or receipt_hash != _sha(gate.get("benchmarkReceiptSha256"), "gate receipt"):
+        raise GrowContractError("benchmark receipt bytes do not match measured gate")
+    evidence = gate["evidence"]
+    if (Path(evidence["writerManifest"]["path"]).resolve(strict=True) != writer_path
+            or _sha(evidence["writerManifest"]["sha256"], "benchmark writer") != writer_hash):
+        raise GrowContractError("benchmark gate binds a different writer")
+    if _sha(summary.get("oracleSha256"), "measured oracle") != _sha(evidence["oracleProof"]["sha256"], "gate oracle"):
+        raise GrowContractError("summary and gate oracle bindings differ")
+    gate_outputs = sorted(({"path": o["path"], "bytes": o["bytes"], "sha256": _sha(o["sha256"], "benchmark output")}
+                           for o in gate["writerOutputHashes"]), key=lambda o: o["path"])
+    if gate_outputs != outputs:
+        raise GrowContractError("benchmark gate world output map differs from writer")
+    validator = Path(source.get("benchmark_validator_path", Path(__file__).resolve().parent.parent / "validate-benchmark.mjs")).resolve(strict=True)
+    if validator.name != "validate-benchmark.mjs":
+        raise GrowContractError("benchmark validator must be the existing typed validation module")
+    code_hashes = summary["validatorCodeHashes"]
+    validator_hashes = []
+    for name in ("validate-benchmark.mjs", "validate-benchmark-bindings.mjs"):
+        path = validator.parent / name
+        sha = digest(path)
+        if sha != _sha(code_hashes[name], "measured validator code"):
+            raise GrowContractError("read-only validator code differs from measured validation")
+        validator_hashes.append({"path": str(path), "sha256": sha})
+    node = shutil.which("node")
+    if not node:
+        raise GrowContractError("existing Node runtime required for actual binding validation")
+    script = ("import {pathToFileURL} from 'node:url';"
+              "const m=await import(pathToFileURL(process.argv[2]).href);"
+              "const v=m.loadIndependentlyValidatedReceipt(process.argv[3],process.argv[4]);"
+              "console.log(JSON.stringify({status:v.status,bindings:v.resultBindings}));")
+    # Keep argv[1] different from the imported module so its CLI entry-point
+    # guard cannot mistake this read-only call for a benchmark execution.
+    completed = subprocess.run([node, "--max-old-space-size=384", "--input-type=module", "-e", script,
+                                "fork-grow-readonly-bindings", str(validator), str(receipt_path), str(gate_path)],
+                               capture_output=True, text=True, encoding="utf-8", timeout=120)
+    if completed.returncode != 0:
+        raise GrowContractError("actual validateResultBindings rejected source: " + completed.stderr[-2000:])
+    result = json.loads(completed.stdout)
+    bindings = result["bindings"]
+    if (result.get("status") != "PASS" or Path(bindings["worldRoot"]).resolve(strict=True) != world
+            or Path(bindings["writerManifestPath"]).resolve(strict=True) != writer_path
+            or _bounds(bindings["coreBounds"], "verified benchmark core") != core):
+        raise GrowContractError("verified benchmark identity differs from requested grow source")
+    rebound = sorted(({"path": Path(o["path"]).resolve(strict=True).relative_to(world).as_posix(),
+                       "bytes": o["bytes"], "sha256": _sha(o["sha256"], "verified output")}
+                      for o in bindings["outputs"]), key=lambda o: o["path"])
+    if rebound != outputs:
+        raise GrowContractError("verified benchmark output bindings differ from grow outputs")
+    return {"benchmark_summary_path": str(summary_path), "benchmark_summary_sha256": digest(summary_path),
+            "benchmark_receipt_path": str(receipt_path), "benchmark_receipt_sha256": receipt_hash,
+            "benchmark_gate_path": str(gate_path), "benchmark_gate_sha256": digest(gate_path),
+            "benchmark_validator_code": validator_hashes}
+
+
+def _structural(gate, writer_hash, outputs, core, source=None, world=None, writer_path=None):
+    if gate.get("kind") in ("independent-benchmark-result-gate", "measured-independent-benchmark-validation"):
+        return _benchmark_structural(gate, source, writer_hash, outputs, core, world, writer_path)
     if gate.get("status") != "PASS" or gate.get("synthetic") is True:
         raise GrowContractError("actual structural gate PASS required")
     if _sha(gate.get("writerManifestSha256"), "structural writer binding") != writer_hash:
@@ -250,13 +340,13 @@ def validate_plan(plan):
             versions.add(version)
             outputs = _outputs(writer, world)
             gate_path = Path(raw["structural_gate_path"]).resolve(strict=True)
-            _structural(load(gate_path), writer_hash, outputs, core)
+            extra_bindings = _structural(load(gate_path), writer_hash, outputs, core, raw, world, writer_path) or {}
             coverage = {component: _coverage(component, raw["coverage"].get(component), core, writer_hash)
                         for component in ("roads", "water")}
             sources.append({"id": name, "world_path": str(world), "core_bounds": list(core),
                             "writer_manifest_path": str(writer_path), "writer_manifest_sha256": writer_hash,
                             "structural_gate_path": str(gate_path), "structural_gate_sha256": digest(gate_path),
-                            "outputs": outputs, "region_directory": REGION_DIRECTORY, "coverage": coverage})
+                            "outputs": outputs, "region_directory": REGION_DIRECTORY, "coverage": coverage, **extra_bindings})
         if len(versions) != 1:
             raise GrowContractError("all source DataVersions must match")
         sources.sort(key=lambda source: source["id"])
@@ -265,5 +355,5 @@ def validate_plan(plan):
                   max(s["core_bounds"][2] for s in sources), max(s["core_bounds"][3] for s in sources)]
         return {"sources": sources, "extent": extent, "expected_chunks": sum(_chunk_count(s["core_bounds"]) for s in sources),
                 "data_version": next(iter(versions)), "coordinate_frame": dict(FRAME)}
-    except (KeyError, TypeError, OSError, json.JSONDecodeError) as exc:
+    except (KeyError, TypeError, OSError, json.JSONDecodeError, subprocess.SubprocessError) as exc:
         raise GrowContractError(f"missing or unreadable grow evidence: {exc}") from exc

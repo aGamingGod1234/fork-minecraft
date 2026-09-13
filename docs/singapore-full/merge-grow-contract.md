@@ -62,6 +62,31 @@ unchanged-input checks. `iter_owned_chunks(sources)` yields exact `(cx,cz)`
 keys without building an island-sized set. The bounding extent may include
 holes and must never be presented as the covered chunk set.
 
+## Measured 1024-metre benchmark sources
+
+The actual `independent-benchmark-result-gate` is accepted under its original
+type only alongside its passing `measured-independent-benchmark-validation`
+summary. A source may provide `benchmark_summary_path`,
+`benchmark_receipt_path` and `benchmark_validator_path`. The summary defaults
+to `summary.json` beside the gate; the receipt defaults to the summary's
+`receiptPath`. The validator defaults to the sibling `validate-benchmark.mjs`.
+Alternatively, `structural_gate_path` may name the measured summary, with
+`benchmark_gate_path` naming its gate (default `gate.json` beside the summary).
+
+Admission requires exact owned-core bounds of 1024 by 1024 blocks, full-volume
+comparison of 402,653,184 cells, zero mismatches, and passing coordinates,
+metadata, heightmaps and file hashes. Summary, receipt, oracle, writer and
+world-output hashes must agree. The existing read-only
+`loadIndependentlyValidatedReceipt` calls `validateResultBindings`, rechecking
+the full measured output inventory, frozen job/core/halo identity, every input
+run and the exact oracle/writer file maps. It does not repeat the volume scan.
+Both validator module hashes are pinned to the measured summary before Node
+imports them. Node runs sequentially with a 384-MiB JavaScript heap limit.
+
+The normalized source retains summary, receipt and gate paths/hashes plus
+`benchmark_validator_code` records. The experimental gate does not waive the
+separate roads/water coverage requirements or assert nationwide fidelity.
+
 The CBD core `[29696,29696,30720,30720]` can be admitted alone (4096 chunks)
 when its own gates pass. Twelve 256-metre east cores may extend coverage to
 `[30720,29696,31488,30720]`, adding 3072 chunks, only after every source's roads

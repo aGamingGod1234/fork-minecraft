@@ -4,9 +4,12 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from grow_contract import FRAME, REGION_DIRECTORY, WORLD_SETTINGS, GrowContractError, digest, iter_owned_chunks, validate_plan
+from grow_contract import _benchmark_structural
 
 
 class GrowContractTests(unittest.TestCase):
@@ -156,6 +159,74 @@ class GrowContractTests(unittest.TestCase):
         (world / WORLD_SETTINGS).unlink()
         with self.assertRaises(GrowContractError):
             validate_plan({"schemaVersion": 1, "sources": [a]})
+
+    def benchmark_fixture(self):
+        source = self.source("benchmark", [0, 0, 1024, 1024])
+        root = Path(source["writer_manifest_path"]).parent
+        writer_path = Path(source["writer_manifest_path"])
+        writer = json.loads(writer_path.read_text())
+        writer_hash = digest(writer_path)
+        receipt = self.write(root / "receipt.json", {"fixture": True})
+        validator = root / "validate-benchmark.mjs"
+        validator.write_text("// Test fixture only. Actual read-only loader smoke is separate.\n")
+        bindings_module = root / "validate-benchmark-bindings.mjs"
+        bindings_module.write_text("// Test fixture only.\n")
+        gate = {"schemaVersion": 1, "kind": "independent-benchmark-result-gate", "status": "PASS",
+                "comparisonScope": "full-volume", "comparisonBounds": [0, 0, 1024, 1024],
+                "comparedCells": 402653184, "mismatchedCells": 0, "fileHashErrors": [],
+                "checks": {"globalChunkCoordinates": True, "metadata": True, "heightmaps": True},
+                "benchmarkReceiptSha256": digest(receipt), "writerOutputHashes": writer["outputs"],
+                "evidence": {"writerManifest": {"path": str(writer_path), "sha256": writer_hash},
+                             "oracleProof": {"path": str(root / "oracle.json"), "sha256": "a" * 64}}}
+        gate_path = self.write(Path(source["structural_gate_path"]), gate)
+        summary = {"schemaVersion": 1, "kind": "measured-independent-benchmark-validation", "status": "PASS",
+                   "metrics": {"exitCode": 0, "timedOut": False, "parentExited": False},
+                   "receiptPath": str(receipt), "benchmarkReceiptSha256": digest(receipt), "gateSha256": digest(gate_path),
+                   "oracleSha256": "a" * 64, "validatorCodeHashes": {p.name: digest(p) for p in (validator, bindings_module)}}
+        self.write(root / "summary.json", summary)
+        source["benchmark_validator_path"] = str(validator)
+        world = Path(source["world_path"])
+        outputs = sorted(writer["outputs"], key=lambda record: record["path"])
+        bound_outputs = [{**record, "path": str(world / record["path"])} for record in outputs]
+        loaded = {"status": "PASS", "bindings": {"worldRoot": str(world), "writerManifestPath": str(writer_path),
+                                                  "coreBounds": [0, 0, 1024, 1024], "outputs": bound_outputs}}
+        return gate, source, writer_hash, outputs, (0, 0, 1024, 1024), world, writer_path, loaded
+
+    def test_benchmark_uses_pinned_loader_and_retains_provenance(self):
+        *arguments, loaded = self.benchmark_fixture()
+        with patch("grow_contract.shutil.which", return_value="node"), patch("grow_contract.subprocess.run") as run:
+            run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(loaded), stderr="")
+            result = _benchmark_structural(*arguments)
+        self.assertEqual(len(result["benchmark_validator_code"]), 2)
+        self.assertIn("--max-old-space-size=384", run.call_args.args[0])
+        self.assertIn("fork-grow-readonly-bindings", run.call_args.args[0])
+
+    def test_benchmark_rejects_partial_volume_before_loader(self):
+        *arguments, loaded = self.benchmark_fixture()
+        arguments[0]["comparedCells"] -= 1
+        path = Path(arguments[1]["structural_gate_path"])
+        self.write(path, arguments[0])
+        summary_path = path.parent / "summary.json"
+        summary = json.loads(summary_path.read_text())
+        summary["gateSha256"] = digest(path)
+        self.write(summary_path, summary)
+        with patch("grow_contract.subprocess.run") as run, self.assertRaisesRegex(GrowContractError, "every 1024-core cell"):
+            _benchmark_structural(*arguments)
+        run.assert_not_called()
+
+    def test_benchmark_rejects_changed_validator_and_wrong_returned_world(self):
+        *arguments, loaded = self.benchmark_fixture()
+        bindings_path = Path(arguments[1]["benchmark_validator_path"]).parent / "validate-benchmark-bindings.mjs"
+        original = bindings_path.read_text()
+        bindings_path.write_text("changed")
+        with self.assertRaisesRegex(GrowContractError, "validator code"):
+            _benchmark_structural(*arguments)
+        bindings_path.write_text(original)
+        loaded["bindings"]["worldRoot"] = str(self.root)
+        with patch("grow_contract.shutil.which", return_value="node"), patch("grow_contract.subprocess.run") as run:
+            run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(loaded), stderr="")
+            with self.assertRaisesRegex(GrowContractError, "identity differs"):
+                _benchmark_structural(*arguments)
 
 
 if __name__ == "__main__":
