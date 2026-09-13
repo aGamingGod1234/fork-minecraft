@@ -1,0 +1,205 @@
+{
+  "createdUtc": "2026-09-13T05:29:00.591Z",
+  "status": "Measured best-fit placement alignment; NOT an exact rigid translation of all source geometry",
+  "exactRigidTranslation": false,
+  "actualMetadata": {
+    "minMcX": 0,
+    "maxMcX": 1022,
+    "minMcZ": 0,
+    "maxMcZ": 1022,
+    "minGeoLat": 1.278400648,
+    "maxGeoLat": 1.287599352,
+    "minGeoLon": 103.845399492,
+    "maxGeoLon": 103.854600508,
+    "projection": "local",
+    "scale": 1
+  },
+  "actualWidthBlocks": 1023,
+  "approximateOffsetFromGeneratedMetadata": [
+    383.25000000059197,
+    383.24999999999693
+  ],
+  "translation": [
+    384,
+    0,
+    383
+  ],
+  "landmarkMatch": {
+    "dx": 384,
+    "dz": 383,
+    "matched": 542,
+    "total": 837,
+    "ratio": 0.6475507765830346,
+    "error": 9269
+  },
+  "nextBest": {
+    "dx": 384,
+    "dz": 384,
+    "matched": 505,
+    "total": 837,
+    "ratio": 0.6033452807646356,
+    "error": 10222
+  },
+  "courtOrigin": [
+    428,
+    0,
+    408
+  ],
+  "arrival": [
+    436,
+    1,
+    415
+  ],
+  "oldCoreBoundsInNew": [
+    384,
+    383,
+    639,
+    638
+  ],
+  "witnessExamples": [
+    {
+      "old": [
+        119,
+        35,
+        3
+      ],
+      "new": [
+        503,
+        282,
+        386
+      ]
+    },
+    {
+      "old": [
+        121,
+        282,
+        3
+      ],
+      "new": [
+        505,
+        281,
+        386
+      ]
+    },
+    {
+      "old": [
+        143,
+        282,
+        3
+      ],
+      "new": [
+        527,
+        35,
+        386
+      ]
+    },
+    {
+      "old": [
+        173,
+        76,
+        3
+      ],
+      "new": [
+        557,
+        74,
+        386
+      ]
+    },
+    {
+      "old": [
+        193,
+        76,
+        3
+      ],
+      "new": [
+        577,
+        0,
+        386
+      ]
+    },
+    {
+      "old": [
+        221,
+        26,
+        3
+      ],
+      "new": [
+        605,
+        23,
+        386
+      ]
+    },
+    {
+      "old": [
+        27,
+        99,
+        5
+      ],
+      "new": [
+        411,
+        0,
+        388
+      ]
+    },
+    {
+      "old": [
+        97,
+        36,
+        5
+      ],
+      "new": [
+        481,
+        36,
+        388
+      ]
+    },
+    {
+      "old": [
+        115,
+        35,
+        5
+      ],
+      "new": [
+        499,
+        282,
+        388
+      ]
+    },
+    {
+      "old": [
+        117,
+        282,
+        5
+      ],
+      "new": [
+        501,
+        281,
+        388
+      ]
+    },
+    {
+      "old": [
+        145,
+        282,
+        5
+      ],
+      "new": [
+        529,
+        35,
+        388
+      ]
+    },
+    {
+      "old": [
+        173,
+        74,
+        5
+      ],
+      "new": [
+        557,
+        74,
+        388
+      ]
+    }
+  ]
+}

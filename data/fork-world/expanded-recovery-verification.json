@@ -1,0 +1,94 @@
+{
+  "status": "SAVED NBT CHECK PASS; runtime/appearance pending Main",
+  "actualCoverage": [
+    1023,
+    1023
+  ],
+  "all1046529ColumnHeightsUnchanged": true,
+  "changedCellsVerified": 12179,
+  "courtRelativeContractExact": true,
+  "spawn": [
+    436,
+    1,
+    415
+  ],
+  "cityArrivalSafe": true,
+  "road": {
+    "createdUtc": "2026-09-13T05:29:00.860Z",
+    "source": "Interpretive game staging, not original OSM road layout",
+    "vertex": [
+      445,
+      0,
+      430
+    ],
+    "stemEndpoint": [
+      450.65685424949237,
+      0,
+      424.34314575050763
+    ],
+    "prongEndpoints": [
+      [
+        442.17157287525384,
+        0,
+        439.89949493661163
+      ],
+      [
+        438.6360389693211,
+        0,
+        436.3639610306789
+      ],
+      [
+        435.1005050633883,
+        0,
+        432.8284271247462
+      ]
+    ],
+    "headingDegrees": 225,
+    "forwardVector": [
+      -0.7071067811865475,
+      0,
+      0.7071067811865477
+    ],
+    "roadCells": 98,
+    "buildingDemolitionCells": 0,
+    "allStagingColumnsOriginallyTopY0": true,
+    "crane": {
+      "start": [
+        452.77817459305203,
+        6,
+        422.22182540694797
+      ],
+      "end": [
+        459.14213562373095,
+        36,
+        415.85786437626905
+      ],
+      "lookAt": [
+        442.1715728752538,
+        0,
+        432.8284271247462
+      ],
+      "tiltUpLookAt": [
+        367.21825406947977,
+        100,
+        507.78174593052023
+      ],
+      "status": "POINT-CLEAR; live framing pending",
+      "obstructions": []
+    },
+    "betweenBuildings": {
+      "status": "NO ROUTE VERIFIED",
+      "clearanceBlocks": 5,
+      "height": 12,
+      "waypoints": [],
+      "route": [],
+      "nearbyRooflineMaxY": null
+    },
+    "cityArrival": [
+      460.5,
+      1,
+      524.5
+    ]
+  },
+  "untransferredOldFacadeCells": 46497
+}
