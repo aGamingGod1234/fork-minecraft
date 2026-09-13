@@ -15,7 +15,7 @@ import re
 import shutil
 import tempfile
 
-from anvil import _fs_path
+from anvil import _fs_path, Tag, read_level_dat, write_level_dat
 from grow_contract import validate_plan
 from grow_regions import merge_regions
 from grow_receipt import verify_grown_world
@@ -81,6 +81,9 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
     if len(matches) != 1:
         raise ValueError("plan spawn_source_id must name exactly one accepted owned core")
     spawn_source = matches[0]
+    world_name = plan.get("world_name")
+    if world_name is not None and (not isinstance(world_name, str) or not 1 <= len(world_name) <= 80):
+        raise ValueError("optional world_name must contain 1 to 80 characters")
     for source in sources:
         path = Path(source["world_path"]).resolve()
         if path == world.parent or path in world.parent.parents or world.parent in path.parents:
@@ -98,6 +101,10 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
         target = staging_world / relative
         os.makedirs(_fs_path(target.parent), exist_ok=True)
         shutil.copyfile(_fs_path(source), _fs_path(target))
+    if world_name is not None:
+        level = read_level_dat(staging_world / "level.dat")
+        level.root.value["Data"].value["LevelName"] = Tag(8, world_name)
+        write_level_dat(staging_world / "level.dat", level)
     region_report = merge_regions(sources, staging_world)
     checked = verify_grown_world(staging_world, sources, region_report, spawn_id)
     if checked.get("status") != "PASS" or checked.get("assemblyAccepted") is not True:
@@ -117,6 +124,7 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
               "extent": accepted["extent"], "expectedChunks": accepted["expected_chunks"],
               "dataVersion": accepted["data_version"],
               "coordinateFrame": accepted["coordinate_frame"],
+              "worldName": world_name,
               "sources": sources, "regions": region_report,
               "verification": checked, "assemblyAccepted": True, "runtimeLoadAccepted": False,
               "actualGroundAccepted": False,

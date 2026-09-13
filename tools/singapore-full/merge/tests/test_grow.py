@@ -101,6 +101,17 @@ class GrowIntegrationTests(unittest.TestCase):
         self.assertEqual("keep", sentinel.read_text())
         self.assertFalse(self.manifest.exists())
 
+    def test_location_label_preserves_verified_spawn_and_source(self):
+        plan = json.loads(self.plan.read_text())
+        plan["world_name"] = "FORK - Lim Chu Kang"
+        self.write(self.plan, plan)
+        result = self.assemble()
+        data = anvil.read_level_dat(self.world / "level.dat").root.value["Data"].value
+        self.assertEqual("FORK - Lim Chu Kang", data["LevelName"].value)
+        self.assertEqual([1, 1, 1], data["spawn"].value["pos"].value)
+        self.assertEqual(self.before, package.snapshot_tree(self.source))
+        self.assertTrue(result["verification"]["spawn"]["safe"])
+
     def test_changed_source_fails_without_published_world(self):
         actual = grow.merge_regions
         def mutate_after_copy(*args, **kwargs):
