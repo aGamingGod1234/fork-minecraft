@@ -1,0 +1,16 @@
+{
+  "id": "market-street-view",
+  "label": "Market Street district / CapitaSpring view",
+  "feet": [
+    63.5,
+    1,
+    23.5
+  ],
+  "lookAt": [
+    128,
+    110,
+    30
+  ],
+  "evidence": "Solid existing pavement at Y0; three air blocks above, verified in patched NBT. Main must validate loaded safe arrival in26.1.2.",
+  "travelState": "Human-only at round0/6; preserve scenario; Return remains available"
+}

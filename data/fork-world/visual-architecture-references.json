@@ -1,0 +1,30 @@
+{
+  "schema": "fork-visual-references-1",
+  "checkedUtc": "2026-09-13T04:17:33.854Z",
+  "method": "Owner property page and primary design/news documents; photograph links available but image pixels not retrieved in this worker",
+  "references": [
+    {
+      "id": "capitaspring",
+      "osmWay": 1157548672,
+      "owner": "CapitaLand",
+      "page": "https://www.capitaland.com/en/about-capitaland/newsroom/news-releases/international/2022/feb/CapitaSpring-biophilic-skyscraper-completion.html",
+      "design": "https://www.capitaland.com/content/dam/capitaland-newsroom/International/2022/february/capitaspring-marks-completion/CapitaSpring_Design_Fact_Sheet.pdf",
+      "photo": "https://www.capitaland.com/content/dam/capitaland-newsroom/International/2022/february/capitaspring-marks-completion/Photo3_GreenOasis.jpg",
+      "observations": "Aluminium vertical fins;35m Green Oasis starting100m above ground; rooftop garden;280m source height.",
+      "implemented": "Pale fins, green terrace materials atY100..134, existing roof garden surface.",
+      "notVerified": "Exact fin pitch/profile, photographic match, roof silhouette, existing generator height offsets."
+    },
+    {
+      "id": "capitagreen",
+      "osmWay": 393100853,
+      "owner": "CapitaLand",
+      "page": "https://www.capitaland.com/sg/en/lease/commercial-space-listing/capitagreen.html",
+      "observations": "Glass frontage and vertical planted pockets; crimson petal crown.",
+      "implemented": "Existing in-bounds facade material accents; no crown reconstruction because building crosses bbox.",
+      "notVerified": "Roof form and full building coverage."
+    }
+  ],
+  "rights": "Copyright respective owners; link/reference only. No photograph pixels or external textures distributed.",
+  "geometry": "Original OSM source footprints and every occupied block/column height unchanged.",
+  "court": "Designed gameplay frontage; no authentic business or floorplan claim."
+}

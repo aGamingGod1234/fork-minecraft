@@ -1,0 +1,79 @@
+{
+  "status": "NBT-verified point and path clearance; live camera framing and loaded travel pending Cinematic/Main",
+  "courtEstablishing": {
+    "position": [
+      44.5,
+      7,
+      40.5
+    ],
+    "lookAt": [
+      64,
+      7,
+      32
+    ],
+    "purpose": "Oblique shop frontage then eastward into district, avoiding north-edge pullout"
+  },
+  "districtReveal": {
+    "position": [
+      63.5,
+      14,
+      40.5
+    ],
+    "lookAt": [
+      128,
+      110,
+      30
+    ]
+  },
+  "paths": [
+    {
+      "start": [
+        44.5,
+        7,
+        40.5
+      ],
+      "end": [
+        63.5,
+        14,
+        40.5
+      ],
+      "obstruction": null,
+      "acceptance": "POINT-CLEAR: framing unverified"
+    },
+    {
+      "start": [
+        63.5,
+        14,
+        40.5
+      ],
+      "end": [
+        78.5,
+        45,
+        65.5
+      ],
+      "obstruction": {
+        "point": [
+          77,
+          41.9,
+          63
+        ],
+        "block": "minecraft:mud_bricks"
+      },
+      "acceptance": "REJECTED: do not use this flight segment"
+    }
+  ],
+  "additionalHumanDestination": {
+    "feet": [
+      76.5,
+      1,
+      141.5
+    ],
+    "lookAt": [
+      128,
+      120,
+      30
+    ],
+    "evidence": "3x3 existing paved floor atY0, three air layers verified"
+  },
+  "coverage": "Keep camera inside0..255 X/Z; no full-Singapore geometry claim"
+}
