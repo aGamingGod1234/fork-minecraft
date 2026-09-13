@@ -1,3 +1,4 @@
+export const FORK_PROVIDER_BUDGET_MS = 55_000;
 const ROLES = ['MEDIC', 'ENGINEER', 'COURIER'];
 function exact(value, keys) {
   if (!value || Array.isArray(value) || typeof value !== 'object' || Object.keys(value).sort().join('|') !== [...keys].sort().join('|')) throw new Error('Malformed FORK object');
@@ -13,7 +14,7 @@ export function normalizeForkPacket(type, p) {
   if (JSON.stringify(p).length > 65536) throw new Error('FORK packet too large');
   if (type === 'fork_request') {
     exact(p, ['ticket', 'state', 'budgetMs']); forkTicket(p.ticket);
-    if (p.budgetMs !== 20000 || p.state?.mode !== 'LIVE' || p.state.branch !== p.ticket.branch || p.state.epoch !== p.ticket.epoch || p.state.revision !== p.ticket.baseRevision || p.state.round + 1 !== p.ticket.round) throw new Error('Invalid FORK observation');
+    if (![20_000, FORK_PROVIDER_BUDGET_MS].includes(p.budgetMs) || p.state?.mode !== 'LIVE' || p.state.branch !== p.ticket.branch || p.state.epoch !== p.ticket.epoch || p.state.revision !== p.ticket.baseRevision || p.state.round + 1 !== p.ticket.round) throw new Error('Invalid FORK observation');
   } else if (type === 'fork_cancel') { exact(p, ['epoch']); if (!Number.isSafeInteger(p.epoch) || p.epoch < 0) throw new Error('Invalid cancel epoch'); }
   else if (type === 'fork_batch') {
     if ('error' in p) { exact(p, ['ticket', 'error']); forkTicket(p.ticket); if(typeof p.error !== 'string' || p.error.length>256) throw new Error('Invalid error'); }

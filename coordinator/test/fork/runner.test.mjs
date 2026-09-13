@@ -46,3 +46,48 @@ test('A canary never enters B requests after rewind or runner restart',async()=>
   for(const p of later) assert.ok(!JSON.stringify(p).includes('A-only-canary'));
   assert.equal(new Set(ids).size,9);
 });
+
+test('preparation requests have a bounded 55 second provider budget while legacy 20 second packets remain valid',async()=>{
+  const sent=[],events=[];
+  const service={async createAgent(){return {async setGoalRevision(){},async decide(){return {action:'wait'};}};},async removeAgent(){}};
+  const runner=new ForkRunner(service,(type,p)=>sent.push(p),{budgetMs:99_000,report:e=>events.push(e)});
+  const p={...request(),budgetMs:55_000};
+  await runner.request(p);
+  assert.equal(sent.length,1);
+  assert.equal(events.find(e=>e.stage==='attempt-start').budgetMs,55_000);
+  assert.equal(events.filter(e=>e.stage==='role-stage'&&e.phase==='creating').length,3);
+  assert.equal(events.filter(e=>e.stage==='role-stage'&&e.phase==='deciding').length,3);
+  assert.equal(events.filter(e=>e.stage==='role-proposal').length,3);
+  normalizeForkPacket('fork_request',request());
+  for(const budgetMs of [0,1,54_999,55_001,60_000,NaN,'55000'])assert.throws(()=>normalizeForkPacket('fork_request',{...p,budgetMs}));
+});
+
+test('55 second attempt survives the former 20 second cutoff and reports the unfinished role phase',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const sent=[],events=[];
+  let resolve;
+  const pending=new Promise(r=>resolve=r);
+  const service={async createAgent(profile){return {async setGoalRevision(){},async decide(){if(profile.agentId.endsWith('ENGINEER'))await pending;return {action:'wait'};}};},async removeAgent(){}};
+  const runner=new ForkRunner(service,(type,p)=>sent.push(p),{report:e=>events.push(e)});
+  const task=runner.request({...request(),budgetMs:55_000});
+  await new Promise(resolve=>setImmediate(resolve));
+  t.mock.timers.tick(20_000);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(sent.length,0,'20 seconds must not end a 55 second preparation request');
+  t.mock.timers.tick(34_999);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(sent.length,0);
+  t.mock.timers.tick(1);
+  await task;
+  assert.equal(sent.length,1);
+  assert.equal(sent[0].error,'Whole three-role attempt exceeded 55 seconds');
+  assert.equal(sent[0].intents,undefined);
+  assert.deepEqual(events.find(e=>e.stage==='attempt-error').roles,{MEDIC:'complete',ENGINEER:'deciding',COURIER:'complete'});
+  resolve();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(sent.length,1,'late Engineer proposal must never commit an expired batch');
+});
+
+test('invalid local budget caps fail before any provider calls',()=>{
+  for(const budgetMs of [0,-1,NaN,Infinity,0.5,'55000'])assert.throws(()=>new ForkRunner({},()=>{},{budgetMs}),/Invalid FORK budget/);
+});

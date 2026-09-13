@@ -36,7 +36,7 @@ public final class ForkEngineVerification {
         rejects(() -> e.commit(new Batch(b.ticket(), b.intents().subList(0, 2))));
         check(e.state().equals(initial), "Incomplete commits nothing");
         rejects(() -> e.power(Power.CLINIC));
-        time.set(20_000_000_000L); rejects(() -> e.commit(b));
+        time.set(dev.fork.core.ForkContract.TOTAL_ATTEMPT_SECONDS * 1_000_000_000L); rejects(() -> e.commit(b));
         check(e.state().equals(initial), "Timeout commits nothing");
         var waitTicket = e.begin(); var waitBatch = new Batch(waitTicket, List.of(new Intent(Role.MEDIC,"m","destroy"),new Intent(Role.ENGINEER,"e","wait"),new Intent(Role.COURIER,"c","wait")));
         e.commit(waitBatch); check(e.state().round() == 1 && e.state().charge() == 1 && e.state().repair() == 0, "Illegal/wait passive effects");
@@ -67,7 +67,11 @@ public final class ForkEngineVerification {
         var latest=adapterEngine.state(); adapter.commit(firstBatch);
         check(projected.getLast().equals(latest)&&projected.getLast().round()==2,"Delayed duplicate cannot project round1 over round2");
         var liveClock=new AtomicLong();var live=new ForkEngine(Mode.LIVE,liveClock::get);live.power(Power.CLINIC);
-        live.begin();liveClock.set(20_000_000_000L);rejects(live::begin);live.begin(true);live.cancel();rejects(()->live.begin(true));rejects(live::begin);
+        live.begin();liveClock.set(dev.fork.core.ForkContract.TOTAL_ATTEMPT_SECONDS * 1_000_000_000L);rejects(live::begin);live.begin(true);live.cancel();rejects(()->live.begin(true));rejects(live::begin);
+        var marginClock=new AtomicLong();var margin=new ForkEngine(Mode.LIVE,marginClock::get);margin.power(Power.CLINIC);
+        var marginTicket=margin.begin();marginClock.set((dev.fork.core.ForkContract.TOTAL_ATTEMPT_SECONDS-1)*1_000_000_000L);
+        margin.commit(new Batch(marginTicket,List.of(new Intent(Role.MEDIC,"margin-m","wait"),new Intent(Role.ENGINEER,"margin-e","wait"),new Intent(Role.COURIER,"margin-c","wait"))));
+        check(margin.state().round()==1,"Provider reply may commit within the reserved server grace interval");
         for(var outside:List.of(new ForkCheckpoint.Cell(-1,0,0),new ForkCheckpoint.Cell(16,0,15),new ForkCheckpoint.Cell(0,-1,0),new ForkCheckpoint.Cell(15,16,15),new ForkCheckpoint.Cell(0,0,-1),new ForkCheckpoint.Cell(15,0,16))) {
             var snap=new ForkCheckpoint<>(volume);String key=outside.x()+","+outside.y()+","+outside.z();String before=volume.read(outside.x(),outside.y(),outside.z());world.put(key,"ALTERED");check(!snap.verify(volume),"Each accepted sentinel is checked");world.put(key,before);
         }

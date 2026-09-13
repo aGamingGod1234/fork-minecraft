@@ -68,7 +68,7 @@ test('real coordinator starts and routes a three-role LIVE request while no voic
   assert.equal(bridge.ready,true);
   bridge.emit('ready',{serverInstanceId:'fork-voice-disabled-test',registry:[],connectionEpoch:1});
   await new Promise(resolve=>setImmediate(resolve));
-  const request={ticket:{branch:'LIVE-test',epoch:1,round:1,baseRevision:0,requestId:'request-1'},state:{mode:'LIVE',branch:'LIVE-test',epoch:1,round:0,revision:0},budgetMs:20000};
+  const request={ticket:{branch:'LIVE-test',epoch:1,round:1,baseRevision:0,requestId:'request-1'},state:{mode:'LIVE',branch:'LIVE-test',epoch:1,round:0,revision:0},budgetMs:55000};
   bridge.emit('fork_request',{agentId:'server',connectionEpoch:1,payload:request});
   for(let i=0;i<20&&!bridge.sent.some(m=>m.type==='fork_batch');i++)await new Promise(resolve=>setImmediate(resolve));
   const batch=bridge.sent.find(m=>m.type==='fork_batch');
