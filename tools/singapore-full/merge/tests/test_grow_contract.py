@@ -341,7 +341,7 @@ class GrowContractTests(unittest.TestCase):
         for marker in ({"standaloneStatus": "NOT_STANDALONE"},
                        {"finalAssembledSafeSpawnRequired": True},
                        {"componentSpawnAccepted": False},
-                       {"evidence": {"gateModule": {}}}):
+                       {"evidence": {"gateModule": {"path": "validate-east-world-gate.mjs"}}}):
             for role in (None, "standalone"):
                 gate = {**original, **marker}
                 if role is not None:
@@ -349,6 +349,21 @@ class GrowContractTests(unittest.TestCase):
                 self.write(path, gate)
                 with self.subTest(marker=marker, role=role), self.assertRaisesRegex(GrowContractError, "geometry-only role"):
                     validate_plan({"schemaVersion": 1, "sources": [source], "spawn_source_id": source["id"]})
+
+    def test_direct_cbd_validator_metadata_is_not_component_role(self):
+        source = self.source("direct-cbd", [29696, 29696, 30720, 30720])
+        path = Path(source["structural_gate_path"])
+        gate = json.loads(path.read_text())
+        gate.update(comparedBlocks=402653184, coreBounds=source["core_bounds"],
+                    chunkCount=4096, allocatedChunkCount=6400,
+                    evidence={"gateModule": {"path": "validate-direct-world-gate.mjs", "bytes": 20149,
+                              "sha256": "f21e86106fad75ad892085d9d9213eb3b0dfc2e9833299d049fd430e6bd9ab8c"}})
+        self.write(path, gate)
+        with patch("grow_contract.subprocess.run") as run:
+            result = validate_plan({"schemaVersion": 1, "sources": [source], "spawn_source_id": source["id"]})
+        run.assert_not_called()
+        self.assertEqual(result["expected_chunks"], 4096)
+        self.assertNotIn("role", result["sources"][0])
 
 
 if __name__ == "__main__":

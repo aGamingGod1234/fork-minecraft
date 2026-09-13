@@ -280,10 +280,12 @@ def _structural(gate, writer_hash, outputs, core, source=None, world=None, write
     for name in ("mismatches", "blockMismatches", "occupancyMismatches", "mismatchedCells", "seamMismatchedCells", "heightmapMismatches"):
         if name in gate and (type(gate[name]) is not int or gate[name] != 0):
             raise GrowContractError(f"structural gate reports {name}")
+    gate_module = gate.get("evidence", {}).get("gateModule", {})
+    east_module = Path(gate_module.get("path", "")).name == "validate-east-world-gate.mjs"
     if (gate.get("role") == "assembly-component" or gate.get("standaloneStatus") == "NOT_STANDALONE"
             or gate.get("finalAssembledSafeSpawnRequired") is True
             or gate.get("componentSpawnAccepted") is False
-            or "gateModule" in gate.get("evidence", {})):
+            or east_module):
         # Typed component proof cannot downgrade into the legacy generic path
         # by removing/changing only its role discriminator.
         return _component_role(gate, source, core, world, writer_path)
