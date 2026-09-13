@@ -1,0 +1,5 @@
+{
+  "peakRssBytes": 51023872,
+  "rssBytes": 41730048,
+  "method": "Windows GetProcessMemoryInfo PeakWorkingSetSize"
+}

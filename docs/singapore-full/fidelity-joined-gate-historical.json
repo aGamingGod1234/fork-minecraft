@@ -1,0 +1,33 @@
+{
+    "mismatchedCells":  0,
+    "seamComparedCells":  22020096,
+    "seamSha256":  "A6B5128C97BE923C79D4CCBC5701230B0A737F68C2E326CEDBD16A5FC7F1DC4F",
+    "seamMismatchedCells":  0,
+    "heightmapMismatches":  0,
+    "runtimeLoadAccepted":  false,
+    "fullWorldAccepted":  false,
+    "pipelineResultSha256":  "FEC53D72B363D66D1E58AD33BFBD64016A883B352C5B7272E584620543DB4F56",
+    "createdUtc":  "2026-09-13T08:37:59.6992089Z",
+    "chunkCount":  256,
+    "kind":  "independent-joined-strip-structural-gate",
+    "comparedCells":  25165824,
+    "spawn":  [
+                  29838,
+                  1,
+                  30624
+              ],
+    "joinReceiptSha256":  "4CF3249A8CF0E88118C6C41F61D5B9483A481C594C42439ABD88DDB4A88ACD4A",
+    "spawnClear":  true,
+    "oracleSha256":  "DF561D1269FDBCE61C014952E3A929EC5FC50182C39B183088C6E532D28B2578",
+    "fileHashErrors":  [
+
+                       ],
+    "status":  "PASS",
+    "bounds":  [
+                   29712,
+                   30496,
+                   29968,
+                   30752
+               ],
+    "writerManifestSha256":  "978D2B330E34DE554CCCC4FD680F85421C483C7D3BEFD8DE72ADA2433812747A"
+}

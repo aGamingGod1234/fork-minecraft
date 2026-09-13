@@ -1,0 +1,113 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "way/1359256910",
+      "properties": {
+        "name": "Middle Rocks",
+        "source_osm_url": "https://www.openstreetmap.org/way/1359256910",
+        "country": "MY",
+        "source_pbf_sha256": "01E16A33157689DB74C401F4A6E9204526883369B999E3C92A561AC4A5A78699",
+        "official_citation": "https://geneva-un.mfa.gov.sg/mission-updates/press-20170701-01-jul-2017/",
+        "reason": "Malaysian land inside OSM Singapore maritime administrative geometry",
+        "sampling_rule": "Exclusion covers(point) takes precedence, including its boundary."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.4061055,
+              1.3216084
+            ],
+            [
+              104.4060796,
+              1.3217144
+            ],
+            [
+              104.40603,
+              1.3217355
+            ],
+            [
+              104.4059617,
+              1.3217101
+            ],
+            [
+              104.40595,
+              1.3216422
+            ],
+            [
+              104.406023,
+              1.3216088
+            ],
+            [
+              104.4061055,
+              1.3216084
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1359256911",
+      "properties": {
+        "name": "Middle Rocks",
+        "source_osm_url": "https://www.openstreetmap.org/way/1359256911",
+        "country": "MY",
+        "source_pbf_sha256": "01E16A33157689DB74C401F4A6E9204526883369B999E3C92A561AC4A5A78699",
+        "official_citation": "https://geneva-un.mfa.gov.sg/mission-updates/press-20170701-01-jul-2017/",
+        "reason": "Malaysian land inside OSM Singapore maritime administrative geometry",
+        "sampling_rule": "Exclusion covers(point) takes precedence, including its boundary."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.4096283,
+              1.3215123
+            ],
+            [
+              104.4095321,
+              1.3212799
+            ],
+            [
+              104.4096203,
+              1.3211196
+            ],
+            [
+              104.4097165,
+              1.3209993
+            ],
+            [
+              104.409925,
+              1.3210314
+            ],
+            [
+              104.4101255,
+              1.3211276
+            ],
+            [
+              104.4101575,
+              1.32136
+            ],
+            [
+              104.4100373,
+              1.3216166
+            ],
+            [
+              104.4098128,
+              1.3216005
+            ],
+            [
+              104.4096283,
+              1.3215123
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

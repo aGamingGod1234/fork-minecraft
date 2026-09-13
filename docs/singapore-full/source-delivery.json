@@ -1,0 +1,31 @@
+{
+    "excludedOperationalFiles":  [
+                                     "docs/singapore-full/plan.html",
+                                     "docs/singapore-full/fidelity-coverage-benchmarks-measured.json",
+                                     "docs/singapore-full/fidelity-coverage-historical-joined-structural.json",
+                                     "docs/singapore-full/fidelity-coverage-historical-raw-mask.json",
+                                     "docs/singapore-full/fidelity-coverage-measured.json",
+                                     "docs/singapore-full/fidelity-coverage-runs-controls-exact.json",
+                                     "docs/singapore-full/fidelity-coverage-runs-controls-negative.json",
+                                     "tools/singapore-full/pipeline-grow-review.patch",
+                                     "tools/singapore-full/pipeline-launch-pilot.ps1",
+                                     "tools/singapore-full/pipeline-launch-roads.ps1",
+                                     "tools/singapore-full/pipeline-repair-pilot.ps1",
+                                     "tools/singapore-full/pipeline-snapshot.mjs",
+                                     "tools/singapore-full/merge/grow_job.py",
+                                     "tools/singapore-full/merge/grow_runtime_run.py",
+                                     "tools/singapore-full/seam-extent.test.mjs",
+                                     "tools/singapore-full/merge/tests/test_streaming_equivalence.py"
+                                 ],
+    "snapshot":  "1fdd298",
+    "repositoryDependency":  {
+                                 "unchangedFromPublicBase":  "e32d9c6",
+                                 "path":  "tools/fork-world/nbt-region.mjs"
+                             },
+    "historicalArchive":  "tools/singapore-full/preview-lim-chu-kang-1024/manifest.json",
+    "notes":  [
+                  "No generator behavior changes from snapshot.",
+                  "roads-adapter.md uses a generic Python command.",
+                  "Archived source bytes are preserved with -text attributes."
+              ]
+}

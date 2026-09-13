@@ -1,0 +1,327 @@
+{
+  "schemaVersion": 1,
+  "description": "Historical first-party generating and crop/runtime modules for the released Lim Chu Kang preview. Original bytes; no raw data, job records, native dependencies or worlds.",
+  "currentSourceSnapshot": "1fdd298b1a33dfa26f32d07e61173d869e7c592f",
+  "package": {
+    "filename": "FORK-Lim-Chu-Kang-1024.zip",
+    "sha256": "bc2d1ac5a24a066d7091d4b7ff93e90e84e12b60f19004b8079693f1c6b6e7ae",
+    "bytes": 1747503
+  },
+  "source": {
+    "subsetSha256": "dcea9db0b6a1060d799fd3e958eefc7510a0896553cfab7ca7b3f55d203a0b5d",
+    "subsetBytes": 3827840,
+    "nationalExtractSha256": "9fdaf1f6dcf3629a3dfaaac24d5837f03f97bbfea59fe7875d2c221b3ae21d0d"
+  },
+  "receiptSha256": "e13f8705d0495f719a5d15f90a270869df75048b4b8f8b812168cf9c97bb4fd8",
+  "coreBoundsXZ": [
+    13312,
+    13312,
+    14336,
+    14336
+  ],
+  "renderBoundsXZ": [
+    13184,
+    13184,
+    14464,
+    14464
+  ],
+  "files": [
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-adapter.mjs",
+      "originalSha256": "98e6d9288183ef1696022feb29852e98fe348373dab6eadf14f4a7fc75c75487",
+      "bytes": 15133,
+      "currentPath": "tools/singapore-full/pipeline-adapter.mjs",
+      "currentGitBlobSha256": "98e6d9288183ef1696022feb29852e98fe348373dab6eadf14f4a7fc75c75487",
+      "comparison": "exact"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-job-policy.mjs",
+      "originalSha256": "076b623abab8e9e81651195b22659f709e836ea6e35fb8e0eaf510024cccce40",
+      "bytes": 3121,
+      "currentPath": "tools/singapore-full/pipeline-job-policy.mjs",
+      "currentGitBlobSha256": "076b623abab8e9e81651195b22659f709e836ea6e35fb8e0eaf510024cccce40",
+      "comparison": "exact"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-features.mjs",
+      "originalSha256": "aaeccadd814e14dd94faa7780c45acdb30104c86486cd51281cfebbe56d974b7",
+      "bytes": 10970,
+      "currentPath": "tools/singapore-full/pipeline-features.mjs",
+      "currentGitBlobSha256": "d8154f633e28375c2ba1e3e708e59471ef771c6ad83dc96d9ede3217dda087e6",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline.mjs",
+      "originalSha256": "93171cd874c98c9dff49620c8e7906b131d6a183f2a1ee8a396af46da26ad084",
+      "bytes": 13464,
+      "currentPath": "tools/singapore-full/pipeline.mjs",
+      "currentGitBlobSha256": "93171cd874c98c9dff49620c8e7906b131d6a183f2a1ee8a396af46da26ad084",
+      "comparison": "exact"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-node-projection.mjs",
+      "originalSha256": "2ff95efdeac448053c763ee13bb8ee41af72daede854032ec1de871dc701a44f",
+      "bytes": 1857,
+      "currentPath": "tools/singapore-full/pipeline-node-projection.mjs",
+      "currentGitBlobSha256": "2b81f11f73ca36fefb65cc937b99e58b8e49c672610627306099d0bb49952113",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-roads.py",
+      "originalSha256": "0b117f3442bb39a40922385d312ec7b28c4738ba9987c61b86dcc2c6a563ac19",
+      "bytes": 6868,
+      "currentPath": "tools/singapore-full/pipeline-roads.py",
+      "currentGitBlobSha256": "270c689f8808ff492e04b43ac198d7eac80b9d21c23430ce6f5ff6a38a657de6",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-mask-runs.py",
+      "originalSha256": "32bd825750ad5b00dcdfeeea58f9c088325aecf57bb43079d4000aec87abc9f0",
+      "bytes": 8263,
+      "currentPath": "tools/singapore-full/pipeline-mask-runs.py",
+      "currentGitBlobSha256": "f3431d97c2491c39f29a470ae9f9578b047088e1d57991c1bf49b79a87e88721",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-package.json",
+      "originalSha256": "ae0a4785f1dbea34cd18f5e3fc1ef0259eb083332196095f84c8f85b082c8452",
+      "bytes": 50,
+      "currentPath": "tools/singapore-full/pipeline-package.json",
+      "currentGitBlobSha256": "ae0a4785f1dbea34cd18f5e3fc1ef0259eb083332196095f84c8f85b082c8452",
+      "comparison": "exact"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/pipeline-package-lock.json",
+      "originalSha256": "770af72bade25d0b8eedb1eb5eed5f74936651342c1159968f92b3104e1e4ea2",
+      "bytes": 1420,
+      "currentPath": "tools/singapore-full/pipeline-package-lock.json",
+      "currentGitBlobSha256": "770af72bade25d0b8eedb1eb5eed5f74936651342c1159968f92b3104e1e4ea2",
+      "comparison": "exact"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/buildings/facades.py",
+      "originalSha256": "27721e7ceb0a2a67a0aa5808a5625aa9cedca5be7472c861d63fcdfeb241722b",
+      "bytes": 12578,
+      "currentPath": "tools/singapore-full/buildings/facades.py",
+      "currentGitBlobSha256": "5ca1ad464a973ce23242f24d240c499b58d81163d287be28e68479fce49a8b57",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/buildings/footprints.py",
+      "originalSha256": "cd235b5abee962970f8d1d3008fae5398568827aa3b0168db76ca35fb6029126",
+      "bytes": 14036,
+      "currentPath": "tools/singapore-full/buildings/footprints.py",
+      "currentGitBlobSha256": "c7e66f9464a0faf0a38a00eb947bcb6c7788ff34d3640ace6cb8c9a3f461fc92",
+      "comparison": "code-changed"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/buildings/parts.py",
+      "originalSha256": "b3a1b1e751ed781a693cd38197d2fa9ceed864025cfde6ad537f6f451c6798f8",
+      "bytes": 12562,
+      "currentPath": "tools/singapore-full/buildings/parts.py",
+      "currentGitBlobSha256": "51097421d6bc773787f3f92b5cae778606bfab32bfa1d022bb5c1f963d3bb473",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/buildings/renderer.py",
+      "originalSha256": "434747b15eeacd914dd9fd85d82907a30396095e3e0239bbf8a86ef579c478aa",
+      "bytes": 16982,
+      "currentPath": "tools/singapore-full/buildings/renderer.py",
+      "currentGitBlobSha256": "08f119fdf11fa869547ae5168a634b93fc9ba17c3e8a35ccdbf7c534cb3488ba",
+      "comparison": "code-changed"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/buildings/stream_renderer.py",
+      "originalSha256": "45c91178c9720302e0eb216bf7591b91dcfcc4bf568c2cb2f7f616c72e2f633a",
+      "bytes": 11215,
+      "currentPath": "tools/singapore-full/buildings/stream_renderer.py",
+      "currentGitBlobSha256": "3322ce10e325a27c67850468522e5b86d3c341894ced8b0f726af1d718a30730",
+      "comparison": "code-changed"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/osm_adapter.py",
+      "originalSha256": "bfe4ab698e87c3e53db7e1460bb9d815995e0270ad7b97ae2f080f82097d1149",
+      "bytes": 10291,
+      "currentPath": "tools/singapore-full/roads/osm_adapter.py",
+      "currentGitBlobSha256": "cd73bfb1bdd0c751c210ace1c3775777e7dc89649f416af0eaf3bc967175245c",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/road_raster.py",
+      "originalSha256": "7730ecde88305d69425a57c94b662b1e4abd63ae41f155589b317515e786b8d9",
+      "bytes": 8621,
+      "currentPath": "tools/singapore-full/roads/road_raster.py",
+      "currentGitBlobSha256": "f31038a0cf750ce3fec2e6ff94efbfd66a0c4469e33792b12a2f73d86ed171b9",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/runs.py",
+      "originalSha256": "52ab87f198bf90709c8b438cdb138d9f570d182d26a73492486e5c221d2638b6",
+      "bytes": 11570,
+      "currentPath": "tools/singapore-full/roads/runs.py",
+      "currentGitBlobSha256": "eb9eedcab05774e3b6bcbabf1caa45fbf90967fc627d4aa783815077dab82ec2",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/topology.py",
+      "originalSha256": "a2ade4d4fe7d1b546380ce98ada359838ed00277a1ccda03d8a4b55fb28ca161",
+      "bytes": 20296,
+      "currentPath": "tools/singapore-full/roads/topology.py",
+      "currentGitBlobSha256": "d88331fd776b92db26ae2fe52ce1a6d104c1723c84fcc658185b3e3a490e4925",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/water_landuse.py",
+      "originalSha256": "e3dc7f158a7db25d93b28f76193971ac008ad41eea5dcf0f2218712bfdbfcf7e",
+      "bytes": 10842,
+      "currentPath": "tools/singapore-full/roads/water_landuse.py",
+      "currentGitBlobSha256": "c0275804c92a1321cc34faa0e44de520df917acc49fdf089d9f61dd074ad7d44",
+      "comparison": "code-changed"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/roads/__init__.py",
+      "originalSha256": "97226639f3117e27c171cd7e099695cfb1f1026fe5f874cded1512b4d7dfc6a8",
+      "bytes": 519,
+      "currentPath": "tools/singapore-full/roads/__init__.py",
+      "currentGitBlobSha256": "225a0be440e89bb30a75fb6aa867626aecde6923f50a9b63306022dffc4fb647",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/merge/anvil.py",
+      "originalSha256": "d8d5af3257d26181330bb22240f79e6d27bca397a6002d230021a2c01bd369dd",
+      "bytes": 26296,
+      "currentPath": "tools/singapore-full/merge/anvil.py",
+      "currentGitBlobSha256": "2d12fc2ebfcb3f4c65c5fc8bb70d30406159453dc6a60c9d7ff5b71bb01de805",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/merge/overlay.py",
+      "originalSha256": "014b25a8b99f58b113f6fcb29c4427949fd93d854d1a1cf0f7c4a0088591d7a0",
+      "bytes": 28376,
+      "currentPath": "tools/singapore-full/merge/overlay.py",
+      "currentGitBlobSha256": "901fc8571e9326f20b11f8825be5f353aac79abba76c59f24a1269a028d74ab8",
+      "comparison": "code-changed"
+    },
+    {
+      "phase": "generation",
+      "path": "generation/merge/run_spool.py",
+      "originalSha256": "252a2469c5d301b9d5641159c80b195a3b0feb552efeba9fb3c2657b8bdc8823",
+      "bytes": 6144,
+      "currentPath": "tools/singapore-full/merge/run_spool.py",
+      "currentGitBlobSha256": "a15da48b1c29ff5ca8dfae2dee3cb6409dd79aaa195b9e395c813ca00562dd14",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/anvil.py",
+      "originalSha256": "d8d5af3257d26181330bb22240f79e6d27bca397a6002d230021a2c01bd369dd",
+      "bytes": 26296,
+      "currentPath": "tools/singapore-full/merge/anvil.py",
+      "currentGitBlobSha256": "2d12fc2ebfcb3f4c65c5fc8bb70d30406159453dc6a60c9d7ff5b71bb01de805",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow.py",
+      "originalSha256": "abd4a388d6cc7c65b1a27ef910401703296e4b3582e8a39d86aeb47283dfc813",
+      "bytes": 7967,
+      "currentPath": "tools/singapore-full/merge/grow.py",
+      "currentGitBlobSha256": "abd4a388d6cc7c65b1a27ef910401703296e4b3582e8a39d86aeb47283dfc813",
+      "comparison": "exact"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow_contract.py",
+      "originalSha256": "f5d33cc34476490a47882e75a1b8200b772cda3fe8edd518064a07b3364c2b55",
+      "bytes": 23420,
+      "currentPath": "tools/singapore-full/merge/grow_contract.py",
+      "currentGitBlobSha256": "ace9afeeabc23738f92b422355101f97b70b637e02a83ed88bc2ecb9ead72238",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow_receipt.py",
+      "originalSha256": "e51ea73ee9b505107a5238c66cb829c46766d0add7f780fb2ae7e509ea118f63",
+      "bytes": 13606,
+      "currentPath": "tools/singapore-full/merge/grow_receipt.py",
+      "currentGitBlobSha256": "24d620b552afd95ed4ae5c1052007b523ecc5c2541153e158d71843ee7fb329f",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow_regions.py",
+      "originalSha256": "d3192aa174ac009a41feecc88ff6723b3c78c0bfc7a5288c47e3dbb8066e877c",
+      "bytes": 9082,
+      "currentPath": "tools/singapore-full/merge/grow_regions.py",
+      "currentGitBlobSha256": "8f3ea7097ea7e1fd3e1616f6ec33e0f115ac906d92b5fa073091728d3188daf0",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/package.py",
+      "originalSha256": "dbcce096986fb1808f357c6a70ce76ed79fd442043c6ab18c89205b4031d007f",
+      "bytes": 16162,
+      "currentPath": "tools/singapore-full/merge/package.py",
+      "currentGitBlobSha256": "9409f140e39332fca0cd7ec2b5f51efeea1e7f35fa34f0a4681295851724cf45",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/runtime_receipt.py",
+      "originalSha256": "a7bb74e627df644df872bdaefa7592be138a675509e8e6b351d00f126615eece",
+      "bytes": 12646,
+      "currentPath": "tools/singapore-full/merge/runtime_receipt.py",
+      "currentGitBlobSha256": "77f57b94bd0b7f173d70fe0978deb30568e9eb1ccebb0ae0cba20df0fab48e75",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow_runtime.py",
+      "originalSha256": "f22de422115c238581707957afdcfcd6b266118716b4facbed1097e319ff4484",
+      "bytes": 14457,
+      "currentPath": "tools/singapore-full/merge/grow_runtime.py",
+      "currentGitBlobSha256": "302f619d88e39f9c15ec254981dcbf446357288e702a1745cd450682737e0df3",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/grow_sentinels.py",
+      "originalSha256": "1aa92930206ef616d9d0f849cb3b9119392af91c92fc733fd8f67eede93ceab1",
+      "bytes": 9465,
+      "currentPath": "tools/singapore-full/merge/grow_sentinels.py",
+      "currentGitBlobSha256": "26b78817b79af1650a1f33dce37695c5316c6c249fbf16aa5d844c38fef4a0d9",
+      "comparison": "line-endings-only"
+    },
+    {
+      "phase": "assembly",
+      "path": "assembly/runtime_check.py",
+      "originalSha256": "d729015607ccbbee41797bba96d9a99a27769d6fb64575e9b896354dd338c3ca",
+      "bytes": 16219,
+      "currentPath": "tools/singapore-full/merge/runtime_check.py",
+      "currentGitBlobSha256": "d729015607ccbbee41797bba96d9a99a27769d6fb64575e9b896354dd338c3ca",
+      "comparison": "exact"
+    }
+  ]
+}

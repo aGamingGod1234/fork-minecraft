@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "kind": "fork-experimental-benchmark-job-spec-preparation",
+  "status": "PREPARED_NOT_DISPATCHABLE",
+  "generationDispatched": false,
+  "admissionScope": "pilot-policy",
+  "administrativeJobCount": 1716,
+  "landIntersectingJobs": null,
+  "waterOnlyJobs": null,
+  "resourceLease": null,
+  "requiredBeforeDispatch": [
+    "Frozen immutable adapter jobs/settings/generator artifact hashes",
+    "PASS focused roads-v2 and streaming semantic proofs",
+    "Coordinator-frozen gate allowlisting these three cases",
+    "Source export Slot A released and explicit benchmark Slot A lease issued"
+  ],
+  "measurement": {
+    "cpu": "Windows Job Object includes descendants after root exit",
+    "wall": "Through last descendant exit",
+    "rss": "50 ms non-atomic owned-tree working-set sampling",
+    "peakCommit": "Windows Job Object aggregate peak commit",
+    "disk": "Isolated output logical file bytes"
+  },
+  "cases": [
+    {
+      "id": "dense-cbd",
+      "class": "dense",
+      "coreOrigin": [
+        29696,
+        29696
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "sourcePathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/dense-cbd-x29696-z29696-s1024-h128.json",
+      "sourceReceiptPathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/dense-cbd-x29696-z29696-s1024-h128.json.manifest.json",
+      "jobSpecification": null,
+      "approvedArgv": null,
+      "generatorArtifacts": null,
+      "sourceInventorySha256": "cbd4f95f0f9e5b1df9b9cce6ed58ce24ccdabe92a98c4250c922f4f018ab7d18",
+      "settingsSha256": null,
+      "measurementReportRelativeToPrivateRoot": "benchmarks/1024-v1/dense-cbd",
+      "status": "PREPARED_NOT_DISPATCHABLE",
+      "representativeEvidence": "CBD source selection; actual density/feature counts await export receipt",
+      "independentValidationRequired": true,
+      "productionAccepted": false,
+      "sourceSha256": "1f63db64bd9fecdd0c6d15beb7de9d882df4d6841379d456f6be61de9dc55bac",
+      "sourceBytes": 5545981,
+      "sourceElementCounts": {
+        "node": 52488,
+        "relation": 447,
+        "way": 4578
+      },
+      "sourceReferenceComplete": true
+    },
+    {
+      "id": "rural-lim-chu-kang",
+      "class": "rural",
+      "coreOrigin": [
+        13312,
+        13312
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "sourcePathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/rural-lim-chu-kang-x13312-z13312-s1024-h128.json",
+      "sourceReceiptPathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/rural-lim-chu-kang-x13312-z13312-s1024-h128.json.manifest.json",
+      "jobSpecification": null,
+      "approvedArgv": null,
+      "generatorArtifacts": null,
+      "sourceInventorySha256": "7894c5414cce7666d7cd2609a78cf9985e292688763ad7801a93929cbe0f8c7b",
+      "settingsSha256": null,
+      "measurementReportRelativeToPrivateRoot": "benchmarks/1024-v1/rural-lim-chu-kang",
+      "status": "PREPARED_NOT_DISPATCHABLE",
+      "representativeEvidence": "Lim Chu Kang source selection; representative rural status requires source review",
+      "independentValidationRequired": true,
+      "productionAccepted": false,
+      "sourceSha256": "dcea9db0b6a1060d799fd3e958eefc7510a0896553cfab7ca7b3f55d203a0b5d",
+      "sourceBytes": 3827840,
+      "sourceElementCounts": {
+        "node": 41876,
+        "relation": 415,
+        "way": 2203
+      },
+      "sourceReferenceComplete": true
+    },
+    {
+      "id": "coast-changi",
+      "class": "coast",
+      "coreOrigin": [
+        45056,
+        18432
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "sourcePathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/coast-changi-x45056-z18432-s1024-h128.json",
+      "sourceReceiptPathRelativeToPrivateRoot": "index/9fdaf1f6dcf3629a-v1/benchmark-1024-v1/coast-changi-x45056-z18432-s1024-h128.json.manifest.json",
+      "jobSpecification": null,
+      "approvedArgv": null,
+      "generatorArtifacts": null,
+      "sourceInventorySha256": "617fbacec36b76b23fdf1f0680da8739fdc5d536e17526c432fa4b519e4c34d0",
+      "settingsSha256": null,
+      "measurementReportRelativeToPrivateRoot": "benchmarks/1024-v1/coast-changi",
+      "status": "PREPARED_NOT_DISPATCHABLE",
+      "representativeEvidence": "Changi coastal selection; land/water fractions and water-only policy unknown",
+      "independentValidationRequired": true,
+      "productionAccepted": false,
+      "sourceSha256": "5dc2b60b7b3b196a59a30e6a09a145f3c376d5748aed77a403824463641d7e6b",
+      "sourceBytes": 3931618,
+      "sourceElementCounts": {
+        "node": 41893,
+        "relation": 412,
+        "way": 2563
+      },
+      "sourceReferenceComplete": true
+    }
+  ],
+  "sourceExportsComplete": true
+}

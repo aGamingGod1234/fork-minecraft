@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-13",
+  "coordinatePolicy": {
+    "horizontal": "EPSG:4326 source longitude/latitude",
+    "outputScale": "1 Minecraft block per metre",
+    "selectionBboxWgs84": [
+      103.55,
+      1.12,
+      104.58,
+      1.52
+    ],
+    "selectionIsSovereignBoundary": false,
+    "administrativeMask": "OSM relation536780 represents administrative/maritime geometry, not sovereign-land proof. It includes Malaysia's Middle Rocks inside an eastern maritime component; explicit foreign-land exclusion and independent land-scope gates are required.",
+    "vertical": "Keep each source datum explicit. Never reinterpret height controls as observed heights."
+  },
+  "sources": [
+    {
+      "id": "osm-geofabrik-260912",
+      "download": true,
+      "filename": "malaysia-singapore-brunei-260912.osm.pbf",
+      "url": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-260912.osm.pbf",
+      "landingUrl": "https://download.geofabrik.de/asia/malaysia-singapore-brunei.html",
+      "bytes": 250727913,
+      "sha256": "01e16a33157689db74c401f4a6e9204526883369b999e3c92a561ac4a5a78699",
+      "md5": "f0ac6246e2b42583697d316a205931d9",
+      "checksumUrl": "https://download.geofabrik.de/asia/malaysia-singapore-brunei-260912.osm.pbf.md5",
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://www.openstreetmap.org/copyright",
+      "attribution": "OpenStreetMap contributors, ODbL 1.0. Extract from Geofabrik.",
+      "coverage": "Malaysia, Singapore and Brunei regional extract. Must mask output to Singapore.",
+      "classes": {
+        "footprints": "mapped where OSM exists",
+        "roads": "mapped centrelines/geometry; width often inferred",
+        "coastline": "mapped, dates vary",
+        "buildingHeight": "mapped explicit height; inferred from levels; missing otherwise",
+        "facades": "missing except partial material/colour tags",
+        "terrain": "missing from this source"
+      },
+      "datum": "WGS84 horizontal; building height is relative base-to-top and not elevation above sea level",
+      "acquired": true
+    },
+    {
+      "id": "copernicus-glo30-n01-e103",
+      "download": true,
+      "filename": "Copernicus_DSM_COG_10_N01_00_E103_00_DEM.tif",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N01_00_E103_00_DEM/Copernicus_DSM_COG_10_N01_00_E103_00_DEM.tif",
+      "landingUrl": "https://registry.opendata.aws/copernicus-dem/",
+      "license": "Copernicus DEM free licence with attribution",
+      "licenseUrl": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+      "coverageBboxWgs84": [
+        103,
+        1,
+        104,
+        2
+      ],
+      "nativeResolution": "1 arcsecond, approximately 30m; 2021 public AWS release",
+      "datum": "WGS84-G1150 / EGM2008 vertical metres",
+      "classes": {
+        "surfaceElevation": "mapped DSM at native resolution",
+        "bareTerrain": "inferred if filtering buildings/vegetation; not 1m surveyed DTM",
+        "buildingHeight": "not suitable to infer individual exact heights",
+        "facades": "missing"
+      },
+      "attribution": "Produced using Copernicus WorldDEM-30; retain the full publisher notice before distributing derived terrain.",
+      "bytes": 31871871,
+      "sha256": "fe2cf9dbc8a06ac328fb6d3d11a3764adac203e91adfae6cb066e07390480417",
+      "acquired": true
+    },
+    {
+      "id": "copernicus-glo30-n01-e104",
+      "download": true,
+      "filename": "Copernicus_DSM_COG_10_N01_00_E104_00_DEM.tif",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_N01_00_E104_00_DEM/Copernicus_DSM_COG_10_N01_00_E104_00_DEM.tif",
+      "landingUrl": "https://registry.opendata.aws/copernicus-dem/",
+      "license": "Copernicus DEM free licence with attribution",
+      "licenseUrl": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
+      "coverageBboxWgs84": [
+        104,
+        1,
+        105,
+        2
+      ],
+      "nativeResolution": "1 arcsecond, approximately 30m; 2021 public AWS release",
+      "datum": "WGS84-G1150 / EGM2008 vertical metres",
+      "classes": {
+        "surfaceElevation": "mapped DSM at native resolution",
+        "bareTerrain": "inferred if filtering buildings/vegetation; not 1m surveyed DTM",
+        "buildingHeight": "not suitable to infer individual exact heights",
+        "facades": "missing"
+      },
+      "attribution": "Produced using Copernicus WorldDEM-30; retain the full publisher notice before distributing derived terrain.",
+      "bytes": 12044289,
+      "sha256": "b33db33b7610096f6eff53d3662513ff12e71837d86682490ca094de189b3d08",
+      "acquired": true
+    },
+    {
+      "id": "ura-height-controls",
+      "download": false,
+      "url": "https://data.gov.sg/datasets/d_22899c44540ff47fa67ff0fc756950ee/view",
+      "license": "Singapore Open Data Licence",
+      "status": "Excluded as height truth",
+      "reason": "Planning controls, not measured existing heights. Dataset page says superseded by DMP25 June 2025."
+    },
+    {
+      "id": "onemap",
+      "download": false,
+      "url": "https://www.onemap.gov.sg/apidocs/",
+      "status": "Inventory only; no access-dependent fetch attempted",
+      "reason": "Authoritative map APIs require registered token for search. API availability does not grant 3D model extraction or texture reuse."
+    },
+    {
+      "id": "worldcover-2021-v200",
+      "download": false,
+      "url": "https://esa-worldcover.org/en/data-access",
+      "license": "CC-BY-4.0",
+      "status": "Arnis accessed one header and one raster-tile cache fragment",
+      "fullIslandCoverageVerified": false,
+      "evidence": "data-provenance.json",
+      "nativeResolutionMetres": 10,
+      "classes": {
+        "landCover": "mapped raster classification at native resolution",
+        "exactCoastline": "not established by raster cells",
+        "trees": "individual tree positions not supplied"
+      }
+    }
+  ],
+  "artifacts": {
+    "acceptedFeatureExtract": {
+      "cachePath": "singapore-masked-260912-v4/singapore-overpass.json",
+      "bytes": 292186106,
+      "sha256": "9fdaf1f6dcf3629a3dfaaac24d5837f03f97bbfea59fe7875d2c221b3ae21d0d",
+      "objectReferencesComplete": true,
+      "landScopeVerified": false
+    },
+    "sourceAdministrativeMask": {
+      "cachePath": "mask-260912/singapore-admin-mask.geojson",
+      "sha256": "5783cb68a03f3dcae77baf8c37ce96222944c03024007df45a627900d9d61978",
+      "components": 3,
+      "semantics": "OSM maritime-inclusive geometry; not land area or sovereignty adjudication"
+    },
+    "coverageJobs": {
+      "cachePath": "coverage-260912/country-jobs.json",
+      "plannedCores": 1716,
+      "coreSize": 1024,
+      "halo": 128,
+      "generatedCores": 0,
+      "verifiedCores": 0,
+      "waterInclusive": true
+    },
+    "heightInventory": {
+      "cachePath": "height-audit/masked-v4/building-heights.jsonl",
+      "bytes": 48773204,
+      "sha256": "4504f41a1cd0ca11801b44075f21767eca2abc8e62254d5a9f9a3c358493e50b",
+      "classificationCounts": {
+        "mapped-valid-explicit": 3829,
+        "inferred-levels": 38913,
+        "missing": 90115,
+        "invalid": 1877
+      },
+      "objectCount": 134734
+    },
+    "correctedAdministrativeMask": {
+      "repositoryPath": "docs/singapore-full/data-mask-audit.derived.geojson",
+      "sha256": "aa88ef3ad093817290ca48180fd21d00d1532fdfe89e9a10dab8fac3006676d1",
+      "exclusionsSha256": "ec62589d40215c460635ad7523c803dcd1597cf935be928dc6340b597d7b46af",
+      "independentAuditSha256": "4f5388f35d197f50b63617ad886d88a33830dd0b6e7beb573fbe9c79fef7954e",
+      "negativeControls": "PASS: both Middle Rocks interiors and boundary points excluded; Pedra Branca retained",
+      "landScopeVerified": false,
+      "limitation": "Renderer adapter still must apply exclusion.covers precedence. South Ledge sovereignty unverified. Administrative waters are not land."
+    },
+    "correctedCoverageJobs": {
+      "cachePath": "coverage-derived-260912/country-jobs.json",
+      "sha256": "68b2b048c7420c03494c27188f7783435e3382e2562c7299e73c9dcf0376fbe1",
+      "plannedCores": 1716,
+      "coreSize": 1024,
+      "halo": 128,
+      "generatedCores": 0,
+      "verifiedCores": 0,
+      "waterInclusive": true,
+      "areaSumCheckPass": true
+    }
+  }
+}

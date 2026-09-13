@@ -1,0 +1,99 @@
+﻿{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "root": "data",
+      "path": "Copernicus_DSM_COG_10_N01_00_E103_00_DEM.tif",
+      "pass": true,
+      "bytes": 31871871,
+      "sha256": "fe2cf9dbc8a06ac328fb6d3d11a3764adac203e91adfae6cb066e07390480417"
+    },
+    {
+      "root": "data",
+      "path": "copernicus-glo30-n01-e103.receipt.json",
+      "pass": true,
+      "bytes": 981,
+      "sha256": "ccabf97cf27ba72a1aa1aa1f05a4f234599b4c5149ac7af90ebe358e23160064"
+    },
+    {
+      "root": "data",
+      "path": "Copernicus_DSM_COG_10_N01_00_E104_00_DEM.tif",
+      "pass": true,
+      "bytes": 12044289,
+      "sha256": "b33db33b7610096f6eff53d3662513ff12e71837d86682490ca094de189b3d08"
+    },
+    {
+      "root": "data",
+      "path": "copernicus-glo30-n01-e104.receipt.json",
+      "pass": true,
+      "bytes": 981,
+      "sha256": "9f6cf7c7594eb6737cbf38c17ff447ada91cb934d22d29ff535c2754f2e80a5c"
+    },
+    {
+      "root": "data",
+      "path": "malaysia-singapore-brunei-260912.osm.pbf",
+      "pass": true,
+      "bytes": 250727913,
+      "sha256": "01e16a33157689db74c401f4a6e9204526883369b999e3c92a561ac4a5a78699"
+    },
+    {
+      "root": "data",
+      "path": "osm-geofabrik-260912.receipt.json",
+      "pass": true,
+      "bytes": 409,
+      "sha256": "c8dd97e8cbf7a3ef6bb4d525aeb63c39270ce7d3f9f2c825c1db1557d80fc558"
+    },
+    {
+      "root": "license",
+      "path": "ODbL-1.0.html",
+      "pass": true,
+      "bytes": 51971,
+      "sha256": "b6a2f85037826ea3d4b637f876ef240d9e6bdfe0678f2dd195b046b21adaff4d"
+    },
+    {
+      "root": "license",
+      "path": "Copernicus-GLO30-Public.pdf",
+      "pass": true,
+      "bytes": 113786,
+      "sha256": "9cd37d37ea654bbcaf0a2e059e6a3a5b5f76072824d8dd860ccf274ada8951bd"
+    },
+    {
+      "root": "license",
+      "path": "ESA-WorldCover-data-access.html",
+      "pass": true,
+      "bytes": 50661,
+      "sha256": "28650c6fcbb3082d5b8eab4e3f5634a32a45fc4feb8a11ecb502973fa2691aff"
+    },
+    {
+      "root": "license",
+      "path": "CC-BY-4.0.txt",
+      "pass": true,
+      "bytes": 18657,
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    },
+    {
+      "root": "license",
+      "path": "NOTICE.txt",
+      "pass": true,
+      "bytes": 1707,
+      "sha256": "c9f6b5bf1ab06f4f3dc7c6c2ed01e9e461c9b96f384f7ce5fe8274eeae53620f"
+    },
+    {
+      "root": "landcover",
+      "path": "ESA_WorldCover_10m_2021_v200_N00E102_Map_header.bin",
+      "pass": true,
+      "bytes": 65536,
+      "sha256": "eb5e106b0a851a79ebe25c3bd3a1e32caaf8259872d4e86f67e537a35084b018"
+    },
+    {
+      "root": "landcover",
+      "path": "ESA_WorldCover_10m_2021_v200_N00E102_Map_tile_21_20.bin",
+      "pass": true,
+      "bytes": 44029,
+      "sha256": "bc5989d5176d60e020454a269da83ce693aa1f2d143cdd2beaaecc25fcd2c973"
+    }
+  ],
+  "pass": true,
+  "worldcoverFullIslandCoverageVerified": false,
+  "meaning": "Recorded byte identity only; not a coverage or legal-clearance certificate"
+}

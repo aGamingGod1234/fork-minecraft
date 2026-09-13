@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Singapore measured benchmark configuration",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "mode",
+    "resourceLease",
+    "cases"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "mode": {
+      "const": "real"
+    },
+    "admissionEvidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "admissionEvidenceSha256": {
+      "$ref": "#/$defs/sha"
+    },
+    "seamEvidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seamEvidenceSha256": {
+      "$ref": "#/$defs/sha"
+    },
+    "administrativeJobCount": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1716
+    },
+    "resourceLease": {
+      "type": "object",
+      "required": [
+        "id",
+        "approvedBy",
+        "machine",
+        "heavyJobSlot",
+        "startsUtc",
+        "expiresUtc",
+        "maxCores",
+        "maxMemoryBytes",
+        "reservedCores",
+        "reservedMemoryBytes"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approvedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine": {
+          "const": "Desktop"
+        },
+        "heavyJobSlot": {
+          "type": "string",
+          "minLength": 1
+        },
+        "startsUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresUtc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "maxCores": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxMemoryBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reservedCores": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "reservedMemoryBytes": {
+          "type": "integer",
+          "minimum": 6442450944
+        },
+        "processorOffset": {
+          "type": "integer",
+          "minimum": 2,
+          "default": 2
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "class",
+          "approvedCommand",
+          "argv",
+          "executableSha256",
+          "generatorArtifacts",
+          "sourcePaths",
+          "sourceInventorySha256",
+          "outputDir",
+          "coreAreaM2",
+          "timeoutSeconds",
+          "settings",
+          "settingsSha256"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]+$"
+          },
+          "class": {
+            "enum": [
+              "dense",
+              "rural",
+              "coast"
+            ]
+          },
+          "approvedCommand": {
+            "const": true
+          },
+          "argv": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "executableSha256": {
+            "$ref": "#/$defs/sha"
+          },
+          "generatorArtifacts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/artifact"
+            }
+          },
+          "sourcePaths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "sourceInventorySha256": {
+            "$ref": "#/$defs/sha"
+          },
+          "outputDir": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cwd": {
+            "type": "string"
+          },
+          "coreAreaM2": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "coreSize": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "halo": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 86400
+          },
+          "settings": {
+            "type": "object"
+          },
+          "settingsSha256": {
+            "$ref": "#/$defs/sha"
+          },
+          "jobSpecification": {
+            "$ref": "#/$defs/artifact"
+          },
+          "representative": {
+            "type": "boolean"
+          },
+          "representativeEvidence": {
+            "type": "string"
+          },
+          "coreOrigin": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "admissionEvidence",
+        "admissionEvidenceSha256"
+      ],
+      "not": {
+        "required": [
+          "seamEvidence"
+        ]
+      }
+    },
+    {
+      "required": [
+        "seamEvidence",
+        "seamEvidenceSha256"
+      ],
+      "not": {
+        "required": [
+          "admissionEvidence"
+        ]
+      }
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "admissionEvidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "resourceLease": {
+            "properties": {
+              "heavyJobSlot": {
+                "const": "A"
+              }
+            }
+          },
+          "cases": {
+            "maxItems": 3,
+            "items": {
+              "required": [
+                "jobSpecification",
+                "coreSize",
+                "halo",
+                "coreOrigin"
+              ],
+              "properties": {
+                "coreSize": {
+                  "const": 1024
+                },
+                "halo": {
+                  "const": 128
+                },
+                "coreAreaM2": {
+                  "const": 1048576
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    }
+  }
+}

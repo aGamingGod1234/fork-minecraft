@@ -1,0 +1,21 @@
+{
+    "scope":  "Original combined structural/spawn gate; serialized block content proof remains valid",
+    "correctedCandidateAccepted":  false,
+    "priorGateSha256":  "13B091B7E121C55FC00D0EF090493BD1FC9D03729128204B7C3AC767A28EE584",
+    "reasons":  [
+                    "Oracle used legacy spawn fields instead of active MC26 Data.spawn.pos",
+                    "External MC26 world generation settings omitted",
+                    "MC26 overworld region files were placed in legacy root directory"
+                ],
+    "originalLegacySpawn":  [
+                                29838,
+                                1,
+                                30624
+                            ],
+    "originalModernSpawn":  [
+                                436,
+                                1,
+                                415
+                            ],
+    "status":  "REVOKED"
+}

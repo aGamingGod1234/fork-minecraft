@@ -1,0 +1,871 @@
+{
+  "schema": 1,
+  "status": "REVIEW_REQUIRED",
+  "boundary_integrity": "PASS",
+  "land_scope": "REVIEW_REQUIRED",
+  "country_land_filter_accepted": false,
+  "land_scope_findings": [
+    {
+      "code": "MALAYSIAN_LAND_INSIDE_OSM_SG_MARITIME_MASK",
+      "osm": "way/1359256910",
+      "detail": "Middle Rocks is Malaysian according to the cited MFA/ICJ account. Exclude this land geometry before treating the mask as Singapore-only land."
+    },
+    {
+      "code": "MALAYSIAN_LAND_INSIDE_OSM_SG_MARITIME_MASK",
+      "osm": "way/1359256911",
+      "detail": "Middle Rocks is Malaysian according to the cited MFA/ICJ account. Exclude this land geometry before treating the mask as Singapore-only land."
+    },
+    {
+      "code": "SOUTH_LEDGE_MARITIME_DELIMITATION_UNRESOLVED",
+      "osm": "way/1146100464",
+      "detail": "OSM membership is not proof of settled sovereignty; preserve separate provenance."
+    }
+  ],
+  "scope": "OSM source boundary consistency, not survey-complete land or legal sovereignty validation",
+  "country_relation": "https://www.openstreetmap.org/relation/536780",
+  "relation_version": 78,
+  "mask_sha256": "5783CB68A03F3DCAE77BAF8C37CE96222944C03024007DF45A627900D9D61978",
+  "boundary_pbf_sha256": "CF4F35F52F7F9A335E7CC3D388C3DBC1C22EBFA6028C48B088B59E211882316E",
+  "source_pbf_sha256": "01E16A33157689DB74C401F4A6E9204526883369B999E3C92A561AC4A5A78699",
+  "valid": true,
+  "validity_detail": "Valid Geometry",
+  "geometry_kind": "MultiPolygon",
+  "component_count": 3,
+  "components": [
+    {
+      "component_id": 1,
+      "bbox_lon_lat": [
+        103.5655797,
+        1.1303611,
+        104.1290145,
+        1.4787511
+      ],
+      "administrative_area_km2_not_land_area": 1421.6671386353175,
+      "perimeter_m": 167558.15574207963,
+      "outer_vertex_count": 112,
+      "interior_rings": 0,
+      "outer_way_ids": [
+        190681125,
+        1414078048,
+        288680799,
+        333364481,
+        288680800,
+        288680802,
+        288680803,
+        727301316,
+        1455785333,
+        1455785334,
+        333364480,
+        53549914
+      ]
+    },
+    {
+      "component_id": 2,
+      "bbox_lon_lat": [
+        104.3459327,
+        1.3166493,
+        104.5712337,
+        1.5143183
+      ],
+      "administrative_area_km2_not_land_area": 216.61307122056513,
+      "perimeter_m": 71736.56648644633,
+      "outer_vertex_count": 95,
+      "interior_rings": 0,
+      "outer_way_ids": [
+        1147865296,
+        1147865303,
+        1147865283,
+        1147865302
+      ]
+    },
+    {
+      "component_id": 3,
+      "bbox_lon_lat": [
+        104.3881992,
+        1.2925863,
+        104.3970232,
+        1.3014363
+      ],
+      "administrative_area_km2_not_land_area": 0.7568840857118962,
+      "perimeter_m": 3088.803520240446,
+      "outer_vertex_count": 39,
+      "interior_rings": 0,
+      "outer_way_ids": [
+        1453274362
+      ]
+    }
+  ],
+  "relation_members": [
+    {
+      "type": "w",
+      "ref": 1147865296,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1453274362,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1147865303,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1147865283,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1147865302,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 190681125,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1414078048,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 288680799,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 333364481,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 288680800,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 288680802,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 288680803,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 727301316,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1455785333,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 1455785334,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 333364480,
+      "role": "outer"
+    },
+    {
+      "type": "w",
+      "ref": 53549914,
+      "role": "outer"
+    },
+    {
+      "type": "n",
+      "ref": 531668011,
+      "role": "admin_centre"
+    },
+    {
+      "type": "n",
+      "ref": 424313428,
+      "role": "label"
+    },
+    {
+      "type": "r",
+      "ref": 3831712,
+      "role": "subarea"
+    },
+    {
+      "type": "r",
+      "ref": 3831714,
+      "role": "subarea"
+    },
+    {
+      "type": "r",
+      "ref": 3831716,
+      "role": "subarea"
+    },
+    {
+      "type": "r",
+      "ref": 3831715,
+      "role": "subarea"
+    },
+    {
+      "type": "r",
+      "ref": 3831713,
+      "role": "subarea"
+    }
+  ],
+  "pbf_object_counts": {
+    "nodes": 1395,
+    "ways": 113,
+    "relations": 6
+  },
+  "missing_references": [],
+  "rebuilt_geometry_topologically_equal": true,
+  "source_country_relation_equal": true,
+  "bounding_rectangle_is_mask": false,
+  "administrative_area_km2_not_land_area": 1639.0370939415945,
+  "bounding_rectangle_area_km2": 4751.760632828138,
+  "bounding_rectangle_overstates_area_factor": 2.8991172014301356,
+  "source_land_witnesses": [
+    {
+      "target": "middle rocks",
+      "osm": "way/1359256910",
+      "url": "https://www.openstreetmap.org/way/1359256910",
+      "name": null,
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        104.40602239799529,
+        1.32167615
+      ],
+      "component_ids": [
+        2
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [],
+      "exclusion_or_remote_reference_geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.4061055,
+              1.3216084
+            ],
+            [
+              104.4060796,
+              1.3217144
+            ],
+            [
+              104.40603,
+              1.3217355
+            ],
+            [
+              104.4059617,
+              1.3217101
+            ],
+            [
+              104.40595,
+              1.3216422
+            ],
+            [
+              104.406023,
+              1.3216088
+            ],
+            [
+              104.4061055,
+              1.3216084
+            ]
+          ]
+        ]
+      },
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "middle rocks",
+      "osm": "way/1359256911",
+      "url": "https://www.openstreetmap.org/way/1359256911",
+      "name": null,
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        104.40985033186317,
+        1.32131995
+      ],
+      "component_ids": [
+        2
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [],
+      "exclusion_or_remote_reference_geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.4096283,
+              1.3215123
+            ],
+            [
+              104.4095321,
+              1.3212799
+            ],
+            [
+              104.4096203,
+              1.3211196
+            ],
+            [
+              104.4097165,
+              1.3209993
+            ],
+            [
+              104.409925,
+              1.3210314
+            ],
+            [
+              104.4101255,
+              1.3211276
+            ],
+            [
+              104.4101575,
+              1.32136
+            ],
+            [
+              104.4100373,
+              1.3216166
+            ],
+            [
+              104.4098128,
+              1.3216005
+            ],
+            [
+              104.4096283,
+              1.3215123
+            ]
+          ]
+        ]
+      },
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pedra branca",
+      "osm": "way/469394519",
+      "url": "https://www.openstreetmap.org/way/469394519",
+      "name": "Pedra Branca",
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        104.40611358446014,
+        1.33041305
+      ],
+      "component_ids": [
+        2
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pedra branca"
+      ],
+      "exclusion_or_remote_reference_geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.4057829,
+              1.3300848
+            ],
+            [
+              104.4059841,
+              1.3302607
+            ],
+            [
+              104.4062177,
+              1.3302653
+            ],
+            [
+              104.4064175,
+              1.3303943
+            ],
+            [
+              104.4062984,
+              1.3305155
+            ],
+            [
+              104.4062909,
+              1.3307227
+            ],
+            [
+              104.4061058,
+              1.3307086
+            ],
+            [
+              104.4060079,
+              1.3305818
+            ],
+            [
+              104.4059071,
+              1.3305431
+            ],
+            [
+              104.4058051,
+              1.3303752
+            ],
+            [
+              104.4057272,
+              1.3303679
+            ],
+            [
+              104.4057281,
+              1.3304318
+            ],
+            [
+              104.4056326,
+              1.3305212
+            ],
+            [
+              104.4054777,
+              1.3303776
+            ],
+            [
+              104.4053281,
+              1.3302254
+            ],
+            [
+              104.4054665,
+              1.3301418
+            ],
+            [
+              104.4055301,
+              1.3301836
+            ],
+            [
+              104.4056471,
+              1.3301319
+            ],
+            [
+              104.405671,
+              1.3301216
+            ],
+            [
+              104.4057829,
+              1.3300848
+            ]
+          ]
+        ]
+      },
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau bukom",
+      "osm": "way/23446401",
+      "url": "https://www.openstreetmap.org/way/23446401",
+      "name": "Pulau Bukom",
+      "place": "island",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.7674891268691,
+        1.2321019999999998
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau bukom"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau hantu besar",
+      "osm": "way/55609088",
+      "url": "https://www.openstreetmap.org/way/55609088",
+      "name": "Pulau Hantu Besar",
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.74872224059595,
+        1.22558
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau hantu besar"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau hantu kecil",
+      "osm": "way/55609102",
+      "url": "https://www.openstreetmap.org/way/55609102",
+      "name": "Pulau Hantu Kecil",
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.75246590171324,
+        1.2254136999999998
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau hantu kecil"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau pawai",
+      "osm": "way/55608308",
+      "url": "https://www.openstreetmap.org/way/55608308",
+      "name": "Pulau Pawai",
+      "place": "island",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.7231077947358,
+        1.18565745
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau pawai"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau satumu",
+      "osm": "way/162288643",
+      "url": "https://www.openstreetmap.org/way/162288643",
+      "name": "Pulau Satumu",
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.74072947959235,
+        1.15997785
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau satumu"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau sekudu",
+      "osm": "way/191170315",
+      "url": "https://www.openstreetmap.org/way/191170315",
+      "name": "Pulau Sekudu",
+      "place": "islet",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.98915668995203,
+        1.40534815
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau sekudu"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau semakau",
+      "osm": "relation/9964061",
+      "url": "https://www.openstreetmap.org/relation/9964061",
+      "name": "Pulau Semakau",
+      "place": "island",
+      "natural": null,
+      "witness_lon_lat": [
+        103.76986022605664,
+        1.2031787
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau semakau"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau senang",
+      "osm": "way/55608940",
+      "url": "https://www.openstreetmap.org/way/55608940",
+      "name": "Pulau Senang",
+      "place": "island",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.735420090559,
+        1.1717905499999999
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau senang"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau sudong",
+      "osm": "way/55608138",
+      "url": "https://www.openstreetmap.org/way/55608138",
+      "name": "Pulau Sudong",
+      "place": "island",
+      "natural": "coastline",
+      "witness_lon_lat": [
+        103.71946694467017,
+        1.2080582
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau sudong"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "pulau tekong",
+      "osm": "node/12229020526",
+      "url": "https://www.openstreetmap.org/node/12229020526",
+      "name": "Pulau Tekong",
+      "place": "island",
+      "natural": null,
+      "witness_lon_lat": [
+        104.0528936,
+        1.4129596
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau tekong"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Point"
+    },
+    {
+      "target": "pulau ubin",
+      "osm": "relation/2243165",
+      "url": "https://www.openstreetmap.org/relation/2243165",
+      "name": "Pulau Ubin",
+      "place": "island",
+      "natural": null,
+      "witness_lon_lat": [
+        103.96594299886578,
+        1.41344805
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "pulau ubin"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "sentosa",
+      "osm": "relation/9574725",
+      "url": "https://www.openstreetmap.org/relation/9574725",
+      "name": "Sentosa",
+      "place": "island",
+      "natural": null,
+      "witness_lon_lat": [
+        103.83430564159272,
+        1.24894585
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "sentosa"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "singapore",
+      "osm": "relation/1769123",
+      "url": "https://www.openstreetmap.org/relation/1769123",
+      "name": "Singapore Island",
+      "place": "island",
+      "natural": null,
+      "witness_lon_lat": [
+        103.83026006714371,
+        1.34087
+      ],
+      "component_ids": [
+        1
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "singapore",
+        "singapore island",
+        "pulau ujong"
+      ],
+      "exclusion_or_remote_reference_geometry": null,
+      "geometry_kind": "Polygon"
+    },
+    {
+      "target": "south ledge",
+      "osm": "way/1146100464",
+      "url": "https://www.openstreetmap.org/way/1146100464",
+      "name": "Tubir Selatan",
+      "place": null,
+      "natural": "coastline",
+      "witness_lon_lat": [
+        104.39277128921569,
+        1.2966831
+      ],
+      "component_ids": [
+        3
+      ],
+      "witness_covered": true,
+      "entire_feature_covered": true,
+      "mask_intersects_feature": true,
+      "aliases_matched": [
+        "south ledge"
+      ],
+      "exclusion_or_remote_reference_geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              104.3927152,
+              1.2968055
+            ],
+            [
+              104.3926624,
+              1.2967575
+            ],
+            [
+              104.3926384,
+              1.2966351
+            ],
+            [
+              104.3926816,
+              1.2965799
+            ],
+            [
+              104.39278,
+              1.2965271
+            ],
+            [
+              104.3928616,
+              1.2965463
+            ],
+            [
+              104.3929001,
+              1.2966231
+            ],
+            [
+              104.3928905,
+              1.2967311
+            ],
+            [
+              104.3927656,
+              1.2968391
+            ],
+            [
+              104.3927152,
+              1.2968055
+            ]
+          ]
+        ]
+      },
+      "geometry_kind": "Polygon"
+    }
+  ],
+  "unmatched_witness_names": [],
+  "warnings": [
+    "Do not fill administrative water polygons as land; use coastline and elevation data.",
+    "Three administrative components do not mean three islands.",
+    "OSM remote maritime boundaries are not evidence of settled sovereignty.",
+    "Named source witnesses are sample checks, not proof that every coastline or island is complete."
+  ],
+  "errors": [],
+  "derived_exclusion_receipt": {
+    "version": 1,
+    "original_mask_sha256": "5783CB68A03F3DCAE77BAF8C37CE96222944C03024007DF45A627900D9D61978",
+    "original_mask_unchanged": true,
+    "exclusion_geojson_sha256": "EC62589D40215C460635AD7523C803DCD1597CF935BE928DC6340B597D7B46AF",
+    "derived_geojson_sha256": "AA88EF3AD093817290CA48180FD21D00D1532FDFE89E9A10DAB8FAC3006676D1",
+    "negative_control": "PASS",
+    "remaining_middle_rocks_interior_area_degrees2": 0.0,
+    "exclusion_count": 2,
+    "derived_valid": true,
+    "remote_reference_checks": [
+      {
+        "osm": "way/469394519",
+        "target": "pedra branca",
+        "retained": true
+      },
+      {
+        "osm": "way/1146100464",
+        "target": "south ledge",
+        "retained": true
+      }
+    ],
+    "land_scope": "REVIEW_REQUIRED_UNTIL_RENDER_ADAPTER_APPLIES_EXCLUSIONS",
+    "country_land_filter_accepted": false,
+    "south_ledge_sovereignty_verified": false,
+    "coordinate_reference": "EPSG:4326 longitude, latitude",
+    "sampling_rule": "Exclusion covers(point) takes precedence, including the shared boundary."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fork.local/schemas/ground-profile-v1.json",
+  "title": "FORK explicit ground profile",
+  "type": "object",
+  "required": ["schemaVersion", "id", "grid", "mode", "vertical", "evidence"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["flat-provisional", "elevation-evidence"]},
+    "grid": {
+      "type": "object",
+      "required": ["kind", "blocksPerMeter", "originEasting", "originNorthing", "xDirection", "zDirection"],
+      "properties": {
+        "kind": {"const": "EPSG:3414"}, "blocksPerMeter": {"const": 1},
+        "originEasting": {"const": 0}, "originNorthing": {"const": 60000},
+        "xDirection": {"const": "east"}, "zDirection": {"const": "south"}
+      }
+    },
+    "vertical": {
+      "type": "object",
+      "required": ["datum", "seaLevelY", "standingOffset", "rounding", "minY", "maxY"],
+      "properties": {
+        "datum": {"type": ["string", "null"]},
+        "seaLevelY": {"type": ["number", "null"]},
+        "surfaceY": {"type": "integer"},
+        "standingOffset": {"const": 1},
+        "rounding": {"const": "nearest_half_away_from_zero"},
+        "minY": {"type": "integer"}, "maxY": {"type": "integer"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["classification", "sourceId", "surveyed", "actualGroundAccepted", "uncertaintyMeters"],
+      "properties": {
+        "classification": {"enum": ["provisional-flat", "bare-earth", "estimated-ground", "surface-dsm"]},
+        "sourceId": {"type": "string", "minLength": 1},
+        "surveyed": {"type": "boolean"}, "actualGroundAccepted": {"type": "boolean"},
+        "uncertaintyMeters": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "samplesPath": {"type": "string", "minLength": 1}
+  },
+  "allOf": [{
+    "if": {"properties": {"mode": {"const": "flat-provisional"}}},
+    "then": {
+      "properties": {
+        "vertical": {"required": ["surfaceY"], "properties": {"datum": {"const": null}, "seaLevelY": {"const": null}}},
+        "evidence": {"properties": {"classification": {"const": "provisional-flat"}, "surveyed": {"const": false}, "actualGroundAccepted": {"const": false}, "uncertaintyMeters": {"const": null}}}
+      }
+    },
+    "else": {
+      "required": ["samplesPath"],
+      "properties": {
+        "vertical": {"not": {"required": ["surfaceY"]}, "properties": {"datum": {"type": "string", "minLength": 1}, "seaLevelY": {"type": "number"}}},
+        "evidence": {"properties": {"classification": {"enum": ["bare-earth", "estimated-ground", "surface-dsm"]}}}
+      }
+    }
+  }],
+  "$comment": "Run ground_profile.py as well: cross-field range/evidence rules supplement structural validation. samplesPath contains explicit per-cell elevation evidence, never an implicit flat fallback."
+}

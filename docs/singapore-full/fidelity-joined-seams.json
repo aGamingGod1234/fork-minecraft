@@ -1,0 +1,128 @@
+{
+  "status": "PASS",
+  "scope": "Independent canonical actual block comparison across every shared 3D halo including diagonal corner overlaps, Y -64..319",
+  "pipelineSha256": "fec53d72b363d66d1e58ad33bfbd64016a883b352c5b7272e584620543db4f56",
+  "sourceSha256": "12709086eb05a0d1e7a334a1c4d1518afd7ff6a7404f7a2253c0b5411ec5198d",
+  "inputs": [
+    {
+      "tile": "tile-nw",
+      "manifestSha256": "88d86483f47d553ddfebb6b1ad9ffec2dc551c7a39b763efea7f9a1801ad3d4b",
+      "runsSha256": "0c340864fabb6a8d07bb4e4c04ec4b51fa914a7d98b5bb98063b24645c6b2ac4"
+    },
+    {
+      "tile": "tile-ne",
+      "manifestSha256": "975d98c24fe141313d63a6349ae01e903a2ecfa5f523c3a787e638bb9d93c30a",
+      "runsSha256": "5f11eaf6a34a357ab463bdadd07ba2cffe89b33687f48362c73048ef16b02fc2"
+    },
+    {
+      "tile": "tile-sw",
+      "manifestSha256": "e789fb6c619044a6d7775252c7a1a21156872ef936fadb0340172b54cfd3bae5",
+      "runsSha256": "2efcc586aa4a9e83f8e1672f9fc89cbe3d9d96eb2c08fb29e399d79332a8f320"
+    },
+    {
+      "tile": "tile-se",
+      "manifestSha256": "8ab0edb2b2c95c48673f37e02e0d388e3a7264ccec7bf35b4c902fd1af4f8291",
+      "runsSha256": "0e9831134ac32184de2e2d55431136867d14cfbe17cc718f77114174df0bf0d5"
+    }
+  ],
+  "pairs": [
+    {
+      "left": "tile-nw",
+      "right": "tile-ne",
+      "bounds": [
+        29808,
+        30464,
+        29872,
+        30656
+      ],
+      "comparedCells": 4718592,
+      "mismatchedCells": 0,
+      "leftSha256": "132f48106e50635d76d22ce9bbf10ada6934880a38127ed09368ce1480965e91",
+      "rightSha256": "132f48106e50635d76d22ce9bbf10ada6934880a38127ed09368ce1480965e91",
+      "examples": []
+    },
+    {
+      "left": "tile-nw",
+      "right": "tile-sw",
+      "bounds": [
+        29680,
+        30592,
+        29872,
+        30656
+      ],
+      "comparedCells": 4718592,
+      "mismatchedCells": 0,
+      "leftSha256": "b951259df6b6e11aa3676ecd6074534e97255b91bca02c73b8ad4514028d0d0e",
+      "rightSha256": "b951259df6b6e11aa3676ecd6074534e97255b91bca02c73b8ad4514028d0d0e",
+      "examples": []
+    },
+    {
+      "left": "tile-nw",
+      "right": "tile-se",
+      "bounds": [
+        29808,
+        30592,
+        29872,
+        30656
+      ],
+      "comparedCells": 1572864,
+      "mismatchedCells": 0,
+      "leftSha256": "92a7379acc2bdbf3272604b0f4e5ab62e2e185dd4ae1ac0f91d87a32c8d5c248",
+      "rightSha256": "92a7379acc2bdbf3272604b0f4e5ab62e2e185dd4ae1ac0f91d87a32c8d5c248",
+      "examples": []
+    },
+    {
+      "left": "tile-ne",
+      "right": "tile-sw",
+      "bounds": [
+        29808,
+        30592,
+        29872,
+        30656
+      ],
+      "comparedCells": 1572864,
+      "mismatchedCells": 0,
+      "leftSha256": "92a7379acc2bdbf3272604b0f4e5ab62e2e185dd4ae1ac0f91d87a32c8d5c248",
+      "rightSha256": "92a7379acc2bdbf3272604b0f4e5ab62e2e185dd4ae1ac0f91d87a32c8d5c248",
+      "examples": []
+    },
+    {
+      "left": "tile-ne",
+      "right": "tile-se",
+      "bounds": [
+        29808,
+        30592,
+        30000,
+        30656
+      ],
+      "comparedCells": 4718592,
+      "mismatchedCells": 0,
+      "leftSha256": "6473c6e265fb2007aaf07fcb455e38c2339ef386f4fb08860517493873797d14",
+      "rightSha256": "6473c6e265fb2007aaf07fcb455e38c2339ef386f4fb08860517493873797d14",
+      "examples": []
+    },
+    {
+      "left": "tile-sw",
+      "right": "tile-se",
+      "bounds": [
+        29808,
+        30592,
+        29872,
+        30784
+      ],
+      "comparedCells": 4718592,
+      "mismatchedCells": 0,
+      "leftSha256": "1b4d4299fcec17877d54b88155fdb5ed563dca07f5414c4a753aa9f461b96dab",
+      "rightSha256": "1b4d4299fcec17877d54b88155fdb5ed563dca07f5414c4a753aa9f461b96dab",
+      "examples": []
+    }
+  ],
+  "comparedCells": 22020096,
+  "mismatchedCells": 0,
+  "metadataErrors": [],
+  "hashErrors": [],
+  "sourceRunOracleAccepted": false,
+  "runtimeLoadAccepted": false,
+  "fullWorldAccepted": false,
+  "createdUtc": "2026-09-13T08:35:54.527Z"
+}

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "sourceSha256": "9fdaf1f6dcf3629a3dfaaac24d5837f03f97bbfea59fe7875d2c221b3ae21d0d",
+  "hdbSnapshotSha256": "8e100ffbe97a6949f8a1509283f9287cee1c1548d1a1f48bf7192d30f33fe5d4",
+  "hdbDescriptorSha256": "cc8b65db0d1df6a07a69c1659364bf7f5ec01f22cfcb44870624d4c3e4e33742",
+  "maskSha256": "5783cb68a03f3dcae77baf8c37ce96222944c03024007df45a627900d9d61978",
+  "hdbRows": 13357,
+  "normalizedHdbKeys": 13325,
+  "duplicateNormalizedHdbKeys": 0,
+  "counts": {
+    "osmBuildingOrPartObjects": 134734,
+    "nonAreaBuildingObjects": 150,
+    "missingExactAddressFields": 61401,
+    "addressCandidates": 73183,
+    "rejectedAddressForms": 271,
+    "noHdbAddressMatch": 61391,
+    "hdbAddressMatchedObjects": 11521
+  },
+  "decisionCounts": {
+    "preserved": 9354,
+    "manual-review": 1198,
+    "enrich-missing": 796,
+    "ambiguous": 173
+  },
+  "decisionReasonCounts": {
+    "existing-valid-osm-levels": 9151,
+    "residential-non-carpark-use-not-confirmed": 308,
+    "unique-exact-normalized-address-and-no-existing-height-or-levels": 796,
+    "osm-address-does-not-identify-one-outline": 173,
+    "existing-osm-numeric-tags-invalid-or-conflicting": 890,
+    "existing-valid-osm-height": 203
+  },
+  "matchedHdbAddressKeys": 11430,
+  "newOptionalHeightOverrides": 796,
+  "newUniqueHdbAddressKeys": 796,
+  "existingSourceModified": false,
+  "worldModified": false,
+  "redistributionStatus": "REVIEW_REQUIRED",
+  "licenceNote": "HDB records retain Singapore Open Data Licence terms; OSM source IDs and geographic database retain ODbL obligations. No blanket ODbL relicensing or downstream sublicense compatibility is asserted.",
+  "elapsedSeconds": 4.732106685638428,
+  "policy": {
+    "kind": "optional exact-address HDB maximum-floor proxy",
+    "metresPerFloor": 2.8,
+    "metresEvidence": "Explicitly chosen estimate, not verified per-building physical or roof height",
+    "matching": "conservative token normalization; no fuzzy/geographic nearest matching",
+    "multiplicity": "Repeated OSM key or HDB key is ambiguous; no silent fusion",
+    "preservation": "Existing valid OSM height or levels retained; invalid evidence requires review",
+    "applicability": "New estimates restricted to residential, non-multistorey-carpark outlines. Source counts include parts, not deduplicated physical buildings.",
+    "consumerContract": "Prefer the separate max-floor observation and a common renderer policy; never represent estimated metres as measured roof height."
+  },
+  "files": [
+    {
+      "name": "hdb-height-overrides-v1.jsonl",
+      "bytes": 1113545,
+      "sha256": "4257330dcd925b8df242ed09341174ed3d33bbea128311afedc3c55b4e147511"
+    },
+    {
+      "name": "hdb-address-decisions.jsonl",
+      "bytes": 11093579,
+      "sha256": "b6c2ec0da534b94f6c9b803573bc1def56c53522beacb4cd19e4fa713d13968b"
+    }
+  ],
+  "implementation": {
+    "fusionSha256": "24adc3a087ac4a1226741c49515bcc9d14735ead9329060fec3f957cf942b145",
+    "matcherSha256": "68a67c3fa55c34dd65d15e47259aadfe4b4090a99412a73b86ab06bc5976ae78",
+    "heightParserSha256": "046adb58ee0315be7ba2dc824af2782ed110d80ab90123b2aac0ec518bc5c534"
+  },
+  "rejectedHdbAddressForms": 32,
+  "run": "hdb-fusion/run-v2",
+  "sourceSummarySha256": "70f115e33731db7884d7c77794f8f34a97c1bbc259a8e477eeec056301e1d15f",
+  "verification": {
+    "status": "PASS",
+    "focusedMatcherTestsPassed": 13,
+    "independentReportSha256": "2dc82e8d30edcb5adfbce577aaf7c3b8dbe3bdbeeda7f0ac9a90d0ae270f76aa",
+    "independentV1ReportSha256": "4867b139820681ad64a8481aaa0c8401d02ed0eac61584cafcc353bb132973bd",
+    "scope": "All 796 offers; 11521 matching decisions; 9354 preserved records; frozen raw source hashes; v2 licence-only equivalence."
+  },
+  "retainedLicence": {
+    "name": "Singapore Open Data Licence version 1.0",
+    "url": "https://data.gov.sg/open-data-licence",
+    "file": "data-hdb-licence/singapore-open-data-licence.html",
+    "sha256": "c7f61e687a910ee5d477f8896763182d608657a8e68e1af8f887b73fb0ff6318"
+  },
+  "retainedAttribution": {
+    "file": "data-hdb-licence/ATTRIBUTION-NOTICE.txt",
+    "sha256": "7c62660c896bdf8343c679df450184468957dff2b0ba7b4bb77927225b3e6b3e"
+  },
+  "sourceScopeNote": "The extract receipt binds the original water-inclusive OSM administrative mask. This join does not establish country-land acceptance or apply derived exclusions in a renderer."
+}

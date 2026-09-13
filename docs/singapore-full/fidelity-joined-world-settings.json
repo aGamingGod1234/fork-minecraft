@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "dataVersion": 4790,
+  "spawn": [
+    29838,
+    1,
+    30624
+  ],
+  "spawnSchema": "modern Data.spawn.pos",
+  "legacySpawn": [
+    29838,
+    1,
+    30624
+  ],
+  "externalSettings": {
+    "dataVersion": 4790,
+    "generateStructures": 0
+  },
+  "regionDirectory": "dimensions/minecraft/overworld/region",
+  "enabledDatapacks": [
+    "vanilla"
+  ],
+  "files": [
+    {
+      "path": "level.dat",
+      "sha256": "c62754bf75e3f3478e4461591f0619d2ed0974f4bcfbde7db1a9296466bf46df",
+      "bytes": 404
+    },
+    {
+      "path": "data/minecraft/world_gen_settings.dat",
+      "sha256": "bf22cc0282cbb65d5295deaeda3970d7876350bf39e4f0830937bbaa7f71208b",
+      "bytes": 344
+    }
+  ],
+  "errors": []
+}

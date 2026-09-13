@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "status": "SOURCE_GEOMETRY_PASS",
+  "worldGenerationEvaluated": false,
+  "run": "coast-mask/national-v2",
+  "source": {
+    "kind": "pinned regional OSM PBF",
+    "sha256": "01e16a33157689db74c401f4a6e9204526883369b999e3c92a561ac4a5a78699",
+    "bytes": 250727913,
+    "regionalCoastlineWays": 3477,
+    "regionalCoastlineNodes": 252420,
+    "missingReferences": [],
+    "referenceComplete": true,
+    "licence": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "OpenStreetMap contributors"
+  },
+  "scopeSha256": "aa88ef3ad093817290ca48180fd21d00d1532fdfe89e9a10dab8fac3006676d1",
+  "boundsEN": [
+    -2798.2187661255084,
+    11615.294587171073,
+    111120.70113909859,
+    56082.13786430602
+  ],
+  "classificationPointConvention": "global block center X+0.5,Z+0.5; E=X,N=60000-Z",
+  "areaSquareMetres": {
+    "sea": 864845882.4188759,
+    "land": 774220366.561827
+  },
+  "scopeAreaSquareMetres": 1639066248.9807005,
+  "outsideScopeAreaSquareMetres": 3426548508.7453885,
+  "landMeaning": "Coastline-enclosed side includes inland reservoirs and rivers until the separate water layer is applied; not an official dry-land statistic.",
+  "sourceWays": 415,
+  "sourceSegments": 16884,
+  "preScopeFaces": 106,
+  "serializedPolygonFeatures": 64,
+  "discardedZeroAreaScopeRemnants": 2,
+  "closedRings": 103,
+  "closedRingWays": 390,
+  "unresolvedWays": 25,
+  "unresolvedComponents": 2,
+  "openEndpointQualification": "All four endpoints lie outside the processing domain.",
+  "geometryAudit": {
+    "status": "PASS",
+    "class_areas_m2": {
+      "land": 774220366.5618279,
+      "sea": 864845882.4188676,
+      "unknown": 3426548508.7453895
+    },
+    "domain_coverage_gap_m2": 0.0,
+    "overlap_m2": 2.86102294921875e-06,
+    "known_ring_contradiction_m2": {
+      "land": 0.0,
+      "sea": 0.0
+    },
+    "directed_probes": {
+      "total": 101304,
+      "known_agree": 58611,
+      "outside_scope_or_unknown": 42693
+    },
+    "source_segment_intersections": [],
+    "stored_witnesses": {
+      "total": 260,
+      "source_direction_verified": 260,
+      "retained_face_verified": 252,
+      "outside_scope_after_clipping": 8
+    },
+    "max_XZ_symmetric_difference_m2": 0.0,
+    "max_XZ_hausdorff_m": 0.0,
+    "changi_known_overlap_disagreements": [],
+    "island_scope_checks": [
+      {
+        "name": "Pedra Branca",
+        "way_id": 469394519,
+        "raw_area_m2": 3887.9027725728524,
+        "class_overlap_m2": {
+          "land": 3887.902772572851,
+          "sea": 0.0,
+          "unknown": 0.0
+        },
+        "status": "geometry_checked"
+      },
+      {
+        "name": "Middle Rocks",
+        "way_id": 1359256910,
+        "raw_area_m2": 178.39142816390358,
+        "class_overlap_m2": {
+          "land": 0.0,
+          "sea": 0.0,
+          "unknown": 178.39142816390358
+        },
+        "status": "geometry_checked"
+      },
+      {
+        "name": "Middle Rocks",
+        "way_id": 1359256911,
+        "raw_area_m2": 3517.3178675380314,
+        "class_overlap_m2": {
+          "land": 0.0,
+          "sea": 0.0,
+          "unknown": 3517.317867538032
+        },
+        "status": "geometry_checked"
+      }
+    ],
+    "completeness_qualification": "All 415 supplied coastline ways are independently accounted for and checked. Regional PBF totals (3477 coastline ways,252420 referenced nodes) and completeness are frozen producer-receipt assertions; no PBF rescan or independent omission verification was performed.",
+    "scope_qualification": "Land and sea describe physical OSM coast orientation inside the accepted project scope. Unknown outside that scope does not mean sea. The accepted scope itself was not independently reconstructed from its source geometry in this audit. Inclusion/exclusion tests do not establish sovereignty.",
+    "ring_qualification": "Ring-only known land or sea clipped to unknown can be intentional project-scope exclusion, including foreign coastline. It is reported separately from opposite known-class contradictions.",
+    "raster_qualification": "Vector island retention does not prove retention after integer-block sampling or later rasterization.",
+    "resource_usage": {
+      "cpu_affinity_logical_processors": 1,
+      "wall_seconds": 7.937000000005355,
+      "peak_working_set_bytes": 105349120
+    },
+    "area_comparison_tolerance_m2": 0.0001,
+    "overlay_precision_fallbacks": [
+      {
+        "operation": "intersection",
+        "grid_size_m": 1e-06,
+        "reason": "AssertionFailedException: Should never reach here: Unable to determine overlay result geometry dimension"
+      }
+    ]
+  },
+  "geometryAuditSha256": "13f3455568cfdc3fd38bfc5e56264621133a46fefad2d2e4eaad854ea5402f17",
+  "normalization": {
+    "status": "PASS",
+    "sha256": "1107f92f22ad0c103eb4178e4bb47253e0fa2d42979d164ecdde3a70b4fe8621",
+    "sourceBytesIdentical": true,
+    "retainedFullFeatureObjectsIdentical": 64,
+    "removedZeroAreaFeatures": [
+      "coast-face/99",
+      "coast-face/100"
+    ],
+    "classAreaDeltaSquareMetres": 0
+  },
+  "coreClassification": {
+    "artifact": "core-coast-classification.json",
+    "sha256": "6b1e6314d0ad4a0452c04bf3fb0f1c5a3eed7136ce591defff8bc79bd5d0010d",
+    "bytes": 734850,
+    "count": 1716,
+    "classificationCounts": {
+      "coastline_side_land": 561,
+      "mixed_coast": 410,
+      "pure_sea": 745
+    },
+    "areaSquareMetres": {
+      "land": 774220366.5618297,
+      "sea": 864845882.4188704,
+      "unknown": 8.731149137020111e-10
+    },
+    "scopeAreaSquareMetres": 1639066248.9807,
+    "unclassifiedGapSquareMetres": 8.731149137020111e-10,
+    "runtime": {
+      "cpuLimit": 1,
+      "elapsedSeconds": 0.9219999999913853,
+      "peakWorkingSetBytes": 47910912
+    },
+    "statusAsWritten": "CANDIDATE",
+    "qualification": "The annotation was frozen as candidate before the final normalization audit; its bound source geometry now passes. This is not generated-world coverage."
+  },
+  "resourceUse": {
+    "regionalExtraction": {
+      "pid": 50252,
+      "startedUtc": "2026-09-13T09:24:04.248166+00:00",
+      "status": "COMPLETED",
+      "cpuAffinityMask": 4,
+      "limits": {
+        "rssBytes": 2147483648,
+        "runtimeSeconds": 180,
+        "systemFreeBytes": 8589934592,
+        "diskFreeBytes": 107374182400
+      },
+      "elapsedSeconds": 62.011568546295166,
+      "rssBytes": 93519872,
+      "peakRssBytes": 167354368,
+      "systemFreeBytes": 18168369152,
+      "diskFreeBytes": 1478066028544,
+      "boundsEN": [
+        -2798.2187661255084,
+        11615.294587171073,
+        111120.70113909859,
+        56082.13786430602
+      ],
+      "completedUtc": "2026-09-13T09:25:06.258730+00:00"
+    },
+    "polygonOnlyRebuild": {
+      "pid": 29684,
+      "startedUtc": "2026-09-13T09:37:14.810430+00:00",
+      "status": "COMPLETED",
+      "cpuAffinityMask": 4,
+      "limits": {
+        "rssBytes": 2147483648,
+        "runtimeSeconds": 180,
+        "systemFreeBytes": 8589934592,
+        "diskFreeBytes": 107374182400
+      },
+      "elapsedSeconds": 3.671211004257202,
+      "rssBytes": 64413696,
+      "peakRssBytes": 79507456,
+      "systemFreeBytes": 17655947264,
+      "diskFreeBytes": 1477129256960,
+      "boundsEN": [
+        -2798.2187661255084,
+        11615.294587171073,
+        111120.70113909859,
+        56082.13786430602
+      ],
+      "completedUtc": "2026-09-13T09:37:18.481641+00:00"
+    }
+  },
+  "files": [
+    {
+      "name": "coast-mask-en.geojson",
+      "bytes": 828730,
+      "sha256": "302c79bb35570912e04599fbcfaa170bef119f06eac1e00cb37d193c0b4c9b6b"
+    },
+    {
+      "name": "coast-mask-xz.geojson",
+      "bytes": 830416,
+      "sha256": "85db7807ad75ea14ab7ef0aaedfd0f195fdd729c97a40c16f200dd3843db676d"
+    },
+    {
+      "name": "coast-source.json",
+      "bytes": 1036480,
+      "sha256": "04d8b8f65d2aab8740aa21001658ca074503a431de35d591b9070a30231f6d9b"
+    }
+  ],
+  "coastReceiptSha256": "55bf681ccaf1a17f676d3d4e9261deb54f3bbba7f0dd866e47ca24c69b153df6",
+  "reproductionTools": [
+    "data-coast-build.py",
+    "data-coast-audit.py",
+    "data-coast-national-audit.py",
+    "data-coast-coverage.py"
+  ],
+  "focusedTests": {
+    "builder": 9,
+    "strictRingAndFace": 20,
+    "national": 8,
+    "coreCoverage": 8
+  }
+}

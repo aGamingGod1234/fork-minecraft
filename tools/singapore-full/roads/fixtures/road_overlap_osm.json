@@ -1,0 +1,261 @@
+{
+  "type": "FeatureCollection",
+  "provenance": {
+    "source_file": "pilot-e29680-n29216-e30000-n29536.json",
+    "source_sha256": "12709086eb05a0d1e7a334a1c4d1518afd7ff6a7404f7a2253c0b5411ec5198d",
+    "projected_nodes_file": "projected-nodes.json",
+    "projected_nodes_sha256": "c9a6cf0f49713dd232e2056424fb38799676e7e8449811f1092214f3c587726c",
+    "projection": "Frozen attempt projection; EPSG:3414 X=easting,Z=60000-northing; no rounding",
+    "licence": "ODbL-1.0",
+    "attribution": "OpenStreetMap contributors",
+    "licence_url": "https://www.openstreetmap.org/copyright",
+    "extraction": "Three complete actual OSM ways with all node references and original WGS84 coordinates; no synthetic geometry"
+  },
+  "regression": {
+    "failure_voxel": [
+      29855,
+      0,
+      30478
+    ],
+    "core": [
+      29848,
+      30472,
+      29864,
+      30488
+    ],
+    "shared_node": 246810550,
+    "expected_winner": "way/477933141",
+    "expected_block": "minecraft:gray_concrete",
+    "ownership_policy": "Carriageway over pedestrian at same surface height; canonical feature ID breaks equal class ties",
+    "candidate_ids": [
+      "way/22921313",
+      "way/477933141",
+      "way/747369958"
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "way/22921313",
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 22921313,
+        "source_id": "way/22921313",
+        "tags": {
+          "access": "no",
+          "bicycle": "yes",
+          "foot": "yes",
+          "highway": "pedestrian",
+          "lanes": "2",
+          "lit": "yes",
+          "name": "Market Street",
+          "surface": "asphalt"
+        },
+        "nodes": [
+          246810550,
+          6283040578,
+          13611230684,
+          248531057,
+          1931861640,
+          246810562,
+          9559558765,
+          246810584,
+          9559558764
+        ],
+        "source_coordinates_wgs84": [
+          [
+            103.8500058,
+            1.2832447
+          ],
+          [
+            103.8500166,
+            1.2832446
+          ],
+          [
+            103.8500943,
+            1.283243
+          ],
+          [
+            103.8502394,
+            1.2832399
+          ],
+          [
+            103.8502892,
+            1.2832621
+          ],
+          [
+            103.8503233,
+            1.2833165
+          ],
+          [
+            103.8503422,
+            1.2837478
+          ],
+          [
+            103.8503439,
+            1.2837862
+          ],
+          [
+            103.850368,
+            1.2838162
+          ]
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            29857.150165572046,
+            30479.795046504107
+          ],
+          [
+            29858.352116690297,
+            30479.806096152584
+          ],
+          [
+            29866.999487880203,
+            30479.98295937239
+          ],
+          [
+            29883.147925063262,
+            30480.325635117777
+          ],
+          [
+            29888.690238637184,
+            30477.870837046103
+          ],
+          [
+            29892.48524780638,
+            30471.85554070209
+          ],
+          [
+            29894.588344953416,
+            30424.164599161584
+          ],
+          [
+            29894.777512672004,
+            30419.918524121993
+          ],
+          [
+            29897.459621518232,
+            30416.6012611259
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/477933141",
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 477933141,
+        "source_id": "way/477933141",
+        "tags": {
+          "highway": "primary",
+          "lanes": "5",
+          "lit": "yes",
+          "loc_name:zh": "五代天宫",
+          "maxspeed": "50",
+          "name": "Church Street",
+          "name:en": "Church Street",
+          "name:zh": "漆街",
+          "oneway": "yes",
+          "surface": "asphalt"
+        },
+        "nodes": [
+          246810550,
+          248527313,
+          13611230689,
+          246810545
+        ],
+        "source_coordinates_wgs84": [
+          [
+            103.8500058,
+            1.2832447
+          ],
+          [
+            103.8502997,
+            1.2828081
+          ],
+          [
+            103.8503457,
+            1.2827658
+          ],
+          [
+            103.8504251,
+            1.2826928
+          ]
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            29857.150165572046,
+            30479.795046504107
+          ],
+          [
+            29889.859135004604,
+            30528.071805474778
+          ],
+          [
+            29894.97858809603,
+            30532.749087104195
+          ],
+          [
+            29903.81520968686,
+            30540.820991345277
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/747369958",
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 747369958,
+        "source_id": "way/747369958",
+        "tags": {
+          "highway": "primary",
+          "lanes": "5",
+          "lit": "yes",
+          "loc_name:zh": "五代天宫",
+          "maxspeed": "50",
+          "name": "Church Street",
+          "name:en": "Church Street",
+          "name:zh": "漆街",
+          "oneway": "yes",
+          "surface": "asphalt"
+        },
+        "nodes": [
+          6993096000,
+          246810550
+        ],
+        "source_coordinates_wgs84": [
+          [
+            103.849896,
+            1.2834357
+          ],
+          [
+            103.8500058,
+            1.2832447
+          ]
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            29844.93019320059,
+            30458.67533192636
+          ],
+          [
+            29857.150165572046,
+            30479.795046504107
+          ]
+        ]
+      }
+    }
+  ]
+}

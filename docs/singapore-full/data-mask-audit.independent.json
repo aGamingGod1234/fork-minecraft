@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "auditKind": "independent-derived-exclusion-audit",
+  "status": "PASS",
+  "generatedAt": "2026-09-13T08:30:10.922710+00:00",
+  "scope": "Independent geometry and source-feature checks on Desktop; private artifact; no renderer or sovereignty certification.",
+  "sourcePbf": {
+    "path": "data/malaysia-singapore-brunei-260912.osm.pbf",
+    "sha256": "01E16A33157689DB74C401F4A6E9204526883369B999E3C92A561AC4A5A78699",
+    "hashProvenance": "Pinned source provenance supplied to auditor; source PBF was directly read to reconstruct all four feature polygons. This audit did not recompute the entire source PBF hash.",
+    "hashRecomputed": false
+  },
+  "artifacts": {
+    "originalMask": {
+      "path": "data/mask-260912/singapore-admin-mask.geojson",
+      "sha256": "5783CB68A03F3DCAE77BAF8C37CE96222944C03024007DF45A627900D9D61978",
+      "hashRecomputed": true
+    },
+    "exclusions": {
+      "path": "data/mask-audit/foreign-land-exclusions.geojson",
+      "sha256": "EC62589D40215C460635AD7523C803DCD1597CF935BE928DC6340B597D7B46AF",
+      "hashRecomputed": true
+    },
+    "derivedMask": {
+      "path": "data/mask-audit/singapore-admin-mask-minus-middle-rocks.geojson",
+      "sha256": "AA88EF3AD093817290CA48180FD21D00D1532FDFE89E9A10DAB8FAC3006676D1",
+      "hashRecomputed": true
+    },
+    "receipt": {
+      "path": "data/mask-audit/foreign-land-exclusions.receipt.json",
+      "sha256": "83FFC608F1656A8F7CBA42217A881E2297DBCE2AC5902576E07E2E0BAD4B2DF4",
+      "hashRecomputed": true
+    }
+  },
+  "method": {
+    "runtime": "Desktop data/.venv/Scripts/python.exe",
+    "shapelyVersion": "2.1.2",
+    "sourceReconstruction": "Read pinned source PBF using independent pyosmium way and node passes; reconstruct Polygon objects from source node coordinates in memory.",
+    "artifactGeometry": "Read original, exclusion and derived GeoJSON independently; evaluate Shapely validity, equality, intersection, covers and centroids.",
+    "checksAreFromCompletedRun": true,
+    "geometryRescannedForPersistence": false
+  },
+  "checks": {
+    "originalMaskUnchanged": true,
+    "originalValid": true,
+    "exclusionsValid": true,
+    "derivedValid": true,
+    "exclusionPolygonCount": 2,
+    "exactlyTwoMiddleRocksPolygons": true,
+    "sourceWayIds": [
+      1359256910,
+      1359256911
+    ],
+    "exclusionsEqualUnionOfPinnedSourceMiddleRocksPolygons": true,
+    "derivedEqualsOriginalDifferenceExclusions": true,
+    "remainingForeignInteriorOverlapAreaDegreesSquared": 0.0,
+    "middleRocksActualSourceCentroidsRejected": true,
+    "pedraBrancaEntireSourcePolygonRetained": true,
+    "southLedgeEntireSourcePolygonRetained": true,
+    "sourceAuditRepresentativePointControlsAlsoPassed": true
+  },
+  "sourceCentroids": [
+    {
+      "osm": "way/1359256910",
+      "name": "Middle Rocks",
+      "longitude": 104.40602812432583,
+      "latitude": 1.3216670481470303,
+      "exclusionCovers": true,
+      "acceptedWithExclusionPrecedence": false,
+      "entireFeatureRetained": false
+    },
+    {
+      "osm": "way/1359256911",
+      "name": "Middle Rocks",
+      "longitude": 104.40985706596038,
+      "latitude": 1.3213105879109446,
+      "exclusionCovers": true,
+      "acceptedWithExclusionPrecedence": false,
+      "entireFeatureRetained": false
+    },
+    {
+      "osm": "way/469394519",
+      "name": "Pedra Branca",
+      "longitude": 104.40590955233469,
+      "latitude": 1.3303785356580218,
+      "exclusionCovers": false,
+      "acceptedWithExclusionPrecedence": true,
+      "entireFeatureRetained": true
+    },
+    {
+      "osm": "way/1146100464",
+      "name": "South Ledge",
+      "longitude": 104.39277257207739,
+      "latitude": 1.2966733636766752,
+      "exclusionCovers": false,
+      "acceptedWithExclusionPrecedence": true,
+      "entireFeatureRetained": true
+    }
+  ],
+  "boundaryPrecedence": {
+    "required": true,
+    "samplingRule": "not exclusions.covers(point) and derived.covers(point)",
+    "reason": "Derived polygon hole boundaries and exclusion boundaries are shared; derived.covers alone accepts boundary points.",
+    "testedBoundaryVertexCount": 2,
+    "bothDerivedAndExclusionsCoverEachTestedVertex": true,
+    "eachTestedVertexRejectedWithExclusionPrecedence": true
+  },
+  "SouthLedgeSovereigntyVerified": false,
+  "rendererAdapterVerified": false,
+  "limitations": [
+    "PASS applies to the stated geometry and source-feature controls only.",
+    "Renderer adapter must implement exclusion.covers(point) precedence before this establishes rendering behavior.",
+    "Retaining South Ledge records OSM geometry preservation and is not a sovereignty finding."
+  ],
+  "independence": "Auditor independently read and checked source and output geometry. Source feature polygons were reconstructed directly from the pinned PBF. Persistence uses completed observations and does not regenerate any audited input or output."
+}

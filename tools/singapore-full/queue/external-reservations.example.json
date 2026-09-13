@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "reservations": [
+    {
+      "id": "manual-render-operation",
+      "owners": [
+        {
+          "pid": 12345,
+          "created": "GET_EXACT_TOKEN_WITH_QUEUE_IDENTITY_COMMAND"
+        }
+      ],
+      "memoryGiB": 3,
+      "cpuThreads": 1
+    }
+  ]
+}

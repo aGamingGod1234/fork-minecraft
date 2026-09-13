@@ -1,0 +1,575 @@
+{
+  "schemaVersion": 1,
+  "kind": "measured-1024-benchmark-summary",
+  "generatedUtc": "2026-09-13T10:10:13.394Z",
+  "machine": "Desktop",
+  "status": "PARTIAL_BENCHMARK_SET",
+  "cases": [
+    {
+      "label": "Lim Chu Kang",
+      "id": "benchmark-rural-lim-chu-kang-1024-v1",
+      "class": "rural",
+      "receiptStatus": "WRITTEN_UNACCEPTED",
+      "measuredUtc": "2026-09-13T09:51:21.336Z",
+      "receipt": {
+        "pathRelativeToPrivateRoot": "queue/jobs/58187e080e6b495d815d8e3dae7622cff73b3dfb7f6ce95765d8548287188820/attempt-1/benchmark-report/benchmark-rural-lim-chu-kang-1024-v1.receipt.json",
+        "sha256": "c5e094e7e74e35429e00a37433803b857284990194709e53deb582fdb73a7d1b"
+      },
+      "coreOrigin": [
+        13312,
+        13312
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "settingsSha256": "9d003b94881c7e8430310cd8e60d5682d9f6716d3f2f5d0568759525d21e07b5",
+      "generatorArtifactsSha256": "542a44d35150d568d3e7b1176dc7277412651beb08861e017b160009db8246d0",
+      "jobSpecificationSha256": "6d5d18d3158bb9f706e022a5611e08ecb0a9fa3bf7a022cc265960951251a928",
+      "source": {
+        "bytes": 3827840,
+        "files": 1,
+        "contentHashed": true,
+        "inventorySha256": "edd32a9d9bcc0b002a4a6a637d2aa416ee1c95fd3840d2e6dd346f3118fbc030"
+      },
+      "output": {
+        "bytes": 196368904,
+        "files": 38,
+        "contentHashed": true,
+        "inventorySha256": "ae40cf8f0d118d7c71b273debbaf4de92e783fd2ccf187e07fc83f4df7f55759"
+      },
+      "metrics": {
+        "wallSeconds": 882.4183322,
+        "cpuSeconds": 830.640625,
+        "userCpuSeconds": 828.046875,
+        "kernelCpuSeconds": 2.59375,
+        "peakSampledRssBytes": 520421376,
+        "peakJobCommitBytes": 535113728,
+        "exitCode": 0,
+        "totalProcesses": 12,
+        "timedOut": false,
+        "parentExited": false,
+        "sampleIntervalMs": 50,
+        "samples": 14190,
+        "missedProcessSamples": 0,
+        "processorOffset": 2,
+        "logicalProcessorCount": 1,
+        "affinityMask": "0x4",
+        "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed",
+        "sourceLogicalBytes": 3827840,
+        "outputLogicalBytes": 196368904
+      },
+      "resourceLimits": {
+        "maxCores": 1,
+        "maxMemoryBytes": 4294967296,
+        "processorOffset": 2
+      },
+      "pipelineResult": {
+        "pathRelativeToPrivateRoot": "queue/jobs/58187e080e6b495d815d8e3dae7622cff73b3dfb7f6ce95765d8548287188820/attempt-1/output/pipeline-result.json",
+        "sha256": "e13f8705d0495f719a5d15f90a270869df75048b4b8f8b812168cf9c97bb4fd8"
+      },
+      "stages": [
+        {
+          "name": "project-features",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:36:39.166Z",
+          "completedUtc": "2026-09-13T09:36:39.309Z",
+          "wallSeconds": 0.166
+        },
+        {
+          "name": "project-road-nodes",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:36:39.313Z",
+          "completedUtc": "2026-09-13T09:36:39.517Z",
+          "wallSeconds": 0.204
+        },
+        {
+          "name": "rural-lim-chu-kang-buildings",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:36:39.521Z",
+          "completedUtc": "2026-09-13T09:36:44.175Z",
+          "wallSeconds": 4.654
+        },
+        {
+          "name": "rural-lim-chu-kang-building-mask",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:36:44.224Z",
+          "completedUtc": "2026-09-13T09:36:46.314Z",
+          "wallSeconds": 2.09
+        },
+        {
+          "name": "rural-lim-chu-kang-roads",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:36:46.336Z",
+          "completedUtc": "2026-09-13T09:50:23.392Z",
+          "wallSeconds": 817.056
+        },
+        {
+          "name": "rural-lim-chu-kang-world",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:50:23.469Z",
+          "completedUtc": "2026-09-13T09:51:20.411Z",
+          "wallSeconds": 56.943
+        }
+      ],
+      "stageTimingScope": "Adapter-reported stage wall time only; no separately measured per-stage CPU or memory. Excludes interstage orchestration.",
+      "analysisStatus": "STRUCTURAL_PASS",
+      "productionAccepted": false,
+      "validation": {
+        "pathRelativeToFidelityWorktree": ".work/fidelity/rural1024-validation-1/gate.json",
+        "sha256": "154dd2cd25076a8a8de2efba95e5d932f86b7031c9d9985ba23cedbdfca1c793",
+        "comparedCells": 402653184,
+        "mismatchedCells": 0,
+        "coreChunks": 4096,
+        "comparisonBounds": [
+          13312,
+          13312,
+          14336,
+          14336
+        ],
+        "scope": "Exact owned-core block volume, consumed source runs, chunk coordinates, metadata and heightmaps; no runtime, visual, real-terrain or facade acceptance."
+      },
+      "worldLogicalBytes": 26346217,
+      "worldFiles": 18
+    },
+    {
+      "label": "Changi coast",
+      "id": "benchmark-coast-changi-1024-v1",
+      "class": "coast",
+      "receiptStatus": "WRITTEN_UNACCEPTED",
+      "measuredUtc": "2026-09-13T09:55:47.924Z",
+      "receipt": {
+        "pathRelativeToPrivateRoot": "queue/jobs/ad158da79ad415bab0484cba9a6d0e31e24d816a149ce946dd500235c4c83c56/attempt-1/benchmark-report/benchmark-coast-changi-1024-v1.receipt.json",
+        "sha256": "ab0bab551e349b88658891f7b4ed5d990f51d748f98067ad4090535550665187"
+      },
+      "coreOrigin": [
+        45056,
+        18432
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "settingsSha256": "9d003b94881c7e8430310cd8e60d5682d9f6716d3f2f5d0568759525d21e07b5",
+      "generatorArtifactsSha256": "542a44d35150d568d3e7b1176dc7277412651beb08861e017b160009db8246d0",
+      "jobSpecificationSha256": "2c97265f58ba0255242ac610b69566830ca1bb91daca7e2ec7cb9ff3a378f74e",
+      "source": {
+        "bytes": 3931618,
+        "files": 1,
+        "contentHashed": true,
+        "inventorySha256": "75408845a7446d825afc011e10a25fefad17738ee9055bcc2f4f308458e05536"
+      },
+      "output": {
+        "bytes": 414216221,
+        "files": 44,
+        "contentHashed": true,
+        "inventorySha256": "db03448eb506902c57248be6dd0997b104ed7333483e2dbf41d78b32daf864b6"
+      },
+      "metrics": {
+        "wallSeconds": 156.3194376,
+        "cpuSeconds": 144.421875,
+        "userCpuSeconds": 128.375,
+        "kernelCpuSeconds": 16.046875,
+        "peakSampledRssBytes": 755474432,
+        "peakJobCommitBytes": 734859264,
+        "exitCode": 0,
+        "totalProcesses": 16,
+        "timedOut": false,
+        "parentExited": false,
+        "sampleIntervalMs": 50,
+        "samples": 2508,
+        "missedProcessSamples": 0,
+        "processorOffset": 2,
+        "logicalProcessorCount": 1,
+        "affinityMask": "0x4",
+        "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed",
+        "sourceLogicalBytes": 3931618,
+        "outputLogicalBytes": 414216221
+      },
+      "resourceLimits": {
+        "maxCores": 1,
+        "maxMemoryBytes": 4294967296,
+        "processorOffset": 2
+      },
+      "pipelineResult": {
+        "pathRelativeToPrivateRoot": "queue/jobs/ad158da79ad415bab0484cba9a6d0e31e24d816a149ce946dd500235c4c83c56/attempt-1/output/pipeline-result.json",
+        "sha256": "762ad3c9475870e8a0ba889c1e162e722d72a91852e39838cb1c634657e7a785"
+      },
+      "stages": [
+        {
+          "name": "project-features",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:11.739Z",
+          "completedUtc": "2026-09-13T09:53:11.895Z",
+          "wallSeconds": 0.156
+        },
+        {
+          "name": "project-road-nodes",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:11.900Z",
+          "completedUtc": "2026-09-13T09:53:12.114Z",
+          "wallSeconds": 0.214
+        },
+        {
+          "name": "coast-changi-buildings",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:12.119Z",
+          "completedUtc": "2026-09-13T09:53:16.698Z",
+          "wallSeconds": 4.579
+        },
+        {
+          "name": "coast-changi-building-mask",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:16.734Z",
+          "completedUtc": "2026-09-13T09:53:18.621Z",
+          "wallSeconds": 1.887
+        },
+        {
+          "name": "coast-changi-roads",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:18.643Z",
+          "completedUtc": "2026-09-13T09:54:26.349Z",
+          "wallSeconds": 67.707
+        },
+        {
+          "name": "coast-changi-coast",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:54:26.489Z",
+          "completedUtc": "2026-09-13T09:54:27.966Z",
+          "wallSeconds": 1.477
+        },
+        {
+          "name": "coast-changi-coast-mask",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:54:28.029Z",
+          "completedUtc": "2026-09-13T09:54:33.855Z",
+          "wallSeconds": 5.826
+        },
+        {
+          "name": "coast-changi-world",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:54:33.918Z",
+          "completedUtc": "2026-09-13T09:55:46.787Z",
+          "wallSeconds": 72.869
+        }
+      ],
+      "stageTimingScope": "Adapter-reported stage wall time only; no separately measured per-stage CPU or memory. Excludes interstage orchestration.",
+      "analysisStatus": "STRUCTURAL_PASS",
+      "productionAccepted": false,
+      "validation": {
+        "pathRelativeToFidelityWorktree": ".work/fidelity/coast1024-validation-1/gate.json",
+        "sha256": "dcbc3a2c189d5162dc12daae4968e34aee487d987692f2f89f6eef4cbf08dfdb",
+        "comparedCells": 402653184,
+        "mismatchedCells": 0,
+        "coreChunks": 4096,
+        "comparisonBounds": [
+          45056,
+          18432,
+          46080,
+          19456
+        ],
+        "scope": "Exact owned-core block volume, consumed source runs, chunk coordinates, metadata and heightmaps; no runtime, visual, real-terrain or facade acceptance."
+      },
+      "worldLogicalBytes": 26346219,
+      "worldFiles": 18
+    },
+    {
+      "label": "CBD v1",
+      "id": "benchmark-dense-cbd-1024-v1",
+      "class": "dense",
+      "receiptStatus": "FAIL",
+      "measuredUtc": "2026-09-13T09:31:58.747Z",
+      "receipt": {
+        "pathRelativeToPrivateRoot": "queue/jobs/80af48602186ad1fb0066e07e096e77f259a6693a3ab4603857541878636d57c/attempt-1/benchmark-report/benchmark-dense-cbd-1024-v1.receipt.json",
+        "sha256": "895a6d524290809e229b5980cac118700c23387e37ee40cc86cab435b6a08475"
+      },
+      "coreOrigin": [
+        29696,
+        29696
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "settingsSha256": "9d003b94881c7e8430310cd8e60d5682d9f6716d3f2f5d0568759525d21e07b5",
+      "generatorArtifactsSha256": "542a44d35150d568d3e7b1176dc7277412651beb08861e017b160009db8246d0",
+      "jobSpecificationSha256": "cfb38aea999f408181e624b7d021cec4dfe56773fb58024333d0748761794c15",
+      "source": {
+        "bytes": 5545981,
+        "files": 1,
+        "contentHashed": true,
+        "inventorySha256": "90e31a561c244c804c095d825b74eda3c583936d7f347209feb7c3c704fc58af"
+      },
+      "output": {
+        "bytes": 393462192,
+        "files": 11,
+        "contentHashed": true,
+        "inventorySha256": "979a39a692692d860973ace3a46023bed8b422d045e4b73c17cf0f37b186587a"
+      },
+      "metrics": {
+        "wallSeconds": 66.81947869999999,
+        "cpuSeconds": 64.375,
+        "userCpuSeconds": 62.984375,
+        "kernelCpuSeconds": 1.390625,
+        "peakSampledRssBytes": 440819712,
+        "peakJobCommitBytes": 431091712,
+        "exitCode": 1,
+        "totalProcesses": 6,
+        "timedOut": false,
+        "parentExited": false,
+        "sampleIntervalMs": 50,
+        "samples": 1080,
+        "missedProcessSamples": 0,
+        "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed",
+        "sourceLogicalBytes": 5545981,
+        "outputLogicalBytes": 393462192
+      },
+      "resourceLimits": {
+        "maxCores": 1,
+        "maxMemoryBytes": 4294967296,
+        "processorOffset": 2
+      },
+      "pipelineResult": {
+        "pathRelativeToPrivateRoot": "queue/jobs/80af48602186ad1fb0066e07e096e77f259a6693a3ab4603857541878636d57c/attempt-1/output/pipeline-result.json",
+        "sha256": "e9a7882c8eb1e5668e4f3cfa535bb7bd24d106433e39bfa75975d9071cf595ae"
+      },
+      "stages": [
+        {
+          "name": "project-features",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:30:52.238Z",
+          "completedUtc": "2026-09-13T09:30:52.437Z",
+          "wallSeconds": 0.207
+        },
+        {
+          "name": "project-road-nodes",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:30:52.449Z",
+          "completedUtc": "2026-09-13T09:30:52.705Z",
+          "wallSeconds": 0.257
+        },
+        {
+          "name": "dense-cbd-buildings",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:30:52.709Z",
+          "completedUtc": "2026-09-13T09:31:58.156Z",
+          "wallSeconds": 65.447
+        }
+      ],
+      "stageTimingScope": "Adapter-reported stage wall time only; no separately measured per-stage CPU or memory. Excludes interstage orchestration.",
+      "analysisStatus": "FAIL",
+      "failure": "Source validation rejected way407926393: min_height16 m exceeded fallback height6 m; writer not reached.",
+      "usedForSuccessfulThroughput": false,
+      "worldLogicalBytes": null,
+      "completedPreWriterStagesWallSeconds": 65.911
+    },
+    {
+      "label": "CBD v2",
+      "id": "benchmark-dense-cbd-1024-v2",
+      "class": "dense",
+      "receiptStatus": "FAIL",
+      "measuredUtc": "2026-09-13T09:57:39.188Z",
+      "receipt": {
+        "pathRelativeToPrivateRoot": "queue/jobs/3e9dcc9b7855c3e2e19d0adc978bdfd50b8ae8912681d38cec5fd576000f2eec/attempt-1/benchmark-report/benchmark-dense-cbd-1024-v2.receipt.json",
+        "sha256": "7e55bf64ad12af572f225bc270d3c17cc6c6739b0abc8fa20c9b6c69a09fccb1"
+      },
+      "coreOrigin": [
+        29696,
+        29696
+      ],
+      "coreSize": 1024,
+      "halo": 128,
+      "coreAreaM2": 1048576,
+      "settingsSha256": "ad3170b5aa2182401bdd079fec8aeb48a1d9147479415b70e50756273e9208eb",
+      "generatorArtifactsSha256": "0d012df1355fc5ef03f846fa5898298fb94581a6cc2f9f2d9d72af4e435b9188",
+      "jobSpecificationSha256": "4e9b7b90a9732709a35200246e58130b8838838bf7bc7e7b9d66c787ab79f4b5",
+      "source": {
+        "bytes": 5545981,
+        "files": 1,
+        "contentHashed": true,
+        "inventorySha256": "3d1312d8c00e007e55e2400a26587b0dac6cb2b1f57e10a077a3d3c61ed685f0"
+      },
+      "output": {
+        "bytes": 1237829263,
+        "files": 20,
+        "contentHashed": true,
+        "inventorySha256": "730866fb088a8b1e452cf5590bd925d6edce04e80d43cf5520367d5c6c060add"
+      },
+      "metrics": {
+        "wallSeconds": 329.85117909999997,
+        "cpuSeconds": 322.703125,
+        "userCpuSeconds": 318.296875,
+        "kernelCpuSeconds": 4.40625,
+        "peakSampledRssBytes": 1484300288,
+        "peakJobCommitBytes": 1726554112,
+        "exitCode": 1,
+        "totalProcesses": 12,
+        "timedOut": false,
+        "parentExited": false,
+        "sampleIntervalMs": 50,
+        "samples": 5303,
+        "missedProcessSamples": 0,
+        "processorOffset": 4,
+        "logicalProcessorCount": 1,
+        "affinityMask": "0x10",
+        "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed",
+        "sourceLogicalBytes": 5545981,
+        "outputLogicalBytes": 1237829263
+      },
+      "resourceLimits": {
+        "maxCores": 1,
+        "maxMemoryBytes": 4294967296,
+        "processorOffset": 4
+      },
+      "pipelineResult": {
+        "pathRelativeToPrivateRoot": "queue/jobs/3e9dcc9b7855c3e2e19d0adc978bdfd50b8ae8912681d38cec5fd576000f2eec/attempt-1/output/pipeline-result.json",
+        "sha256": "7934fe64b9edbcd21689d87a3b721fd0ec78dffd8575459e7759202144944cff"
+      },
+      "stages": [
+        {
+          "name": "project-features",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:52:08.921Z",
+          "completedUtc": "2026-09-13T09:52:09.129Z",
+          "wallSeconds": 0.208
+        },
+        {
+          "name": "project-road-nodes",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:52:09.140Z",
+          "completedUtc": "2026-09-13T09:52:09.396Z",
+          "wallSeconds": 0.256
+        },
+        {
+          "name": "dense-cbd-buildings",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:52:09.401Z",
+          "completedUtc": "2026-09-13T09:53:13.572Z",
+          "wallSeconds": 64.172
+        },
+        {
+          "name": "dense-cbd-building-mask",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:13.865Z",
+          "completedUtc": "2026-09-13T09:53:30.233Z",
+          "wallSeconds": 16.369
+        },
+        {
+          "name": "dense-cbd-roads",
+          "status": "passed",
+          "exitCode": 0,
+          "startedUtc": "2026-09-13T09:53:30.534Z",
+          "completedUtc": "2026-09-13T09:57:21.605Z",
+          "wallSeconds": 231.072
+        },
+        {
+          "name": "dense-cbd-world",
+          "status": "failed",
+          "exitCode": 1,
+          "startedUtc": "2026-09-13T09:57:21.900Z",
+          "completedUtc": "2026-09-13T09:57:38.128Z",
+          "wallSeconds": 16.228
+        }
+      ],
+      "stageTimingScope": "Adapter-reported stage wall time only; no separately measured per-stage CPU or memory. Excludes interstage orchestration.",
+      "analysisStatus": "FAIL",
+      "failure": "Writer rejected minecraft:iron_block in buildings.masked.runs.jsonl line878594; no successful world output.",
+      "usedForSuccessfulThroughput": false,
+      "worldLogicalBytes": null,
+      "completedPreWriterStagesWallSeconds": 312.077
+    }
+  ],
+  "observedAcceptedSampleRanges": {
+    "sampleCount": 2,
+    "classes": [
+      "rural",
+      "coast"
+    ],
+    "scope": "Observed extrema across these two completed cases only; not an island range or statistical interval.",
+    "wallSeconds": [
+      156.3194376,
+      882.4183322
+    ],
+    "cpuSeconds": [
+      144.421875,
+      830.640625
+    ],
+    "peakSampledRssBytes": [
+      520421376,
+      755474432
+    ],
+    "peakJobCommitBytes": [
+      535113728,
+      734859264
+    ]
+  },
+  "administrativeScenarios": {
+    "jobUniverse": {
+      "kind": "administrative-mask",
+      "jobCount": 1716,
+      "landIntersectingJobs": null,
+      "waterOnlyJobs": null,
+      "classCountsVerified": false
+    },
+    "landEstimate": {
+      "available": false,
+      "reason": "Administrative-mask jobs include water; land counts and water policy are unverified"
+    },
+    "scope": "Conditional repeated-sample scenarios, not whole-island bounds or a completion ETA",
+    "exclusions": [
+      "No water-only benchmark or verified skip policy",
+      "No class confidence intervals from one sample",
+      "No measured parallel speedup",
+      "Source preparation, final merge and validation excluded",
+      "Output bytes are generated tile bytes, not final merged-world storage"
+    ],
+    "available": false,
+    "reason": "Need independently accepted measured 1024 m dense, rural and coast samples"
+  },
+  "compatibility": {
+    "acceptedV1SettingsMatch": true,
+    "acceptedV1GeneratorArtifactsMatch": true,
+    "cbdV2SettingsDiffer": true,
+    "cbdV2GeneratorArtifactsDiffer": true,
+    "mixedVersionExtrapolationAllowed": false
+  },
+  "limitations": [
+    "No successful independently accepted dense end-to-end sample.",
+    "A repaired writer consuming completed CBD runs is a separate stage measurement and cannot turn the failed end-to-end receipt into success.",
+    "The 1716 administrative-mask jobs include unknown land-intersecting and water-only counts; coast is not a water-only benchmark.",
+    "One sample per completed class gives no within-class confidence interval.",
+    "No parallel speedup is inferred; coast ran concurrently with CBD v2 on different physical cores.",
+    "Source bytes count selected raw OSM snapshots; auxiliary masks, templates and tools remain bound by each frozen job.",
+    "Output bytes include source projections, intermediate runs, logs and world files; world bytes count that rendered tile and halo, not final assembled-world storage.",
+    "RSS is a non-atomic 50 ms sampled sum and can miss short peaks or double-count shared pages. Peak Job commit is a different measure.",
+    "Terrain remains flat-provisional Y0. Structural agreement with generated input runs does not establish complete real-world terrain, facade or visual fidelity.",
+    "Source export, inventory hashing, independent validation and final merge are outside the measured generator interval."
+  ],
+  "verification": {
+    "typedLoader": "PASS for rural and coast against actual unchanged inventories and referenced evidence",
+    "fullVolumeCellsPerAcceptedCore": 402653184,
+    "originalReceiptsRewritten": false,
+    "failedReceiptsUsedForSuccessfulThroughput": false,
+    "landEtaAvailable": false,
+    "failedOutputInventoriesUnchanged": true,
+    "independentReportArithmeticReview": "PASS"
+  }
+}

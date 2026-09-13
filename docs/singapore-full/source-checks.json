@@ -1,0 +1,53 @@
+{
+  "scope": "Focused synthetic/import checks; no full generation or server launch",
+  "runtime": {
+    "python": "3.11.9"
+  },
+  "commands": [
+    {
+      "command": "python -m unittest discover -s tools/singapore-full/buildings -p test_*.py",
+      "exitCode": 0
+    },
+    {
+      "command": "python -m unittest discover -s tools/singapore-full/roads/tests -p test_*.py",
+      "exitCode": 0
+    },
+    {
+      "command": "python -m unittest discover -s tools/singapore-full/merge/tests -p test_*.py",
+      "exitCode": 0
+    },
+    {
+      "command": "python tools/singapore-full/preview-lim-chu-kang-1024/generation/buildings/stream_renderer.py --help",
+      "exitCode": 0
+    },
+    {
+      "command": "python tools/singapore-full/preview-lim-chu-kang-1024/generation/merge/overlay.py --help",
+      "exitCode": 0
+    },
+    {
+      "command": "python tools/singapore-full/preview-lim-chu-kang-1024/assembly/grow.py --help",
+      "exitCode": 0
+    }
+  ],
+  "pythonAstFiles": 120,
+  "verifiedOriginalSourceHashes": 33,
+  "earlierChecks": {
+    "dataDownloadExtractCoverageHelp": "passed",
+    "dataMaskHelp": "unsupported positional-only CLI; documented",
+    "dataHeightSelfTest": "passed",
+    "dataMaskSelfTests": 7,
+    "dataCoastBuildSelfTests": 9,
+    "dataHdbTests": 13,
+    "spatialIndexTests": 16,
+    "nodePipelineTestFiles": 4
+  },
+  "unitTestCounts": {
+    "buildings": 90,
+    "roads": 50,
+    "merge": 140
+  },
+  "nodeCurrentAndHistoricalImports": "passed",
+  "stagedHistoricalOriginalHashes": 33,
+  "gitDiffCheck": "passed with byte-pinned historical/licence/mask whitespace attributes",
+  "markdownLocalLinks": "all resolved"
+}

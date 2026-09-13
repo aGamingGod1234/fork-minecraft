@@ -1,0 +1,74 @@
+{
+    "status":  "PASS",
+    "scope":  "Independent global JSONL run oracle versus decoded Minecraft blocks, including all default-background cells",
+    "bounds":  [
+                   29712,
+                   30496,
+                   29968,
+                   30752
+               ],
+    "inputs":  [
+                   {
+                       "path":  "owned-core.runs.jsonl",
+                       "sha256":  "738ac9261f98ab79d68f43737042388a8e0a838ce1d6c336fbc7b784f20d1ca5",
+                       "bytes":  34916498
+                   }
+               ],
+    "worldFiles":  [
+                       {
+                           "path":  "r.58.59.mca",
+                           "sha256":  "8e983b097b9cb3bb7f292f3a7a26999ed10bb2c5fb146d8a341c8192894583ea",
+                           "bytes":  925696
+                       },
+                       {
+                           "path":  "r.58.60.mca",
+                           "sha256":  "902f26c0bd7e1dcfce9a4c8d0d3d5a2ce267e913674b8307d60666a52e83497d",
+                           "bytes":  139264
+                       }
+                   ],
+    "runs":  181821,
+    "retainedRuns":  181821,
+    "sourceColumns":  25418,
+    "layers":  {
+                   "50":  181821
+               },
+    "sourceClasses":  {
+                          "estimated":  181821
+                      },
+    "comparedCells":  25165824,
+    "mismatchedCells":  0,
+    "sameLayerConflictingCells":  0,
+    "occludedLowerLayerConflicts":  0,
+    "missingColumns":  0,
+    "heightmapMismatches":  0,
+    "spawn":  [
+                  29838,
+                  1,
+                  30624
+              ],
+    "spawnClear":  true,
+    "dataVersion":  4790,
+    "inputErrors":  [
+
+                    ],
+    "metadataErrors":  [
+
+                       ],
+    "expectedBlockSha256":  "99837940f5bd1d17e869284da89335b5955c83301cac0b04061d43782f590e78",
+    "actualBlockSha256":  "99837940f5bd1d17e869284da89335b5955c83301cac0b04061d43782f590e78",
+    "byY":  {
+
+            },
+    "examples":  [
+
+                 ],
+    "conflictExamples":  [
+
+                         ],
+    "joinedStripBlockAccepted":  true,
+    "runtimeLoadAccepted":  false,
+    "terrainAccepted":  false,
+    "facadeAccuracyAccepted":  false,
+    "fullWorldAccepted":  false,
+    "createdUtc":  "2026-09-13T08:36:53.726Z"
+}

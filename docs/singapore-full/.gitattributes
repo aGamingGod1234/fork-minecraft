@@ -1,0 +1,3 @@
+# Audited source-mask artifacts are byte-pinned by the provenance manifests.
+data-mask-audit*.json -text -whitespace
+data-mask-audit*.geojson -text -whitespace

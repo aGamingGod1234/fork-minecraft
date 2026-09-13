@@ -1,0 +1,64 @@
+{
+    "schemaVersion":  1,
+    "kind":  "independent-joined-strip-structural-gate",
+    "status":  "PASS",
+    "scope":  "Roads-v2 exact joined source-run and six actual overlap proofs; flat provisional terrain",
+    "writerManifestSha256":  "899CD652E53AE3F8C11618238F1F06817DCF178C43FEA8EA22FE4927C9AE2C65",
+    "pipelineResultSha256":  "42CCAC5DC1AF1B8FD328DBDA7F56F49071929544BF1FF446EA6A04EA5A36E123",
+    "joinReceiptSha256":  "4DC96FB61DC060C4F41D5A23A9B60E90102EBACE0F2C5DBAF8DC6A3B41553A9F",
+    "oracleSha256":  "5FE197D19616DB2C45A83874855059460009217850FEEF6AC19BA673572CB034",
+    "seamSha256":  "496B18EFEE653043D2DAD36003D2032E4BCA9EDDAF472E5E0FF7B3B2D8002DE3",
+    "bounds":  [
+                   29712,
+                   30496,
+                   29968,
+                   30752
+               ],
+    "chunkCount":  256,
+    "comparedCells":  25165824,
+    "mismatchedCells":  0,
+    "seamComparedCells":  22020096,
+    "seamMismatchedCells":  0,
+    "heightmapMismatches":  0,
+    "spawn":  [
+                  29838,
+                  1,
+                  30624
+              ],
+    "spawnClear":  true,
+    "regionDirectory":  "dimensions/minecraft/overworld/region",
+    "fileHashErrors":  [
+
+                       ],
+    "sourceRunOracleAccepted":  true,
+    "actualSeamAccepted":  true,
+    "runtimeLoadAccepted":  false,
+    "actualTerrainAccepted":  false,
+    "countryMaskRenderingAccepted":  false,
+    "fullWorldAccepted":  false,
+    "writerOutputs":  [
+                          {
+                              "bytes":  925696,
+                              "path":  "dimensions/minecraft/overworld/region/r.58.59.mca",
+                              "sha256":  "7054ff8a4c5d183d62f4007575b96d2c1feb9c07111875bc0241fe662d6833da"
+                          },
+                          {
+                              "bytes":  139264,
+                              "path":  "dimensions/minecraft/overworld/region/r.58.60.mca",
+                              "sha256":  "8158ebc902ae30365c672da7483f984c74e9e41478b28fd925424f5c224c906f"
+                          },
+                          {
+                              "bytes":  404,
+                              "path":  "level.dat",
+                              "sha256":  "c62754bf75e3f3478e4461591f0619d2ed0974f4bcfbde7db1a9296466bf46df"
+                          },
+                          {
+                              "bytes":  344,
+                              "path":  "data/minecraft/world_gen_settings.dat",
+                              "sha256":  "bf22cc0282cbb65d5295deaeda3970d7876350bf39e4f0830937bbaa7f71208b"
+                          }
+                      ],
+    "oracleProcessId":  33964,
+    "seamProcessId":  19724,
+    "createdUtc":  "2026-09-13T09:26:33.2825947Z"
+}

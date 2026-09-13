@@ -1,0 +1,88 @@
+{
+    "schemaVersion":  1,
+    "kind":  "measured-fast-oracle-regression",
+    "status":  "PASS",
+    "baseline":  {
+                     "matchesPriorScalarStatusAndCounts":  true,
+                     "pid":  17196,
+                     "priorScalarSha256":  "DF561D1269FDBCE61C014952E3A929EC5FC50182C39B183088C6E532D28B2578",
+                     "metrics":  {
+                                     "wallSeconds":  1.260767,
+                                     "cpuSeconds":  1.21875,
+                                     "userCpuSeconds":  1.0625,
+                                     "kernelCpuSeconds":  0.15625,
+                                     "peakSampledRssBytes":  98578432,
+                                     "peakJobCommitBytes":  106864640,
+                                     "exitCode":  0,
+                                     "totalProcesses":  2,
+                                     "timedOut":  false,
+                                     "parentExited":  false,
+                                     "sampleIntervalMs":  50,
+                                     "samples":  21,
+                                     "missedProcessSamples":  0,
+                                     "rssMethod":  "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+                                 },
+                     "mismatchedCells":  0,
+                     "comparedCells":  25165824,
+                     "fastOracleSha256":  "21777001824AA4D4D0E0F8A9B1FCF880B9B2A2C15C0BDFD974BA776717C7D838"
+                 },
+    "roadsV2":  {
+                    "ownedRuns":  263009,
+                    "fastOracleSha256":  "5FE197D19616DB2C45A83874855059460009217850FEEF6AC19BA673572CB034",
+                    "metrics":  {
+                                    "wallSeconds":  1.6211103,
+                                    "cpuSeconds":  1.59375,
+                                    "userCpuSeconds":  1.5,
+                                    "kernelCpuSeconds":  0.09375,
+                                    "peakSampledRssBytes":  104239104,
+                                    "peakJobCommitBytes":  113049600,
+                                    "exitCode":  0,
+                                    "totalProcesses":  2,
+                                    "timedOut":  false,
+                                    "parentExited":  false,
+                                    "sampleIntervalMs":  50,
+                                    "samples":  27,
+                                    "missedProcessSamples":  0,
+                                    "rssMethod":  "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+                                },
+                    "mismatchedCells":  0,
+                    "comparedCells":  25165824,
+                    "pid":  33964
+                },
+    "seams":  {
+                  "baselineComparedCells":  22020096,
+                  "baselineFastSeamSha256":  "5964DF5C32D8D61EB46ABE1E3B28D078B2F8F93185AD70302EBE4F0D15DBC211",
+                  "roadsComparedCells":  22020096,
+                  "pid":  19724,
+                  "combinedMetrics":  {
+                                          "wallSeconds":  3.1091557,
+                                          "cpuSeconds":  3.078125,
+                                          "userCpuSeconds":  2.859375,
+                                          "kernelCpuSeconds":  0.21875,
+                                          "peakSampledRssBytes":  392658944,
+                                          "peakJobCommitBytes":  373985280,
+                                          "exitCode":  0,
+                                          "totalProcesses":  2,
+                                          "timedOut":  false,
+                                          "parentExited":  false,
+                                          "sampleIntervalMs":  50,
+                                          "samples":  51,
+                                          "missedProcessSamples":  0,
+                                          "rssMethod":  "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+                                      },
+                  "mismatchedCells":  0,
+                  "roadsFastSeamSha256":  "496B18EFEE653043D2DAD36003D2032E4BCA9EDDAF472E5E0FF7B3B2D8002DE3"
+              },
+    "limits":  {
+                   "maximumCores":  1,
+                   "hostFreeBytesAfter":  18185850880,
+                   "timeoutSeconds":  60,
+                   "maximumJobCommitBytes":  1073741824
+               },
+    "comparisonNote":  "Interval digests have explicitly versioned traversal; acceptance and full-volume mismatch counts match the earlier scalar proof. They are not claimed equal to earlier per-cell string digests.",
+    "failedAttemptNote":  "Initial seam wrapper included PowerShell progress markup in generated source and exited before comparison. Fixed source syntax, retained failed logs and reran in new report paths.",
+    "runtimeLoadAccepted":  false,
+    "countryCoverageAccepted":  false,
+    "actualTerrainAccepted":  false,
+    "fullWorldAccepted":  false
+}

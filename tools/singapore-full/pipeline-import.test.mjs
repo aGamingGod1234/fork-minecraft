@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {validateCore,validateBuildingRun,verifyRunFile} from './pipeline-import.mjs';
+const bounds=[30720,29696,30976,29952],ids=new Set(['way/1']);
+assert.deepEqual(validateCore(bounds),bounds);assert.throws(()=>validateCore([30720,29696,30977,29952]),/aligned/);
+const run={x:30720,z:29696,yMin:0,yMax:5,block:'minecraft:stone',layer:'building',featureId:'way/1',geometryKind:'wall',sourceClass:'estimated'};
+assert.equal(validateBuildingRun(run,bounds,ids),run);
+assert.throws(()=>validateBuildingRun({...run,x:30976},bounds,ids),/half-open/);
+assert.throws(()=>validateBuildingRun({...run,yMax:321},bounds,ids),/vertical/);
+assert.throws(()=>validateBuildingRun({...run,featureId:'way/2'},bounds,ids),/unknown source/);
+assert.throws(()=>validateBuildingRun({...run,x:30720.5},bounds,ids),/integer/);
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'fork-import-fixture-')),file=path.join(root,'runs.jsonl');
+const hash=x=>crypto.createHash('sha256').update(x).digest('hex');
+try{const lf=JSON.stringify(run)+'\n',raw=lf.replaceAll('\n','\r\n');fs.writeFileSync(file,raw);
+ const options={sha256:hash(raw),bytes:Buffer.byteLength(raw),rendererSha256:hash(lf),count:1,bounds,featureIds:ids};
+ const result=await verifyRunFile(file,options);assert.equal(result.rendererDigestEncoding,'LF-normalized-JSONL');assert.equal(result.runCount,1);
+ const compact=JSON.stringify(Object.fromEntries(Object.entries(run).sort(([a],[b])=>a.localeCompare(b))));
+ const compactResult=await verifyRunFile(file,{...options,rendererSha256:hash(compact)});assert.equal(compactResult.rendererDigestEncoding,'sorted-compact-JSON-LF-joined-no-final-LF');
+ await assert.rejects(()=>verifyRunFile(file,{...options,sha256:'0'.repeat(64)}),/byte hash/);
+ await assert.rejects(()=>verifyRunFile(file,{...options,rendererSha256:'0'.repeat(64)}),/Renderer digest/);
+ await assert.rejects(()=>verifyRunFile(file,{...options,count:2}),/count mismatch/);
+ await assert.rejects(()=>verifyRunFile(file,{...options,sha256:undefined}),/Missing run hash/);
+}finally{fs.unlinkSync(file);fs.rmdirSync(root);}
+console.log('Importer run, ownership, source, CRLF binding and negative checks passed');

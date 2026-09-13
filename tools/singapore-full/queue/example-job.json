@@ -1,0 +1,21 @@
+{
+  "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "configSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "codeSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "cwd": "C:/ABSOLUTE/ACCEPTED/CODE",
+  "argv": [
+    "C:/Program Files/nodejs/node.exe",
+    "C:/ABSOLUTE/ACCEPTED/CODE/tools/singapore-full/pipeline-adapter.mjs",
+    "--job",
+    "C:/ABSOLUTE/ACCEPTED/tile-job.json",
+    "--attempt-root",
+    "{output_dir}",
+    "--checkpoint",
+    "{checkpoint}"
+  ],
+  "dependencies": [],
+  "memoryGiB": 3,
+  "cpuThreads": 1,
+  "maxAttempts": 2,
+  "timeoutSeconds": 3600
+}

@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-runtime-receipt-binding",
+  "status": "PASS",
+  "checkedUtc": "2026-09-13T09:03:06.363Z",
+  "writerManifestSha256": "6924eeb071fcd1cadace84acd053adadc7cc5a363a92e8a2523ee752579e7776",
+  "structuralGateSha256": "14f4f17183c01a479542ce6470c9d25c5e5e7cda6f42f18eae649ff854eaee14",
+  "runtimeReceiptSha256": "8e9ee91002f12aa3231d3e9af70f8147cc6eaba75a18a2a31c2cdb693b0ed814",
+  "runtimeStateSha256": "a437369a8afa83d3ce6763093d01c1480818f10747e144584ee268fa36b04347",
+  "consoleSha256": "84d4e08ea1199dc427a7458ae3e87167ddd523ea812057b4f7c229f89a28458e",
+  "runtimeReceiptManifestSha256": "48c4a423becadf5c071e5573edb4905c8ae3062a148dc4002b1832fdfe53d5b9",
+  "minecraftVersion": "26.1.2",
+  "bounds": [
+    29712,
+    30496,
+    29968,
+    30752
+  ],
+  "chunkCount": 256,
+  "matchedNonGroundSentinels": 16,
+  "independentlyDecodedSentinels": 16,
+  "sentinelRunsSha256": "738ac9261f98ab79d68f43737042388a8e0a838ce1d6c336fbc7b784f20d1ca5",
+  "sentinels": [
+    {
+      "featureId": "way/407705562",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_NE_GLASS_OK",
+      "pos": [
+        29935,
+        1,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:light_blue_stained_glass"
+    },
+    {
+      "featureId": "way/171999278",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_NE_ROOF_OK",
+      "pos": [
+        29886,
+        94,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/171999278",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_NE_WALL_OK",
+      "pos": [
+        29886,
+        1,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/172904605",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_NW_GLASS_OK",
+      "pos": [
+        29720,
+        2,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:light_blue_stained_glass"
+    },
+    {
+      "featureId": "way/372148467",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_NW_ROOF_OK",
+      "pos": [
+        29717,
+        9,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/372148467",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_NW_WALL_OK",
+      "pos": [
+        29717,
+        1,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:smooth_stone"
+    },
+    {
+      "featureId": "way/146335667",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_SEAM_X_LEFT_OK",
+      "pos": [
+        29839,
+        1,
+        30496
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:light_blue_stained_glass"
+    },
+    {
+      "featureId": "way/326926563",
+      "geometryKind": "floor",
+      "marker": "FORK_RUNTIME_BLOCK_SEAM_X_RIGHT_OK",
+      "pos": [
+        29840,
+        12,
+        30506
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:smooth_stone"
+    },
+    {
+      "featureId": "way/493590187",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_SEAM_Z_NORTH_OK",
+      "pos": [
+        29712,
+        9,
+        30623
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/493590187",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_SEAM_Z_SOUTH_OK",
+      "pos": [
+        29712,
+        9,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/424896147",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_SE_GLASS_OK",
+      "pos": [
+        29943,
+        1,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:light_blue_stained_glass"
+    },
+    {
+      "featureId": "way/393100853",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_SE_ROOF_OK",
+      "pos": [
+        29840,
+        241,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/393100853",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_SE_WALL_OK",
+      "pos": [
+        29887,
+        1,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:light_gray_concrete"
+    },
+    {
+      "featureId": "way/171999342",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_SW_GLASS_OK",
+      "pos": [
+        29777,
+        1,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:black_stained_glass"
+    },
+    {
+      "featureId": "way/493590187",
+      "geometryKind": "roof",
+      "marker": "FORK_RUNTIME_BLOCK_SW_ROOF_OK",
+      "pos": [
+        29712,
+        9,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:gray_concrete"
+    },
+    {
+      "featureId": "way/493590187",
+      "geometryKind": "facade",
+      "marker": "FORK_RUNTIME_BLOCK_SW_WALL_OK",
+      "pos": [
+        29715,
+        1,
+        30624
+      ],
+      "sourceClass": "estimated",
+      "state": "minecraft:smooth_stone"
+    }
+  ],
+  "candidateFileHashes": {
+    "dimensions/minecraft/overworld/region/r.58.59.mca": "8e983b097b9cb3bb7f292f3a7a26999ed10bb2c5fb146d8a341c8192894583ea",
+    "dimensions/minecraft/overworld/region/r.58.60.mca": "902f26c0bd7e1dcfce9a4c8d0d3d5a2ce267e913674b8307d60666a52e83497d",
+    "level.dat": "c62754bf75e3f3478e4461591f0619d2ed0974f4bcfbde7db1a9296466bf46df",
+    "data/minecraft/world_gen_settings.dat": "bf22cc0282cbb65d5295deaeda3970d7876350bf39e4f0830937bbaa7f71208b"
+  },
+  "candidateUnchanged": true,
+  "exitCode": 0,
+  "processObservedAlive": false,
+  "elapsedJavaSeconds": 13.703,
+  "maximumObservedOsPeakWorkingSetBytes": 577130496,
+  "runtimeLoadAccepted": true,
+  "visualAccepted": false,
+  "aiAccepted": false,
+  "actualTerrainAccepted": false,
+  "fullWorldAccepted": false,
+  "scope": "Binds the completed runtime checker to the exact independently validated candidate, source run identity, actual console markers, independently decoded candidate block states and unchanged source files. The launcher state predates final acceptance; the completed receipt is authoritative."
+}

@@ -1,0 +1,143 @@
+{
+  "type": "FeatureCollection",
+  "provenance": {
+    "source_file": "singapore-1024.osm",
+    "source_sha256": "4d91cfadc9378f98b1a28f132d34d7ce6756beb2200ec7cc8e2d080945148b05",
+    "licence": "ODbL-1.0",
+    "attribution": "OpenStreetMap contributors",
+    "licence_url": "https://www.openstreetmap.org/copyright",
+    "projection": "EPSG:4326 lon/lat to EPSG:3414; Minecraft X=easting, Z=60000-northing",
+    "extraction": "Two complete real OSM ways and all referenced node coordinates from the existing district source; no invented coordinates"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "way/22921315",
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 22921315,
+        "osm_version": 18,
+        "tags": {
+          "highway": "residential",
+          "lanes": "2",
+          "lit": "yes",
+          "maxspeed": "50",
+          "name": "Market Street",
+          "oneway": "yes",
+          "surface": "asphalt",
+          "turn:lanes": "through;left|through"
+        },
+        "nodes": [
+          3059607957,
+          249766699,
+          6992640451
+        ],
+        "source_coordinates_wgs84": [
+          [
+            103.8503588,
+            1.2822924
+          ],
+          [
+            103.8503645,
+            1.2822793
+          ],
+          [
+            103.8503703,
+            1.2821405
+          ]
+        ],
+        "source_url": "https://www.openstreetmap.org/way/22921315"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            29896.43685866133,
+            30585.0952052394
+          ],
+          [
+            29897.07123158394,
+            30586.543731382146
+          ],
+          [
+            29897.71682617714,
+            30601.8915144239
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/633419647",
+      "properties": {
+        "osm_type": "way",
+        "osm_id": 633419647,
+        "osm_version": 8,
+        "tags": {
+          "highway": "residential",
+          "lanes": "2",
+          "lit": "yes",
+          "maxspeed": "50",
+          "name": "Market Street",
+          "oneway": "yes",
+          "surface": "asphalt"
+        },
+        "nodes": [
+          9559558762,
+          11703411076,
+          11703411083,
+          11703411084,
+          6996328533
+        ],
+        "source_coordinates_wgs84": [
+          [
+            103.8503512,
+            1.2838468
+          ],
+          [
+            103.8503578,
+            1.2839463
+          ],
+          [
+            103.8503806,
+            1.2842876
+          ],
+          [
+            103.8503848,
+            1.2843495
+          ],
+          [
+            103.8503906,
+            1.284437
+          ]
+        ],
+        "source_url": "https://www.openstreetmap.org/way/633419647"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            29895.589897822465,
+            30413.21768352836
+          ],
+          [
+            29896.324350040933,
+            30402.215482241096
+          ],
+          [
+            29898.861549928017,
+            30364.476272997475
+          ],
+          [
+            29899.328929491567,
+            30357.63168737346
+          ],
+          [
+            29899.974356879335,
+            30347.956384687375
+          ]
+        ]
+      }
+    }
+  ]
+}

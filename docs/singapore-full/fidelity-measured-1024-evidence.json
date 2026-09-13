@@ -1,0 +1,143 @@
+{
+    "schemaVersion":  1,
+    "kind":  "measured-1024-core-fidelity-evidence",
+    "status":  "TWO_INDEPENDENT_STRUCTURAL_PASSES",
+    "grid":  "EPSG:3414; X=easting, Z=60000-northing, one block per metre",
+    "verticalComparison":  [
+                               -64,
+                               320
+                           ],
+    "comparisonScope":  "Every owned-core block state, including implicit air, plus actual global chunk coordinates and heightmaps",
+    "proofBinding":  "Typed benchmark result producer and strict loader independently rehash receipt, job, consumed runs, world files and oracle evidence",
+    "resourcePolicy":  {
+                           "maxLogicalCores":  1,
+                           "processorOffset":  6,
+                           "jobMemoryLimitBytes":  1073741824,
+                           "timeoutSeconds":  120,
+                           "minimumHostFreeBytes":  9663676416
+                       },
+    "cases":  [
+                  {
+                      "id":  "rural-lim-chu-kang",
+                      "status":  "PASS",
+                      "coreBounds":  [
+                                         13312,
+                                         13312,
+                                         14336,
+                                         14336
+                                     ],
+                      "comparedCells":  402653184,
+                      "mismatchedCells":  0,
+                      "ownedCoreChunks":  4096,
+                      "renderChunks":  6400,
+                      "heightmapMismatches":  0,
+                      "inputErrorCount":  0,
+                      "metadataErrorCount":  0,
+                      "spawn":  [
+                                    13824,
+                                    1,
+                                    13824
+                                ],
+                      "spawnClear":  true,
+                      "benchmarkReceiptSha256":  "c5e094e7e74e35429e00a37433803b857284990194709e53deb582fdb73a7d1b",
+                      "oracleSha256":  "5544be74fa661a85175986bb2e398e87ff314fc13151930ff815250d9addda38",
+                      "gateSha256":  "154dd2cd25076a8a8de2efba95e5d932f86b7031c9d9985ba23cedbdfca1c793",
+                      "summarySha256":  "1bc35a966781057a2364c830109c6ee9b3df07a258bb078d226bbb99c76809a2",
+                      "validationMetrics":  {
+                                                "wallSeconds":  7.5768869,
+                                                "cpuSeconds":  7.53125,
+                                                "userCpuSeconds":  6.953125,
+                                                "kernelCpuSeconds":  0.578125,
+                                                "peakSampledRssBytes":  250138624,
+                                                "peakJobCommitBytes":  231514112,
+                                                "exitCode":  0,
+                                                "totalProcesses":  4,
+                                                "timedOut":  false,
+                                                "parentExited":  false,
+                                                "sampleIntervalMs":  50,
+                                                "samples":  122,
+                                                "missedProcessSamples":  1,
+                                                "processorOffset":  6,
+                                                "logicalProcessorCount":  1,
+                                                "affinityMask":  "0x40",
+                                                "rssMethod":  "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+                                            },
+                      "freeBytesBefore":  17469100032,
+                      "validatorCodeHashes":  {
+                                                  "validate-world-fast.mjs":  "2928c71c413def39704382ce2cf81494d8254068d9d25784e3eb592795cbafe7",
+                                                  "validate-result-gate.mjs":  "1c6e5490ca22ccb76897c085b1a72e6b44b76bb5ef66090e9182398742ba2b62",
+                                                  "validate-benchmark.mjs":  "0dcd734a9928fb8ea194d84b3bd40f394ab29c8498ef0377825a8f877e15f23a",
+                                                  "validate-benchmark-bindings.mjs":  "60c7e2fc93baaf2371d539b10e753c09c97744b386cc8245c9d9780d9cae5837",
+                                                  "validate-benchmark.windows.ps1":  "007586f6ceb39d1e945e96187bcb5ade1275c8332a24dd02a7c01574e5e8ebb4"
+                                              },
+                      "createdUtc":  "2026-09-13T09:53:17.898Z"
+                  },
+                  {
+                      "id":  "coast-changi",
+                      "status":  "PASS",
+                      "coreBounds":  [
+                                         45056,
+                                         18432,
+                                         46080,
+                                         19456
+                                     ],
+                      "comparedCells":  402653184,
+                      "mismatchedCells":  0,
+                      "ownedCoreChunks":  4096,
+                      "renderChunks":  6400,
+                      "heightmapMismatches":  0,
+                      "inputErrorCount":  0,
+                      "metadataErrorCount":  0,
+                      "spawn":  [
+                                    45568,
+                                    1,
+                                    18944
+                                ],
+                      "spawnClear":  true,
+                      "benchmarkReceiptSha256":  "ab0bab551e349b88658891f7b4ed5d990f51d748f98067ad4090535550665187",
+                      "oracleSha256":  "10f35adbfdac431a94e77d03670f29538776acdd62a31de60e1fb2b5a944eca9",
+                      "gateSha256":  "dcbc3a2c189d5162dc12daae4968e34aee487d987692f2f89f6eef4cbf08dfdb",
+                      "summarySha256":  "36b6c00d08eb6526d54226571d4d1a55891b3ecbeb73515aadd31e5fc4371a03",
+                      "validationMetrics":  {
+                                                "wallSeconds":  9.1352736,
+                                                "cpuSeconds":  9.015625,
+                                                "userCpuSeconds":  8.515625,
+                                                "kernelCpuSeconds":  0.5,
+                                                "peakSampledRssBytes":  266305536,
+                                                "peakJobCommitBytes":  236519424,
+                                                "exitCode":  0,
+                                                "totalProcesses":  4,
+                                                "timedOut":  false,
+                                                "parentExited":  false,
+                                                "sampleIntervalMs":  50,
+                                                "samples":  148,
+                                                "missedProcessSamples":  3,
+                                                "processorOffset":  6,
+                                                "logicalProcessorCount":  1,
+                                                "affinityMask":  "0x40",
+                                                "rssMethod":  "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+                                            },
+                      "freeBytesBefore":  17799913472,
+                      "validatorCodeHashes":  {
+                                                  "validate-world-fast.mjs":  "2928c71c413def39704382ce2cf81494d8254068d9d25784e3eb592795cbafe7",
+                                                  "validate-result-gate.mjs":  "1c6e5490ca22ccb76897c085b1a72e6b44b76bb5ef66090e9182398742ba2b62",
+                                                  "validate-benchmark.mjs":  "0dcd734a9928fb8ea194d84b3bd40f394ab29c8498ef0377825a8f877e15f23a",
+                                                  "validate-benchmark-bindings.mjs":  "60c7e2fc93baaf2371d539b10e753c09c97744b386cc8245c9d9780d9cae5837",
+                                                  "validate-benchmark.windows.ps1":  "007586f6ceb39d1e945e96187bcb5ade1275c8332a24dd02a7c01574e5e8ebb4"
+                                              },
+                      "createdUtc":  "2026-09-13T09:59:48.604Z"
+                  }
+              ],
+    "limitations":  [
+                        "This validates the generated world against consumed runs, not exact real-world appearance.",
+                        "Flat provisional ground Y0 remains unmeasured.",
+                        "Real terrain, facade matching and whole-Singapore coverage remain unaccepted.",
+                        "These two output snapshots have no runtime or visual acceptance from this evidence.",
+                        "Dense CBD measurement is pending; no national completion ETA follows from two samples."
+                    ],
+    "fullWorldAccepted":  false,
+    "terrainAccepted":  false,
+    "facadeAccepted":  false,
+    "runtimeAccepted":  false,
+    "visualAccepted":  false
+}

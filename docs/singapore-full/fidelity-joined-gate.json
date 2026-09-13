@@ -1,0 +1,46 @@
+{
+    "comparedCells":  25165824,
+    "priorGeometryOracleSha256":  "DF561D1269FDBCE61C014952E3A929EC5FC50182C39B183088C6E532D28B2578",
+    "spawnClear":  true,
+    "proofMethod":  "Byte-identical region files and source runs retain full block/heightmap proof; active MC26 spawn, external settings and modern region layout independently rechecked",
+    "fullWorldAccepted":  false,
+    "writerManifestSha256":  "6924EEB071FCD1CADACE84ACD053ADADC7CC5A363A92E8A2523EE752579E7776",
+    "metadataProofSha256":  "E4D56BFC93B5B1EFA64483A7408769AE2B668FC97409BEF1626E09C4E570C5BD",
+    "spawn":  [
+                  29838,
+                  1,
+                  30624
+              ],
+    "createdUtc":  "2026-09-13T08:46:58.9621487Z",
+    "bounds":  [
+                   29712,
+                   30496,
+                   29968,
+                   30752
+               ],
+    "seamMismatchedCells":  0,
+    "spawnSchema":  "modern Data.spawn.pos",
+    "kind":  "independent-joined-strip-structural-gate",
+    "regionIdentity":  [
+                           {
+                               "newPath":  "dimensions/minecraft/overworld/region/r.58.59.mca",
+                               "sha256":  "8E983B097B9CB3BB7F292F3A7A26999ED10BB2C5FB146D8A341C8192894583EA",
+                               "oldPath":  "region/r.58.59.mca"
+                           },
+                           {
+                               "newPath":  "dimensions/minecraft/overworld/region/r.58.60.mca",
+                               "sha256":  "902F26C0BD7E1DCFCE9A4C8D0D3D5A2CE267E913674B8307D60666A52E83497D",
+                               "oldPath":  "region/r.58.60.mca"
+                           }
+                       ],
+    "runtimeLoadAccepted":  false,
+    "chunkCount":  256,
+    "errors":  [
+
+               ],
+    "status":  "PASS",
+    "mismatchedCells":  0,
+    "heightmapMismatches":  0,
+    "seamComparedCells":  22020096,
+    "regionDirectory":  "dimensions/minecraft/overworld/region"
+}

@@ -1,0 +1,140 @@
+{
+  "status": "PASS",
+  "tests": 14,
+  "scope": "Tiny 16x16 worlds only; exact scalar equivalence and negative controls",
+  "reports": [
+    {
+      "case": "base-air-carve-and-hidden-conflict",
+      "status": "PASS",
+      "referenceStatus": "PASS",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 19,
+      "peakRssBytes": 52477952
+    },
+    {
+      "case": "unexpected-high-block",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 1,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 12,
+      "peakRssBytes": 55336960
+    },
+    {
+      "case": "visible-conflict",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 1,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 56152064
+    },
+    {
+      "case": "heightmap-corruption",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 57499648
+    },
+    {
+      "case": "wrong-global-chunk",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 0,
+      "elapsedMs": 5,
+      "peakRssBytes": 58871808
+    },
+    {
+      "case": "missing-modern-world-settings",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 0
+    },
+    {
+      "case": "exact-properties",
+      "status": "PASS",
+      "referenceStatus": "PASS",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 61177856
+    },
+    {
+      "case": "wrong-properties",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 1,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 65908736
+    },
+    {
+      "case": "bad-off-window-record",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 79478784
+    },
+    {
+      "case": "palette-index-overflow",
+      "status": "FAIL",
+      "metadataErrorCount": 1
+    },
+    {
+      "case": "inclusive-min-exclusive-max",
+      "status": "PASS",
+      "referenceStatus": "PASS",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 11,
+      "peakRssBytes": 254468096
+    },
+    {
+      "case": "above-build-volume",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 10,
+      "peakRssBytes": 254468096
+    },
+    {
+      "case": "below-build-volume",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 10,
+      "peakRssBytes": 262320128
+    },
+    {
+      "case": "unsupported-numeric-layer",
+      "status": "FAIL",
+      "referenceStatus": "FAIL",
+      "mismatchedCells": 0,
+      "highestLayerConflicts": 0,
+      "occludedConflicts": 2,
+      "elapsedMs": 9,
+      "peakRssBytes": 262320128
+    }
+  ]
+}

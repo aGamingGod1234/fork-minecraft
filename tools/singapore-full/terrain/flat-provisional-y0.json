@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "flat-provisional-y0-v1",
+  "grid": {
+    "kind": "EPSG:3414",
+    "blocksPerMeter": 1,
+    "originEasting": 0,
+    "originNorthing": 60000,
+    "xDirection": "east",
+    "zDirection": "south"
+  },
+  "mode": "flat-provisional",
+  "vertical": {
+    "datum": null,
+    "seaLevelY": null,
+    "surfaceY": 0,
+    "standingOffset": 1,
+    "rounding": "nearest_half_away_from_zero",
+    "minY": -64,
+    "maxY": 319
+  },
+  "evidence": {
+    "classification": "provisional-flat",
+    "sourceId": "fork:first-joined-strip-provisional-y0",
+    "surveyed": false,
+    "actualGroundAccepted": false,
+    "uncertaintyMeters": null,
+    "note": "A deterministic construction plane only. This is not measured Singapore ground or mean sea level."
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "mode": "synthetic-fixture-only",
+  "checks": [
+    "descendant lifetime and CPU included",
+    "sampled RSS and peak job commit present",
+    "processor offsets2/4 record distinct affinity masks",
+    "exit code retained",
+    "owned child tree terminated on timeout",
+    "missing executable fails",
+    "failed seam blocks real run",
+    "source bytes deduplicated",
+    "synthetic/smoke/missing/mixed measurements cannot yield estimates",
+    "class-weighted arithmetic uses measured inputs",
+    "pilot admission requires coordinator approval and matching focused proofs",
+    "pilot scope rejects production acceptance and excess cases",
+    "typed independent validation binds exact receipt and unchanged output content",
+    "full owned-core volume and actual oracle metadata/heightmaps required",
+    "administrative scenarios do not infer land totals"
+  ],
+  "fixtureMetrics": {
+    "normal": {
+      "wallSeconds": 0.742167,
+      "cpuSeconds": 0.71875,
+      "userCpuSeconds": 0.671875,
+      "kernelCpuSeconds": 0.046875,
+      "peakSampledRssBytes": 49582080,
+      "peakJobCommitBytes": 22982656,
+      "exitCode": 0,
+      "totalProcesses": 3,
+      "timedOut": false,
+      "parentExited": false,
+      "sampleIntervalMs": 20,
+      "samples": 25,
+      "missedProcessSamples": 1,
+      "processorOffset": 2,
+      "logicalProcessorCount": 1,
+      "affinityMask": "0x4",
+      "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+    },
+    "timeout": {
+      "wallSeconds": 1.023884,
+      "cpuSeconds": 0.0625,
+      "userCpuSeconds": 0.015625,
+      "kernelCpuSeconds": 0.046875,
+      "peakSampledRssBytes": 48128000,
+      "peakJobCommitBytes": 22917120,
+      "exitCode": 0,
+      "totalProcesses": 3,
+      "timedOut": true,
+      "parentExited": false,
+      "sampleIntervalMs": 20,
+      "samples": 34,
+      "missedProcessSamples": 1,
+      "processorOffset": 2,
+      "logicalProcessorCount": 1,
+      "affinityMask": "0x4",
+      "rssMethod": "Maximum non-atomic sum of owned process working sets; shared pages can be counted twice and short peaks may be missed"
+    },
+    "nonzeroExit": 7
+  },
+  "wholeSingaporeEstimate": {
+    "available": false,
+    "reason": "No representative generator runs performed"
+  }
+}

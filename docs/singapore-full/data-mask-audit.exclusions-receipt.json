@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "original_mask_sha256": "5783CB68A03F3DCAE77BAF8C37CE96222944C03024007DF45A627900D9D61978",
+  "original_mask_unchanged": true,
+  "exclusion_geojson_sha256": "EC62589D40215C460635AD7523C803DCD1597CF935BE928DC6340B597D7B46AF",
+  "derived_geojson_sha256": "AA88EF3AD093817290CA48180FD21D00D1532FDFE89E9A10DAB8FAC3006676D1",
+  "negative_control": "PASS",
+  "remaining_middle_rocks_interior_area_degrees2": 0.0,
+  "exclusion_count": 2,
+  "derived_valid": true,
+  "remote_reference_checks": [
+    {
+      "osm": "way/469394519",
+      "target": "pedra branca",
+      "retained": true
+    },
+    {
+      "osm": "way/1146100464",
+      "target": "south ledge",
+      "retained": true
+    }
+  ],
+  "land_scope": "REVIEW_REQUIRED_UNTIL_RENDER_ADAPTER_APPLIES_EXCLUSIONS",
+  "country_land_filter_accepted": false,
+  "south_ledge_sovereignty_verified": false,
+  "coordinate_reference": "EPSG:4326 longitude, latitude",
+  "sampling_rule": "Exclusion covers(point) takes precedence, including the shared boundary."
+}

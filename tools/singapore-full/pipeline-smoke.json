@@ -1,0 +1,14 @@
+{
+  "date": "2026-09-13",
+  "projection": "EPSG:3414",
+  "adapterTests": {"status": "PASS", "assertions": 2066},
+  "generatedTiles": [
+    {"id": "svy21_x29712_z30496_s128_h32", "coreOrigin": [29712, 30496], "coreSize": 128, "halo": 32, "sourceNodes": 1284, "regionFiles": 1, "paddedChunks": 1024},
+    {"id": "svy21_x29840_z30496_s128_h32", "coreOrigin": [29840, 30496], "coreSize": 128, "halo": 32, "sourceNodes": 1430, "regionFiles": 1, "paddedChunks": 1024}
+  ],
+  "independentProjectionAndHashAudit": "PASS; separate fidelity lane",
+  "actualSharedHaloBlocks": {"status": "FAIL", "compared": 2654208, "mismatches": 45240, "reason": "Structural facade and occupancy differences; investigation required before assembly"},
+  "productionRolloutAccepted": false,
+  "surveyedTerrainAccepted": false,
+  "fullIslandAccepted": false
+}

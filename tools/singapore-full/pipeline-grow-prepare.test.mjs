@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {combineVerifiedCores} from './pipeline-grow-prepare.mjs';
+const c={id:'east-1',coreBounds:[30720,29696,30976,29952],source:{sha256:'abc'},buildingRuns:{path:'r'},workerReceipt:{path:'w'},sourceEvidence:{exclusions:[]}};
+const s={coreId:'east-1',coreBounds:c.coreBounds,sourceSha256:'abc',sourcePath:'s',referenceClosure:{complete:true}};
+assert.equal(combineVerifiedCores({cores:[c]},{cores:[s]})[0].source.path,'s');
+assert.throws(()=>combineVerifiedCores({cores:[c]},{cores:[{...s,sourceSha256:'bad'}]}));
+assert.throws(()=>combineVerifiedCores({cores:[c]},{cores:[s,s]}));
+assert.throws(()=>combineVerifiedCores({cores:[c]},{cores:[{...s,referenceClosure:{complete:false}}]}));
+assert.throws(()=>combineVerifiedCores({cores:[c]},{cores:[{...s,coreBounds:[0,0,256,256]}]}));
+console.log('PASS imported building and complete road-source identity binding');

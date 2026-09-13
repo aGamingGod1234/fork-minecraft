@@ -1,0 +1,322 @@
+{
+    "$schema":  "https://json-schema.org/draft/2020-12/schema",
+    "$id":  "https://fork.local/schemas/tile-manifest-v1.json",
+    "title":  "FORK source tile fidelity manifest",
+    "type":  "object",
+    "required":  [
+                     "schemaVersion",
+                     "status",
+                     "source",
+                     "grid",
+                     "tile",
+                     "vertical",
+                     "generator",
+                     "mapping",
+                     "output",
+                     "qualityGates"
+                 ],
+    "properties":  {
+                       "schemaVersion":  {
+                                             "const":  1
+                                         },
+                       "status":  {
+                                      "type":  "string"
+                                  },
+                       "source":  {
+                                      "type":  "object",
+                                      "required":  [
+                                                       "path",
+                                                       "bytes",
+                                                       "sha256",
+                                                       "license"
+                                                   ],
+                                      "properties":  {
+                                                         "path":  {
+                                                                      "type":  "string",
+                                                                      "minLength":  1
+                                                                  },
+                                                         "bytes":  {
+                                                                       "type":  "integer",
+                                                                       "minimum":  0
+                                                                   },
+                                                         "sha256":  {
+                                                                        "type":  "string",
+                                                                        "pattern":  "^[A-Fa-f0-9]{64}$"
+                                                                    },
+                                                         "license":  {
+                                                                         "type":  "string"
+                                                                     },
+                                                         "url":  {
+                                                                     "type":  "string"
+                                                                 }
+                                                     },
+                                      "additionalProperties":  true
+                                  },
+                       "grid":  {
+                                    "properties":  {
+                                                       "zDirection":  {
+                                                                          "const":  "south"
+                                                                      },
+                                                       "originEasting":  {
+                                                                             "type":  "number"
+                                                                         },
+                                                       "blocksPerMeter":  {
+                                                                              "const":  1
+                                                                          },
+                                                       "kind":  {
+                                                                    "const":  "EPSG:3414"
+                                                                },
+                                                       "xDirection":  {
+                                                                          "const":  "east"
+                                                                      },
+                                                       "originNorthing":  {
+                                                                              "type":  "number"
+                                                                          }
+                                                   },
+                                    "type":  "object",
+                                    "required":  [
+                                                     "kind",
+                                                     "originEasting",
+                                                     "originNorthing",
+                                                     "blocksPerMeter",
+                                                     "xDirection",
+                                                     "zDirection"
+                                                 ]
+                                },
+                       "tile":  {
+                                    "type":  "object",
+                                    "required":  [
+                                                     "coreOrigin",
+                                                     "coreSize",
+                                                     "halo",
+                                                     "renderOrigin",
+                                                     "renderSize",
+                                                     "boundsWgs84"
+                                                 ],
+                                    "properties":  {
+                                                       "coreOrigin":  {
+                                                                          "type":  "array",
+                                                                          "minItems":  2,
+                                                                          "maxItems":  2,
+                                                                          "items":  {
+                                                                                        "type":  "integer"
+                                                                                    }
+                                                                      },
+                                                       "coreSize":  {
+                                                                        "type":  "integer",
+                                                                        "minimum":  1
+                                                                    },
+                                                       "halo":  {
+                                                                    "type":  "integer",
+                                                                    "minimum":  0
+                                                                },
+                                                       "renderOrigin":  {
+                                                                            "type":  "array",
+                                                                            "minItems":  2,
+                                                                            "maxItems":  2,
+                                                                            "items":  {
+                                                                                          "type":  "integer"
+                                                                                      }
+                                                                        },
+                                                       "renderSize":  {
+                                                                          "type":  "integer",
+                                                                          "minimum":  1
+                                                                      },
+                                                       "boundsWgs84":  {
+                                                                           "type":  "array",
+                                                                           "minItems":  4,
+                                                                           "maxItems":  4,
+                                                                           "items":  {
+                                                                                         "type":  "number"
+                                                                                     },
+                                                                           "description":  "south, west, north, east in WGS84 degrees"
+                                                                       }
+                                                   }
+                                },
+                       "vertical":  {
+                                        "type":  "object",
+                                        "required":  [
+                                                         "groundY",
+                                                         "mode",
+                                                         "surveyed"
+                                                     ],
+                                        "properties":  {
+                                                           "groundY":  {
+                                                                           "type":  "number"
+                                                                       },
+                                                           "mode":  {
+                                                                        "type":  "string"
+                                                                    },
+                                                           "surveyed":  {
+                                                                            "type":  "boolean"
+                                                                        },
+                                                           "datum":  {
+                                                                         "type":  [
+                                                                                      "string",
+                                                                                      "null"
+                                                                                  ]
+                                                                     }
+                                                       }
+                                    },
+                       "generator":  {
+                                         "type":  "object",
+                                         "required":  [
+                                                          "version",
+                                                          "sha256",
+                                                          "args"
+                                                      ],
+                                         "properties":  {
+                                                            "version":  {
+                                                                            "type":  "string"
+                                                                        },
+                                                            "sha256":  {
+                                                                           "type":  "string",
+                                                                           "pattern":  "^[A-Fa-f0-9]{64}$"
+                                                                       },
+                                                            "args":  {
+                                                                         "type":  "array",
+                                                                         "items":  {
+                                                                                       "type":  "string"
+                                                                                   }
+                                                                     }
+                                                        }
+                                     },
+                       "mapping":  {
+                                       "type":  "object",
+                                       "required":  [
+                                                        "adapter",
+                                                        "sourceCoordinatesPreservedInRaw",
+                                                        "controlPoints"
+                                                    ],
+                                       "properties":  {
+                                                          "adapter":  {
+                                                                          "const":  "global-grid-to-Arnis-local"
+                                                                      },
+                                                          "sourceCoordinatesPreservedInRaw":  {
+                                                                                                  "const":  true
+                                                                                              },
+                                                          "controlPoints":  {
+                                                                                "type":  "array",
+                                                                                "minItems":  4,
+                                                                                "items":  {
+                                                                                              "type":  "object",
+                                                                                              "required":  [
+                                                                                                               "sourceLon",
+                                                                                                               "sourceLat",
+                                                                                                               "globalX",
+                                                                                                               "globalZ",
+                                                                                                               "renderX",
+                                                                                                               "renderZ"
+                                                                                                           ],
+                                                                                              "properties":  {
+                                                                                                                 "sourceLon":  {
+                                                                                                                                   "type":  "number"
+                                                                                                                               },
+                                                                                                                 "sourceLat":  {
+                                                                                                                                   "type":  "number"
+                                                                                                                               },
+                                                                                                                 "globalX":  {
+                                                                                                                                 "type":  "number"
+                                                                                                                             },
+                                                                                                                 "globalZ":  {
+                                                                                                                                 "type":  "number"
+                                                                                                                             },
+                                                                                                                 "renderX":  {
+                                                                                                                                 "type":  "number"
+                                                                                                                             },
+                                                                                                                 "renderZ":  {
+                                                                                                                                 "type":  "number"
+                                                                                                                             }
+                                                                                                             }
+                                                                                          }
+                                                                            }
+                                                      }
+                                   },
+                       "output":  {
+                                      "type":  "object",
+                                      "required":  [
+                                                       "files",
+                                                       "regionCount",
+                                                       "chunkCount"
+                                                   ],
+                                      "properties":  {
+                                                         "files":  {
+                                                                       "type":  "array",
+                                                                       "minItems":  1,
+                                                                       "items":  {
+                                                                                     "type":  "object",
+                                                                                     "required":  [
+                                                                                                      "path",
+                                                                                                      "bytes",
+                                                                                                      "sha256"
+                                                                                                  ],
+                                                                                     "properties":  {
+                                                                                                        "path":  {
+                                                                                                                     "type":  "string",
+                                                                                                                     "minLength":  1
+                                                                                                                 },
+                                                                                                        "bytes":  {
+                                                                                                                      "type":  "integer",
+                                                                                                                      "minimum":  0
+                                                                                                                  },
+                                                                                                        "sha256":  {
+                                                                                                                       "type":  "string",
+                                                                                                                       "pattern":  "^[A-Fa-f0-9]{64}$"
+                                                                                                                   }
+                                                                                                    },
+                                                                                     "additionalProperties":  true
+                                                                                 }
+                                                                   },
+                                                         "regionCount":  {
+                                                                             "type":  "integer",
+                                                                             "minimum":  1
+                                                                         },
+                                                         "chunkCount":  {
+                                                                            "type":  "integer",
+                                                                            "minimum":  1
+                                                                        }
+                                                     }
+                                  },
+                       "qualityGates":  {
+                                            "type":  "object",
+                                            "required":  [
+                                                             "coordinateAgreement",
+                                                             "actualTerrain",
+                                                             "facadeMatch",
+                                                             "assembly"
+                                                         ],
+                                            "properties":  {
+                                                               "coordinateAgreement":  {
+                                                                                           "type":  "boolean"
+                                                                                       },
+                                                               "actualTerrain":  {
+                                                                                     "type":  "boolean"
+                                                                                 },
+                                                               "facadeMatch":  {
+                                                                                   "type":  "boolean"
+                                                                               },
+                                                               "assembly":  {
+                                                                                "type":  "boolean"
+                                                                            }
+                                                           }
+                                        },
+                       "claims":  {
+                                      "type":  "object",
+                                      "properties":  {
+                                                         "exactEveryElement":  {
+                                                                                   "const":  false
+                                                                               }
+                                                     }
+                                  },
+                       "assemblyEvidence":  {
+                                                "type":  "object"
+                                            },
+                       "terrainEvidence":  {
+                                               "type":  "object"
+                                           },
+                       "facadeEvidence":  {
+                                              "type":  "object"
+                                          }
+                   },
+    "additionalProperties":  true
+}

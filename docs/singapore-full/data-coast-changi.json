@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "run": "coast-mask/changi-v1",
+  "derivation": {
+    "schemaVersion": 1,
+    "status": "PASS",
+    "sourceWays": 4,
+    "sourceSegments": 86,
+    "faces": 3,
+    "areaSquareMetres": {
+      "land": 1351153.6836356681,
+      "sea": 287246.3163643318
+    },
+    "scopeAreaSquareMetres": 1638400.0,
+    "outsideScopeAreaSquareMetres": 0.0,
+    "unknownSourceWays": [],
+    "unpolygonizedCutLength": 0.0,
+    "unpolygonizedDangleLength": 0.0,
+    "invalidRingLineLength": 0.0,
+    "domainCoverageGapSquareMetres": 0.0,
+    "overlapSquareMetres": 0,
+    "shorelineDefinition": "OSM mean high-water springs; inland lakes and bathymetry are separate sources",
+    "noArtificialCoastlineClosure": true,
+    "rectangleUsedOnlyAsClippingBoundary": true,
+    "source": {
+      "kind": "complete Overpass tile export",
+      "sha256": "5dc2b60b7b3b196a59a30e6a09a145f3c376d5748aed77a403824463641d7e6b",
+      "bytes": 3931618,
+      "missingReferences": [],
+      "referenceComplete": true,
+      "licence": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "OpenStreetMap contributors"
+    },
+    "boundsEN": [
+      44928.0,
+      40416.0,
+      46208.0,
+      41696.0
+    ],
+    "classificationPointConvention": "global block center X+0.5,Z+0.5; E=X,N=60000-Z",
+    "scopeSha256": "aa88ef3ad093817290ca48180fd21d00d1532fdfe89e9a10dab8fac3006676d1",
+    "elapsedSeconds": 0.07605767250061035,
+    "pid": 42276,
+    "completedUtc": "2026-09-13T09:11:52.306703+00:00",
+    "files": [
+      {
+        "name": "coast-mask-en.geojson",
+        "bytes": 9081,
+        "sha256": "f84a654e5f8d54f8a50fcdc0a9689361e6a95fde1816096e460b7c6f747b6f94"
+      },
+      {
+        "name": "coast-mask-xz.geojson",
+        "bytes": 9169,
+        "sha256": "85478c14c21d4cd4175e1a4b1cf3902ef40c6d14e0fd9953c3b3595f10c7e109"
+      },
+      {
+        "name": "coast-source.json",
+        "bytes": 13335,
+        "sha256": "86e96750036d2beca74265a2d006ae220b71db0047c66ed5f5a69ee7edb77a86"
+      }
+    ]
+  },
+  "independentAudit": {
+    "status": "PASS",
+    "domain_area_m2": 1638400.0,
+    "class_areas_m2": {
+      "land": 1351153.6836356681,
+      "sea": 287246.3163643318,
+      "unknown": 0
+    },
+    "coverage_difference_m2": 0.0,
+    "pairwise_overlap_m2": 0.0,
+    "unrepresented_shoreline_length_m": 0.0,
+    "unsupported_internal_boundary_length_m": 0.0,
+    "clipped_source_segments": 86,
+    "directed_probe_count": 516,
+    "max_projected_coordinate_error_m": 0,
+    "intersecting_original_coastline_way_ids": [
+      859323254,
+      859323255,
+      1135314674,
+      1455504916
+    ],
+    "completeness_scope": "Every coastline way intersecting the declared domain in the original supplied 3.9MB export is retained with exact raw node order, tags and projected coordinates. Does not prove completeness beyond that original export.",
+    "ring_scope": "All four supplied complete raw ways form one directed open chain with both graph endpoints outside the domain; ring-only mask unknown throughout is expected and is not a face-mask contradiction."
+  },
+  "failedIndependentProbes": 0,
+  "independentAuditSha256": "10a32c557ea1e4dfa4f00a892a8fe60d553fb7179c9d724188f97b3125aeeafe",
+  "ringAudit": {
+    "rawWays": 4,
+    "closedRingWays": 0,
+    "unresolvedWays": 4,
+    "allWaysAccounted": true
+  },
+  "tests": {
+    "builder": 9,
+    "strictRingAndFaceAudit": 20
+  },
+  "nationalCoverage": "This receipt verifies the Changi tile only; national coastline extraction is separate."
+}

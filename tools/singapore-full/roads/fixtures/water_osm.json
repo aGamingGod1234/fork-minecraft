@@ -1,0 +1,114 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source_file": "singapore-1024.osm",
+    "source_sha256": "4d91cfadc9378f98b1a28f132d34d7ce6756beb2200ec7cc8e2d080945148b05",
+    "attribution": "OpenStreetMap contributors",
+    "license": "ODbL-1.0",
+    "source_url": "https://www.openstreetmap.org/copyright",
+    "projection": "EPSG:3414",
+    "block_coordinates": "x=easting,z=60000-northing",
+    "projection_library": "pyproj 3.7.2",
+    "fixture_only": true
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "way/116801285",
+      "properties": {
+        "tags": {
+          "landuse": "grass",
+          "name": "The Promontory@Marina Bay"
+        },
+        "geometry_complete": true,
+        "references_complete": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              30271.713012,
+              30608.191546
+            ],
+            [
+              30243.957165,
+              30650.387125
+            ],
+            [
+              30298.067649,
+              30699.393462
+            ],
+            [
+              30365.377203,
+              30728.628899
+            ],
+            [
+              30392.687872,
+              30686.355911
+            ],
+            [
+              30375.96062,
+              30675.840384
+            ],
+            [
+              30360.24562,
+              30604.353881
+            ],
+            [
+              30287.917185,
+              30618.707084
+            ],
+            [
+              30271.713012,
+              30608.191546
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/886588582",
+      "properties": {
+        "tags": {
+          "natural": "water",
+          "water": "canal"
+        },
+        "geometry_complete": true,
+        "references_complete": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              29399.449491,
+              30037.918497
+            ],
+            [
+              29405.325711,
+              30042.872221
+            ],
+            [
+              29349.791516,
+              30107.846265
+            ],
+            [
+              29346.842276,
+              30105.358345
+            ],
+            [
+              29343.915295,
+              30102.89254
+            ],
+            [
+              29399.449491,
+              30037.918497
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

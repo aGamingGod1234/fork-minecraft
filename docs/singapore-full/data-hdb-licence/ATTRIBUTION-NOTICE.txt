@@ -1,0 +1,3 @@
+Contains information from HDB Property Information accessed on 2026-09-13 from Housing & Development Board via https://data.gov.sg/datasets/d_17f5382f26140b1fdae0ba2ef6239d2f/view which is made available under the terms of the Singapore Open Data Licence version 1.0: https://data.gov.sg/open-data-licence
+
+Source max_floor_lvl is maximum floor level, not surveyed physical building height in metres. Any derived height must retain a separate method and estimate label. This snapshot includes all API records with five requested fields: blk_no, street, max_floor_lvl, residential, multistorey_carpark. Licence HTML and dataset catalogue are saved as evidence alongside the raw response.

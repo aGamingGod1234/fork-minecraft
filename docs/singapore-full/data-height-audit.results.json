@@ -1,0 +1,733 @@
+{
+  "schemaVersion": 1,
+  "sourceSha256": "9fdaf1f6dcf3629a3dfaaac24d5837f03f97bbfea59fe7875d2c221b3ae21d0d",
+  "extractReportSha256": "3e76221aa4552eb18880c593b275c126dde9a8bc807890efe4be249f21c70eaa",
+  "maskSha256": "5783cb68a03f3dcae77baf8c37ce96222944c03024007df45a627900d9d61978",
+  "sourceObjectCount": 134734,
+  "classifications": {
+    "mapped-valid-explicit": 3829,
+    "inferred-levels": 38913,
+    "missing": 90115,
+    "invalid": 1877
+  },
+  "objectKinds": {
+    "building": 126159,
+    "building-part": 8481,
+    "building-and-part": 94
+  },
+  "tagCounts": {
+    "height": 5199,
+    "building:levels": 41676,
+    "building:material": 3271,
+    "building:colour": 4065,
+    "roof:colour": 6039,
+    "building:levels:underground": 220,
+    "roof:material": 6304,
+    "roof:levels": 3824,
+    "building:min_level": 2070,
+    "building:height": 19,
+    "roof:height": 231,
+    "min_height": 584
+  },
+  "errors": {
+    "height:nonpositive-height": 1325,
+    "building:levels:zero-without-underground-count": 43,
+    "building:levels:levels-not-nonnegative-integer": 245,
+    "roof:height:exceeds-total-height": 2,
+    "building:min_level:not-below-levels": 198,
+    "roof:levels:levels-not-nonnegative-integer": 18,
+    "min_height:not-below-height": 14,
+    "min_height:not-below-estimated-height": 1,
+    "building:min_level:levels-not-nonnegative-integer": 47,
+    "roof:height:exceeds-object-vertical-extent": 9,
+    "roof:height:unsupported-height-syntax": 2
+  },
+  "invalidExamples": [
+    {
+      "osmType": "node",
+      "osmId": 410463765,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": 11,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [
+        "building-point-has-no-footprint"
+      ],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0",
+        "building:levels": "11"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 32507125,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 32507157,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 32507166,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 32507173,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 37354400,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 41889431,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 41890245,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 42009721,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 42009725,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 44348592,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 44414529,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 44414594,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 45098519,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0",
+        "building:material": "metal",
+        "building:colour": "#7b898f",
+        "roof:colour": "#7b898f"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 45098520,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46518148,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46594816,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46594826,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46594832,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46595145,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46595148,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": 45,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0",
+        "building:levels": "45"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46649287,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46671408,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46820919,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46919233,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": 5,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0",
+        "building:levels": "5"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 46928499,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 47134077,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 47298610,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 47298646,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": 3,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0",
+        "building:levels": "3"
+      }
+    },
+    {
+      "osmType": "way",
+      "osmId": 47298664,
+      "objectKind": "building",
+      "classification": "invalid",
+      "heightMetres": null,
+      "estimatedHeightMetres": null,
+      "levels": null,
+      "minHeightMetres": null,
+      "minLevel": null,
+      "roofHeightMetres": null,
+      "roofLevels": null,
+      "roofEstimateBasis": null,
+      "undergroundLevels": null,
+      "warnings": [],
+      "errors": [
+        "height:nonpositive-height"
+      ],
+      "tags": {
+        "height": "0"
+      }
+    }
+  ],
+  "assumedMetresPerLevel": 3.0,
+  "elapsedSeconds": 4.954,
+  "files": [
+    {
+      "name": "building-heights.jsonl",
+      "bytes": 48773204,
+      "sha256": "4504f41a1cd0ca11801b44075f21767eca2abc8e62254d5a9f9a3c358493e50b"
+    }
+  ],
+  "limits": [
+    "Counts are OSM objects, not deduplicated physical buildings; outline and parts may overlap.",
+    "Mapped explicit means a parseable OSM tag, not independently surveyed or exact.",
+    "Selection uses Singapore administrative mask; crossing whole geometries still require clipping.",
+    "Missing heights remain null. Inferred storey heights are estimates, not 1:1 facts.",
+    "Material/colour tags do not establish exact facades.",
+    "URA height controls are not observed heights; DSM elevation is not building height."
+  ]
+}
