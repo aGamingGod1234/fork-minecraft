@@ -51,13 +51,14 @@ export function validateStructure(m) {
     assert(shot.segments?.length > 0 && shot.segments.reduce((n,s) => n + s.frames, 0) === shot.frames, `Shot ${shot.id}: segments must fill exact slot`);
     for (const segment of shot.segments) {
       assert(Number.isInteger(segment.frames) && segment.frames > 0, 'Segment requires positive integer frames');
-      assert(['clip','freeze','card'].includes(segment.kind), 'Unknown segment kind');
+      assert(['clip','freeze','card','image'].includes(segment.kind), 'Unknown segment kind');
       if (segment.kind === 'card') {
         assert([2,22,23].includes(shot.id) && segment.reviewed, 'Cards only in accepted title/credit/end slots');
         local(segment.textFile, ['media/edit/', '.work/fork/cinematic/']);
       } else {
         assert(shaPattern.test(segment.sha256) && Number.isFinite(segment.in) && segment.in >= 0 && segment.captionSafeReviewed, 'Clip requires hash, in point and caption-safe review');
         local(segment.source);
+        if (segment.kind === 'image') assert(shot.id === 4 && segment.in === 0 && !segment.audio, 'Static locator image only in shot 4, without fabricated audio');
         if (segment.kind === 'clip') assert(Number.isFinite(segment.out) && Math.abs(segment.out - segment.in - segment.frames / 30) <= 1 / 30, 'Clip time must match allocated frames at normal speed');
         if (segment.audio) assert(Number.isFinite(segment.audioGainDb) && segment.audioGainDb >= -60 && segment.audioGainDb <= 0, 'Set captured audio gain between -60 and 0 dB');
       }
@@ -87,7 +88,7 @@ async function validateSources(m) {
     if (!sources.has(p)) sources.set(p, {sha256: await hash(p), probe: probe(p)});
     const data = sources.get(p);
     assert(data.sha256 === item.sha256.toLowerCase(), `Changed media: ${item.source}`);
-    assert(Number(data.probe.format.duration) >= (item.out ?? item.in + 1 / 30) - 0.01, `Source too short: ${item.source}`);
+    if (item.kind !== 'image') assert(Number(data.probe.format.duration) >= (item.out ?? item.in + 1 / 30) - 0.01, `Source too short: ${item.source}`);
     const isVoice = m.voice.includes(item);
     assert(data.probe.streams.some(s => s.codec_type === (isVoice ? 'audio' : 'video')), `Missing stream: ${item.source}`);
     if (item.audio) assert(data.probe.streams.some(s => s.codec_type === 'audio'), `No captured audio: ${item.source}`);
@@ -158,7 +159,8 @@ async function render(m, manifestPath) {
       args.push('-f','lavfi','-i',`color=c=0x101820:s=1920x1080:r=30:d=${duration}`);
       vf = `drawtext=fontfile='${font}':textfile='${filterPath(local(s.textFile))}':expansion=none:fontcolor=white:fontsize=46:line_spacing=24:x=(w-tw)/2:y=(h-th)/2`;
     } else {
-      args.push('-ss',String(s.in),'-i',local(s.source));
+      if (s.kind === 'image') args.push('-loop','1','-framerate','30','-i',local(s.source));
+      else args.push('-ss',String(s.in),'-i',local(s.source));
       vf = 'setpts=PTS-STARTPTS,fps=30,scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1';
       if (s.kind === 'freeze') vf += `,trim=end_frame=1,tpad=stop_mode=clone:stop_duration=${duration}`;
     }

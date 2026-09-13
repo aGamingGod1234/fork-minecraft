@@ -39,3 +39,11 @@ test('gameplay cannot be replaced by an editorial card', () => {
   const m=acceptedMetadata(); m.shots[0].segments=[{kind:'card',textFile:'media/edit/cards/title.txt',frames:60,reviewed:true}]; assert.throws(() => validateStructure(m), /Cards only/);
 });
 test('captions follow actual source take duration', () => assert.equal(captions([{at:60,in:1,out:3,text:'Same start. Six rounds.'}]),'1\n00:01:00,000 --> 00:01:02,000\nSame start. Six rounds.\n'));
+test('actual static locator fits the dedicated overview slot', () => {
+  const m=acceptedMetadata(); Object.assign(m.shots[3].segments[0],{kind:'image',source:'media/source/locator.png'});
+  assert.equal(validateStructure(m).frames,2700);
+});
+test('static locator cannot replace gameplay evidence', () => {
+  const m=acceptedMetadata(); Object.assign(m.shots[0].segments[0],{kind:'image',source:'media/source/locator.png'});
+  assert.throws(()=>validateStructure(m),/Static locator image only/);
+});
