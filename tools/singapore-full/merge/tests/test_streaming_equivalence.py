@@ -174,20 +174,26 @@ def run_value(x, z, low, high, block, layer="building", feature="synthetic-build
 
 
 def run_suite(args):
-    root = EVIDENCE_ROOT / ("synthetic-streaming-equivalence-" + uuid.uuid4().hex)
+    # Keep synthetic paths short: the writer adds a staging UUID and region spool
+    # names, and Windows installations may still enforce the 260-character limit.
+    root = EVIDENCE_ROOT / ("synthetic-eq-" + uuid.uuid4().hex[:12])
     root.mkdir(parents=True, exist_ok=False)
     repository = Path(args.repository).resolve()
     candidate = Path(args.candidate_module).resolve()
     template = Path(args.level_template).resolve()
     template_settings = template.parent / "data/minecraft/world_gen_settings.dat"
-    protected = {str(path): file_sha(path) for path in (candidate, candidate.parent / "anvil.py", template, template_settings)}
+    candidate_files = [candidate, candidate.parent / "anvil.py"]
+    if (candidate.parent / "run_spool.py").is_file():
+        candidate_files.append(candidate.parent / "run_spool.py")
+    protected = {str(path): file_sha(path) for path in (*candidate_files, template, template_settings)}
     baseline_ref = subprocess.check_output(["git", "-C", str(repository), "rev-parse", args.baseline_ref], text=True).strip()
     snapshots = {}
     for label in ("baseline", "candidate"):
         module_dir = root / label
         module_dir.mkdir()
         snapshots[label] = {}
-        for name in ("overlay.py", "anvil.py"):
+        names = ("overlay.py", "anvil.py") if label == "baseline" else tuple(path.name for path in candidate_files)
+        for name in names:
             content = subprocess.check_output(["git", "-C", str(repository), "show", f"{baseline_ref}:{RELATIVE_MERGE}{name}"]) if label == "baseline" else (candidate if name == "overlay.py" else candidate.parent / name).read_bytes()
             path = module_dir / name
             path.write_bytes(content)
@@ -211,7 +217,7 @@ def run_suite(args):
         for case in ("positive", "reordered", "conflict"):
             name = label + "-" + case
             spec = {"module": str(root / label / "overlay.py"), "runs": str(fixture_paths[case]),
-                    "world": str(root / (name + "-world")), "level_template": str(template),
+                    "world": str(root / (label[0] + case[0])), "level_template": str(template),
                     "result": str(root / (name + "-result.json"))}
             spec_path = root / (name + "-spec.json")
             spec_path.write_text(json.dumps(spec))
