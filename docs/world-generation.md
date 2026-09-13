@@ -2,7 +2,9 @@
 
 This release contains the Singapore generation tools as of `1fdd298`, plus the exact historical first-party modules used for the **FORK - Lim Chu Kang** 1024-metre preview. The normal source includes subsequent fixes; it is not byte-identical to every module that made that ZIP. CBD and connected growth tools are included, but this snapshot does not establish a released or accepted CBD save.
 
-The Lim Chu Kang package SHA-256 is `bc2d1ac5a24a066d7091d4b7ff93e90e84e12b60f19004b8079693f1c6b6e7ae`. Its owned core is `[13312,13312,14336,14336)`, containing 4,096 chunks. A 128-metre halo was generated and then cropped. The grid is EPSG:3414: X = easting, Z = 60000 minus northing, with one block per metre.
+The [published Lim Chu Kang preview](https://github.com/aGamingGod1234/fork-minecraft/releases/download/v2026.09.13-rc7/FORK-Lim-Chu-Kang-1024-public-v2.zip) is 1,745,910 bytes with SHA-256 `07e654ecae896905a39878f97b6c09df58f9788c81697569bd74e7c74440438f`. It preserves all six world payloads from the original package and adds source attribution and separate-save instructions. The historical records below retain the original package hash, `bc2d1ac5a24a066d7091d4b7ff93e90e84e12b60f19004b8079693f1c6b6e7ae`.
+
+Its owned core is `[13312,13312,14336,14336)`, containing 4,096 chunks. A 128-metre halo was generated and then cropped. The grid is EPSG:3414: X = easting, Z = 60000 minus northing, with one block per metre.
 
 The [preview proof](singapore-full/merge-lim-chu-kang-proof.md) records a full owned-core structural comparison and a representative Minecraft Java 26.1.2 load check. That runtime check visited 15 chunks with 19 sentinels, not every chunk. Client visual review was still pending at this snapshot.
 
