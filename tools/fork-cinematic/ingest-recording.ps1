@@ -6,7 +6,7 @@ $workspace = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $recordFolder = if($RecordingRoot -eq 'Videos'){Join-Path $env:USERPROFILE 'Videos'}else{Join-Path $env:LOCALAPPDATA 'FORK-Tools\preflight-20260913\obs'}
 $original = Join-Path $recordFolder $RecordingName
 $before = Get-Item -LiteralPath $original
-if($before.LastWriteTimeUtc -lt [DateTime]'2026-09-13T02:30:00Z'){throw 'Not a current hackathon recording; do not ingest unrelated old media'}
+if($before.LastWriteTimeUtc -lt [DateTimeOffset]::Parse('2026-09-13T02:30:00Z').UtcDateTime){throw 'Not a current hackathon recording; do not ingest unrelated old media'}
 Start-Sleep -Seconds 3
 $after = Get-Item -LiteralPath $original
 if ($before.Length -ne $after.Length -or $before.LastWriteTimeUtc -ne $after.LastWriteTimeUtc -or $after.Length -eq 0) { throw 'Recording is still changing; leave it intact and wait for Stop Recording' }

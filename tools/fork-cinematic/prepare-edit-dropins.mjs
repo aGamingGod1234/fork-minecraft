@@ -6,6 +6,7 @@ const m=JSON.parse(fs.readFileSync('media/edit/film-edit.json','utf8'));
 const lines=fs.readFileSync('docs/fork-cinematic/narration-live-neutral.md','utf8').split('\n').filter(s=>/^\d+\. /.test(s)).map(s=>s.replace(/^\d+\. /,''));
 if(lines.join(' ').split(/\s+/).length!==120)throw Error('Expected120-word narration');
 m.status='INTERNAL SOURCE ASSIGNMENT - gameplay and human voice missing';
+m.mediaLeaseDeadlineUtc='2026-09-13T06:20:00Z';
 m.shots[0].requiredPicture='Actual accepted road fork in the new Market Street scene. Framing and geographic acceptance required; no toy-court substitution.';
 m.shots[2].requiredPicture='Substantial actual camera crane through loaded Market Street scenery. Preserve actual playback speed and accept live framing first.';
 m.shots[3].requiredPicture='Explicit cut to the attributed Singapore orientation map with the256x256metre Market Street district marker. No full-island game claim.';

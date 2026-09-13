@@ -5,7 +5,7 @@ const relative=process.argv[2];
 if(!relative||path.isAbsolute(relative))throw Error('Supply reviewed media/output diagnostic folder');
 const root=process.cwd(),folder=path.resolve(root,relative);
 if(!folder.startsWith(path.resolve(root,'media/output')+path.sep))throw Error('Unowned review path');
-const manifest=JSON.parse(fs.readFileSync(path.join(folder,'diagnostic-manifest.json'),'utf8'));
+const manifest=JSON.parse(fs.readFileSync(path.join(folder,'diagnostic-manifest.json'),'utf8').replace(/^\uFEFF/,''));
 if(!manifest.technicalCheckPassed||!manifest.gameViewConfirmed||!manifest.sourcePrivacyReviewed)throw Error('Review actual game picture and source privacy before showing video');
 const file=path.join(folder,'fork-real-input-15s.mp4');
 const sha256=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');

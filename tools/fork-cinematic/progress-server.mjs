@@ -32,5 +32,5 @@ const server=http.createServer((request,response)=>{
   const route=routes[request.url];if(!route){response.writeHead(404).end();return;}
   response.writeHead(200,{'Content-Type':route[1]});fs.createReadStream(path.join(root,route[0])).pipe(response);
 });
-server.listen(8765,'127.0.0.1',()=>fs.writeFileSync(path.join(privateDir,'preview-server.json'),JSON.stringify({pid:process.pid,startedUtc:new Date().toISOString(),url:'http://127.0.0.1:8765/',kind:'Visible local progress page; no capture or render',stopDeadlineUtc:'2026-09-13T05:10:00Z'},null,2)));
-setTimeout(()=>server.close(()=>process.exit(0)),Math.max(1,Date.parse('2026-09-13T05:10:00Z')-Date.now()));
+server.listen(8765,'127.0.0.1',()=>fs.writeFileSync(path.join(privateDir,'preview-server.json'),JSON.stringify({pid:process.pid,startedUtc:new Date().toISOString(),url:'http://127.0.0.1:8765/',kind:'Visible local progress page; no capture or render',stopDeadlineUtc:'2026-09-13T06:20:00Z'},null,2)));
+setTimeout(()=>server.close(()=>process.exit(0)),Math.max(1,Date.parse('2026-09-13T06:20:00Z')-Date.now()));
