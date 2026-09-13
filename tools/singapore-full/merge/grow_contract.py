@@ -13,7 +13,8 @@ SHA = re.compile(r"^[0-9a-fA-F]{64}$")
 REGION_DIRECTORY = "dimensions/minecraft/overworld/region"
 WORLD_SETTINGS = "data/minecraft/world_gen_settings.dat"
 REGION = re.compile(r"^dimensions/minecraft/overworld/region/r\.-?\d+\.-?\d+\.mca$")
-COMPONENT_LOADERS = frozenset(("validate-east-world-gate.mjs", "validate-ring-world-gate.mjs"))
+COMPONENT_LOADERS = frozenset(("validate-east-world-gate.mjs", "validate-ring-world-gate.mjs",
+                              "validate-transfer-world-gate.mjs"))
 
 
 class GrowContractError(ValueError):

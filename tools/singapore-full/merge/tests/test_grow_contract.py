@@ -330,7 +330,8 @@ class GrowContractTests(unittest.TestCase):
             result = _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
         self.assertEqual(result["standalone_status"], "NOT_STANDALONE")
         self.assertFalse(result["component_spawn_accepted"])
-        for name, accepted in (("validate-ring-world-gate.mjs", True), ("unapproved-world-gate.mjs", False)):
+        for name, accepted in (("validate-ring-world-gate.mjs", True), ("validate-transfer-world-gate.mjs", True),
+                               ("unapproved-world-gate.mjs", False)):
             validator = writer.parent / name
             validator.write_text("// bounded pinned loader fixture\n")
             gate["evidence"]["gateModule"] = {"path": str(validator), "bytes": validator.stat().st_size, "sha256": digest(validator)}
@@ -356,7 +357,8 @@ class GrowContractTests(unittest.TestCase):
                        {"finalAssembledSafeSpawnRequired": True},
                        {"componentSpawnAccepted": False},
                        {"evidence": {"gateModule": {"path": "validate-east-world-gate.mjs"}}},
-                       {"evidence": {"gateModule": {"path": "validate-ring-world-gate.mjs"}}}):
+                       {"evidence": {"gateModule": {"path": "validate-ring-world-gate.mjs"}}},
+                       {"evidence": {"gateModule": {"path": "validate-transfer-world-gate.mjs"}}}):
             for role in (None, "standalone"):
                 gate = {**original, **marker}
                 if role is not None:
