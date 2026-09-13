@@ -126,7 +126,8 @@ class GrowContractTests(unittest.TestCase):
         runs = path.parent / "roads.runs.jsonl"
         runs.write_bytes(b'{"x":0,"z":0,"layer":40}\n')
         report = self.write(path.parent / "roads-manifest.json", {"schema": "fork.roads-runs.v1",
-                            "sourceSha256": "a" * 64, "runSha256": digest(runs), "runCount": 1, "blockedDiagnostics": 0})
+                            "sourceSha256": "a" * 64, "runSha256": "b" * 64, "outputSha256": digest(runs),
+                            "runCount": 1, "blockedDiagnostics": 0})
         evidence = json.loads(path.read_text())
         evidence.update(status="PASS", featureCount=1, reportPath=str(report), reportSha256=digest(report),
                         runsPath=str(runs), runsSha256=digest(runs))

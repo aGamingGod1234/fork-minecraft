@@ -41,10 +41,11 @@ An evidence wrapper can bind an existing passing actual report using
 `reportPath` and `reportSha256`; its bytes are rechecked. This is an adapter
 around evidence, not permission to relabel a failed or synthetic report.
 The existing `fork.roads-runs.v1` source manifest needs no invented PASS field:
-its wrapper binds `runsPath`/`runsSha256` to its `runSha256`, matches its source
+its wrapper binds `runsPath`/`runsSha256` to its `outputSha256`, matches its source
 hash and requires zero blocked diagnostics. This source can contain roads,
 water and landcover; wrapper feature counts must be scoped to the component
 and exact owned core by the evidence producer.
+The emitter's `runSha256` is a semantic digest, not the raw JSONL file hash.
 
 The normalized result has `sources`, `extent`, `expected_chunks`, `data_version`
 and `coordinate_frame`. Each normalized source includes the exact writer and

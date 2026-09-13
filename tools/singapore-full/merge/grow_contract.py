@@ -160,7 +160,9 @@ def _coverage(component, entry, core, writer_hash):
                 raise GrowContractError(f"{component} actual road/water raster source is blocked or mismatched")
             runs = Path(evidence["runsPath"]).resolve(strict=True)
             runs_hash = _sha(evidence["runsSha256"], "wrapped runs")
-            if digest(runs) != runs_hash or runs_hash != _sha(report_data.get("runSha256"), "report runs"):
+            # outputSha256 binds emitted file bytes; runSha256 is a semantic
+            # emitter digest and is deliberately not a filesystem checksum.
+            if digest(runs) != runs_hash or runs_hash != _sha(report_data.get("outputSha256"), "report output"):
                 raise GrowContractError(f"{component} actual raster run bytes changed")
         elif report_data.get("status") not in ("PASS", "NO_FEATURES"):
             raise GrowContractError(f"{component} wrapped actual report needs a recognized typed source schema")
