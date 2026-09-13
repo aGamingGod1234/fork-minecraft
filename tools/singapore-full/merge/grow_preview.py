@@ -289,3 +289,147 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
             "component": component, "run_source": evidence.get("runSource", "roads"),
             "quarantinedSourceFeatures": deepcopy(quarantines),
             "globalSourceGeometryComplete": False if quarantines else None}
+
+
+MULTI_KIND = "fork-multi-source-component-preview"
+
+
+def validate_multi_water_preview(entry, core_bounds, writer_hash, writer_inputs,
+                                 *, coast_validator):
+    """Compose a strict coast proof and qualified inland preview, without waiver.
+
+    coast_validator must be the existing strict coverage consumer, called as
+    ('water', child_entry, core_bounds, writer_hash, writer_inputs). Keeping that
+    callback mandatory leaves the independent coastline oracle in one place.
+    """
+    _require(callable(coast_validator), "A strict coast proof validator is required")
+    _require(isinstance(entry, dict) and entry.get("status") == ENTRY_STATUS,
+             "Explicit rendered_subset_preview aggregate entry required")
+    core = _bounds(core_bounds, "requested core")
+    path, digest = entry.get("evidence_path"), entry.get("evidence_sha256")
+    aggregate = _bound_json(path, digest, "multi-water preview")
+    _require(aggregate.get("kind") == MULTI_KIND and aggregate.get("schemaVersion") == 1
+             and aggregate.get("status") == "RENDERED_SUBSET"
+             and aggregate.get("component") == "water" and aggregate.get("synthetic") is False
+             and aggregate.get("coreBounds") == core
+             and aggregate.get("writerManifestSha256") == writer_hash,
+             "Multi-water preview identity/core/writer mismatch")
+    _false_gates(aggregate, "multi-water preview")
+    _require(aggregate.get("fullWorldAccepted") is False
+             and aggregate.get("sourceCoverageComplete") is False,
+             "Multi-water preview cannot claim complete coverage")
+    required = {"coast-water", "inland-water"}
+    declared_required = aggregate.get("requiredContributors")
+    _require(isinstance(declared_required, list) and len(declared_required) == 2
+             and set(declared_required) == required, "Exactly coast and inland water are required")
+    source_path, source_hash = aggregate.get("sourceSetPath"), aggregate.get("sourceSha256")
+    source_set = _bound_json(source_path, source_hash, "multi-water source set")
+    _require(source_set.get("kind") == "fork-component-source-set"
+             and source_set.get("schemaVersion") == 1 and source_set.get("component") == "water"
+             and source_set.get("coreBounds") == core
+             and source_set.get("writerManifestSha256") == writer_hash,
+             "Multi-water source-set identity mismatch")
+
+    def keyed(records):
+        _require(isinstance(records, list) and len(records) == 2
+                 and all(isinstance(item, dict) and isinstance(item.get("id"), str)
+                         for item in records), "Two typed source contributors required")
+        result = {item["id"]: item for item in records}
+        _require(len(result) == 2 and set(result) == required, "Missing or duplicate water contributor")
+        return result
+
+    declared, expected = keyed(aggregate.get("contributors")), keyed(source_set.get("contributors"))
+    files = {str(Path(_fs_path(path)).resolve()).casefold(),
+             str(Path(_fs_path(source_path)).resolve()).casefold()}
+    children, proofs, feature_ids = [], {}, set()
+    for name in sorted(required):
+        record, pinned = declared[name], expected[name]
+        child_path, child_hash = record.get("evidencePath"), record.get("evidenceSha256")
+        _require(child_hash == pinned.get("evidenceSha256"), "Source-set child evidence mismatch")
+        child = _bound_json(child_path, child_hash, name + " evidence")
+        logical = str(Path(_fs_path(child_path)).resolve()).casefold()
+        _require(logical not in files, "Duplicate or cyclic water child")
+        files.add(logical)
+        _require(child.get("kind") not in (MULTI_KIND, "fork-multi-source-component-evidence"),
+                 "Nested water aggregates are not source contributors")
+        _require(child.get("component") == "water" and child.get("coreBounds") == core
+                 and child.get("writerManifestSha256") == writer_hash,
+                 "Child component/core/writer mismatch")
+        for key in ("sourceSha256", "runsSha256", "sourceReportSha256"):
+            _require(isinstance(child.get(key), str)
+                     and record.get(key) == pinned.get(key) == child[key],
+                     "Child/source-set binding mismatch: " + key)
+        _require(record.get("status") == child.get("status")
+                 and type(record.get("featureCount")) is int
+                 and record["featureCount"] == child.get("featureCount"),
+                 "Child status or feature count mismatch")
+        source_report = _bound_json(child.get("sourceReportPath"), child["sourceReportSha256"],
+                                    name + " source report")
+        schema = "fork.coast-surface.v1" if name == "coast-water" else "fork.roads-runs.v1"
+        _require(source_report.get("schema") == schema, "Wrong actual source type for water contributor")
+        runs_path, runs_hash = child.get("runsPath"), child["runsSha256"]
+        _pin(runs_path, runs_hash, name + " consumed runs")
+        size = Path(_fs_path(runs_path)).stat().st_size
+        _require(isinstance(writer_inputs, list) and any(
+            isinstance(item, dict) and item.get("sha256") == runs_hash
+            and item.get("bytes") == size
+            and str(item.get("name", "")).casefold() == Path(runs_path).name.casefold()
+            for item in writer_inputs), "Water source runs were not consumed by this writer")
+        if name == "coast-water":
+            _require(child.get("status") in ("PASS", "NO_FEATURES")
+                     and child.get("maskEvidence"), "Coast needs a strict oracle and mask chain")
+            child_entry = {"status": "no_features" if child["status"] == "NO_FEATURES" else "included",
+                           "evidence_path": child_path, "evidence_sha256": child_hash}
+            normalized = coast_validator("water", child_entry, core, writer_hash, writer_inputs)
+            _require(isinstance(normalized, dict)
+                     and normalized.get("status") in ("included", "pass", "no_features"),
+                     "Strict coast consumer did not accept its actual proof")
+        else:
+            _require(child.get("status") == "RENDERED_SUBSET"
+                     and child.get("kind") == KIND and child.get("runSource") == "inland-water",
+                     "Inland child must remain an explicit rendered subset")
+            _require(child.get("reportSha256") == child["sourceReportSha256"],
+                     "Inland source report differs from classified roads report")
+            normalized = validate_preview("water", {"status": ENTRY_STATUS,
+                "evidence_path": child_path, "evidence_sha256": child_hash},
+                core, writer_hash, writer_inputs)
+        _require(normalized.get("source_sha256") == child["sourceSha256"]
+                 and normalized.get("feature_count") == child.get("featureCount"),
+                 "Child normalization does not match actual wrapper")
+        ids = child.get("emittedFeatureIds")
+        _require(isinstance(ids, list) and all(isinstance(value, str) and value for value in ids)
+                 and len(set(ids)) == len(ids) and len(ids) == normalized["feature_count"],
+                 "Child emitted IDs do not establish its feature count")
+        feature_ids.update(child["sourceSha256"] + ":" + value for value in ids)
+        children.append({"id": name, **normalized, "runs_path": runs_path,
+                         "runs_sha256": runs_hash, "source_report_path": child["sourceReportPath"],
+                         "source_report_sha256": child["sourceReportSha256"]})
+        proofs[name] = child
+    count = len(feature_ids)
+    _require(type(aggregate.get("featureCount")) is int and aggregate["featureCount"] == count
+             and type(aggregate.get("emittedFeatureCount")) is int
+             and aggregate["emittedFeatureCount"] == count
+             and aggregate.get("emittedFeatureIds") == sorted(feature_ids),
+             "Aggregate feature IDs/count do not equal actual children")
+    for field in ("blockedDiagnostics", "unmappedSourceCount"):
+        values = [proof.get(field) for proof in proofs.values()]
+        combined = sum(values) if all(type(value) is int and value >= 0 for value in values) else None
+        _require(aggregate.get(field) == combined
+                 and (combined is None or type(aggregate.get(field)) is int),
+                 "Aggregate diagnostic totals contradict child proofs")
+    inland = proofs["inland-water"]
+    _require(aggregate.get("omissions") == inland.get("omissions"),
+             "Aggregate must preserve every inland source diagnostic")
+    quarantines = inland.get("quarantinedSourceFeatures", [])
+    _require(aggregate.get("quarantinedSourceFeatures", []) == quarantines,
+             "Aggregate dropped source geometry quarantines")
+    if quarantines:
+        _require(aggregate.get("globalSourceGeometryComplete") is False,
+                 "Aggregate geometry quarantine cannot claim complete source geometry")
+    return {"status": ENTRY_STATUS, "evidence_path": str(path), "evidence_sha256": digest,
+            "source_sha256": source_hash, "feature_count": count,
+            "source_set_path": str(source_path), "source_set_sha256": source_hash,
+            "contributors": children, "omissions": deepcopy(inland["omissions"]),
+            "quarantinedSourceFeatures": deepcopy(quarantines),
+            "sourceComplete": False, "routeComplete": False, "fullFidelity": False,
+            "fullWorldAccepted": False, "waterAccepted": False}
