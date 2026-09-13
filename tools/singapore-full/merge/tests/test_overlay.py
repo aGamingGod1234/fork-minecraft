@@ -120,6 +120,15 @@ class OverlayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported block"):
             self.render([self.row(0, 0, 1, 2, "unregistered:fake_material")])
 
+    def test_cbd_iron_structure_is_solid_in_all_heightmaps(self):
+        _, chunks, _ = self.render([self.row(0, 0, 1, 12, "minecraft:iron_block")], bounds=(0, 0, 16, 16))
+        self.assertEqual(block_at(chunks, 0, 11, 0), "minecraft:iron_block")
+        self.assertEqual(block_at(chunks, 0, 12, 0), "minecraft:air")
+        maps = chunks[(0, 0)].root.value["Heightmaps"].value
+        self.assertEqual(len(maps), 4)
+        for heightmap in maps.values():
+            self.assertEqual(heightmap.value[0] & 511, 12 - MIN_Y)
+
     def test_job_lease_scope_and_expiry(self):
         now = datetime.now(timezone.utc)
         root = self.base / "queue" / "jobs" / "fixture" / "attempts" / "one" / "output"
