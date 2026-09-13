@@ -145,6 +145,37 @@ class GrownWorldReceiptTests(unittest.TestCase):
         anvil.write_level_dat(settings_path, settings)
         self.assertFalse(self.check()["assemblyAccepted"])
 
+    def test_assembly_component_cannot_supply_final_spawn(self):
+        source = self.sources[0]
+        source.update(role="assembly-component", standalone_status="NOT_STANDALONE",
+                      component_spawn_accepted=False, final_assembled_safe_spawn_required=True)
+        self.structural.write_text(json.dumps({"status": "PASS", "role": "assembly-component", "standaloneStatus": "NOT_STANDALONE",
+                                   "componentSpawnAccepted": False, "finalAssembledSafeSpawnRequired": True,
+                                   "runtimeAccepted": False, "fullWorldAccepted": False}))
+        source["structural_gate_sha256"] = package._file_record(self.structural)["sha256"]
+        result = self.check()
+        self.assertFalse(result["assemblyAccepted"])
+        self.assertIn("cannot supply final spawn", result["issues"][0])
+
+    def test_component_role_stays_nonstandalone_when_not_selected(self):
+        source = {"id": "east", "role": "assembly-component", "standalone_status": "NOT_STANDALONE",
+                  "component_spawn_accepted": False, "final_assembled_safe_spawn_required": True}
+        gate = {"status": "PASS", "role": "assembly-component", "standaloneStatus": "NOT_STANDALONE",
+                "componentSpawnAccepted": False, "finalAssembledSafeSpawnRequired": True,
+                "runtimeAccepted": False, "fullWorldAccepted": False}
+        self.assertTrue(grow_receipt._component_status(source, gate, "safe-cbd"))
+        gate["standaloneStatus"] = "PASS"
+        with self.assertRaises(package.GateError):
+            grow_receipt._component_status(source, gate, "safe-cbd")
+
+    def test_final_configuration_must_come_from_selected_safe_source(self):
+        level = anvil.read_level_dat(self.world / "level.dat")
+        level.root.value["Data"].value["GameType"] = anvil.Tag(3, 3)
+        anvil.write_level_dat(self.world / "level.dat", level)
+        result = self.check()
+        self.assertFalse(result["assemblyAccepted"])
+        self.assertIn("Final configs", result["issues"][0])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

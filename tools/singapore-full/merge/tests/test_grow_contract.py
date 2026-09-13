@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from grow_contract import FRAME, REGION_DIRECTORY, WORLD_SETTINGS, GrowContractError, digest, iter_owned_chunks, validate_plan
-from grow_contract import _benchmark_structural, _coverage
+from grow_contract import _benchmark_structural, _coverage, _component_role, _validate_spawn_selection
 
 
 class GrowContractTests(unittest.TestCase):
@@ -307,6 +307,32 @@ class GrowContractTests(unittest.TestCase):
         (self.root / "coast-oracle.json").write_text('{"status":"FAIL"}')
         with self.assertRaisesRegex(GrowContractError, "report changed"):
             _coverage("water", entry, core, writer_hash, inputs)
+
+    def test_component_cannot_be_selected_or_admitted_without_safe_source(self):
+        components = [{"id": "east", "role": "assembly-component"}]
+        for plan in ({}, {"spawn_source_id": "east"}, {"spawn_source_id": "missing"}):
+            with self.assertRaisesRegex(GrowContractError, "separate standalone safe source"):
+                _validate_spawn_selection(plan, components)
+
+    def test_component_role_reloads_original_typed_proof(self):
+        source = self.source("component", [0, 0, 256, 256])
+        writer = Path(source["writer_manifest_path"])
+        validator = writer.parent / "validate-east-world-gate.mjs"
+        validator.write_text("// bounded test fixture; actual loader tested separately\n")
+        gate = {"role": "assembly-component", "standaloneStatus": "NOT_STANDALONE", "componentSpawnAccepted": False,
+                "finalAssembledSafeSpawnRequired": True, "runtimeAccepted": False, "fullWorldAccepted": False,
+                "coreBounds": [0, 0, 256, 256], "comparedBlocks": 25165824,
+                "evidence": {"gateModule": {"path": str(validator), "bytes": validator.stat().st_size, "sha256": digest(validator)}}}
+        loaded = {"role": "assembly-component", "coreBounds": [0, 0, 256, 256], "componentSpawnAccepted": False,
+                  "worldRoot": source["world_path"], "writerPath": str(writer)}
+        with patch("grow_contract.shutil.which", return_value="node"), patch("grow_contract.subprocess.run") as run:
+            run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(loaded), stderr="")
+            result = _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
+        self.assertEqual(result["standalone_status"], "NOT_STANDALONE")
+        self.assertFalse(result["component_spawn_accepted"])
+        gate["finalAssembledSafeSpawnRequired"] = False
+        with self.assertRaisesRegex(GrowContractError, "geometry-only role"):
+            _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
 
 
 if __name__ == "__main__":

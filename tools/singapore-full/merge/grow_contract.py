@@ -179,6 +179,60 @@ def _benchmark_structural(gate, source, writer_hash, outputs, core, world, write
             "benchmark_validator_code": validator_hashes}
 
 
+def _component_role(gate, source, core, world, writer_path):
+    if (gate.get("role") != "assembly-component" or gate.get("standaloneStatus") != "NOT_STANDALONE"
+            or type(gate.get("componentSpawnAccepted")) is not bool
+            or gate.get("finalAssembledSafeSpawnRequired") is not True
+            or gate.get("runtimeAccepted") is not False or gate.get("fullWorldAccepted") is not False
+            or gate.get("coreBounds") != list(core)
+            or gate.get("comparedBlocks") != _chunk_count(core) * 256 * 384):
+        raise GrowContractError("assembly component requires exact geometry-only role and final safe-spawn obligation")
+    record = gate["evidence"]["gateModule"]
+    validator = Path(record["path"]).resolve(strict=True)
+    validator_hash = _sha(record["sha256"], "assembly component loader")
+    if validator.name != "validate-east-world-gate.mjs" or digest(validator) != validator_hash or validator.stat().st_size != record["bytes"]:
+        raise GrowContractError("actual assembly component loader code changed")
+    node = shutil.which("node")
+    if not node:
+        raise GrowContractError("existing Node runtime required for exact component evidence reload")
+    gate_path = Path(source["structural_gate_path"]).resolve(strict=True)
+    gate_hash = digest(gate_path)
+    script = ("import {pathToFileURL} from 'node:url';"
+              "const m=await import(pathToFileURL(process.argv[2]).href);"
+              "const g=await m.loadEastWorldGate(process.argv[3],process.argv[4]);"
+              "console.log(JSON.stringify({role:g.role,coreBounds:g.coreBounds,worldRoot:g.worldRoot,"
+              "writerPath:g.evidence.writerManifest.path,componentSpawnAccepted:g.componentSpawnAccepted}));")
+    completed = subprocess.run([node, "--max-old-space-size=384", "--input-type=module", "-e", script,
+                                "fork-component-readonly-bindings", str(validator), str(gate_path), gate_hash],
+                               capture_output=True, text=True, encoding="utf-8", timeout=120)
+    if completed.returncode != 0:
+        raise GrowContractError("actual component geometry proof reload failed: " + completed.stderr[-2000:])
+    fresh = json.loads(completed.stdout)
+    if (fresh.get("role") != "assembly-component" or fresh.get("coreBounds") != list(core)
+            or Path(fresh["worldRoot"]).resolve(strict=True) != world
+            or Path(fresh["writerPath"]).resolve(strict=True) != writer_path
+            or fresh.get("componentSpawnAccepted") is not gate["componentSpawnAccepted"]):
+        raise GrowContractError("reloaded component role/identity differs from requested source")
+    return {"role": "assembly-component", "standalone_status": "NOT_STANDALONE",
+            "component_spawn_accepted": gate["componentSpawnAccepted"], "final_assembled_safe_spawn_required": True,
+            "component_validator_path": str(validator), "component_validator_sha256": validator_hash}
+
+
+def _validate_spawn_selection(plan, sources):
+    components = [s for s in sources if s.get("role") == "assembly-component"]
+    if not components:
+        return None
+    selected_id = plan.get("spawn_source_id")
+    selected = next((s for s in sources if s["id"] == selected_id), None)
+    if selected is None or selected.get("role") == "assembly-component":
+        raise GrowContractError("assembly components require plan.spawn_source_id naming a separate standalone safe source")
+    # Read only the selected source's actual spawn region before allowing copy.
+    import anvil
+    from grow_receipt import _spawn_check
+    data = anvil.read_level_dat(Path(selected["world_path"]) / "level.dat").root.value["Data"].value
+    return _spawn_check(Path(selected["world_path"]), data, selected)
+
+
 def _structural(gate, writer_hash, outputs, core, source=None, world=None, writer_path=None):
     if gate.get("kind") in ("independent-benchmark-result-gate", "measured-independent-benchmark-validation"):
         return _benchmark_structural(gate, source, writer_hash, outputs, core, world, writer_path)
@@ -226,6 +280,8 @@ def _structural(gate, writer_hash, outputs, core, source=None, world=None, write
     for name in ("mismatches", "blockMismatches", "occupancyMismatches", "mismatchedCells", "seamMismatchedCells", "heightmapMismatches"):
         if name in gate and (type(gate[name]) is not int or gate[name] != 0):
             raise GrowContractError(f"structural gate reports {name}")
+    if gate.get("role") == "assembly-component":
+        return _component_role(gate, source, core, world, writer_path)
 
 
 def _coast_chain(evidence, report):
@@ -488,9 +544,10 @@ def validate_plan(plan):
             raise GrowContractError("all source DataVersions must match")
         sources.sort(key=lambda source: source["id"])
         _connected(sources)
+        selected_spawn = _validate_spawn_selection(plan, sources)
         extent = [min(s["core_bounds"][0] for s in sources), min(s["core_bounds"][1] for s in sources),
                   max(s["core_bounds"][2] for s in sources), max(s["core_bounds"][3] for s in sources)]
         return {"sources": sources, "extent": extent, "expected_chunks": sum(_chunk_count(s["core_bounds"]) for s in sources),
-                "data_version": next(iter(versions)), "coordinate_frame": dict(FRAME)}
+                "data_version": next(iter(versions)), "coordinate_frame": dict(FRAME), "selected_spawn": selected_spawn}
     except (KeyError, TypeError, OSError, json.JSONDecodeError, subprocess.SubprocessError) as exc:
         raise GrowContractError(f"missing or unreadable grow evidence: {exc}") from exc

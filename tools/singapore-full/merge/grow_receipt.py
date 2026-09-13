@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 from pathlib import Path
 import re
@@ -104,6 +105,22 @@ def _spawn_check(world, data, source):
             "withinOwnedCore": True, "safe": True}
 
 
+def _component_status(source, structural, spawn_source_id):
+    component = structural.get("role") == "assembly-component"
+    _need(component == (source.get("role") == "assembly-component"), "Normalized source role differs from actual gate")
+    if component:
+        _need(source["id"] != spawn_source_id, "An assembly component cannot supply final spawn or configuration")
+        _need(structural.get("status") == "PASS" and structural.get("standaloneStatus") == "NOT_STANDALONE"
+              and structural.get("finalAssembledSafeSpawnRequired") is True
+              and type(structural.get("componentSpawnAccepted")) is bool
+              and structural.get("componentSpawnAccepted") is source.get("component_spawn_accepted")
+              and source.get("standalone_status") == "NOT_STANDALONE"
+              and source.get("final_assembled_safe_spawn_required") is True
+              and structural.get("runtimeAccepted") is False and structural.get("fullWorldAccepted") is False,
+              "Assembly component's geometry-only role or spawn obligation changed")
+    return component
+
+
 def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[str, Any]:
     """Consume normalized grow_contract sources and grow_regions exact-copy report.
 
@@ -149,6 +166,7 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
             _evidence(source["writer_manifest_path"], source["writer_manifest_sha256"])
             structural = _evidence(source["structural_gate_path"], source["structural_gate_sha256"])
             _need(structural.get("status") == "PASS", "Source structural gate is not PASS: " + identity)
+            component_only = _component_status(source, structural, spawn_source_id)
             coverage = {}
             for component in ("roads", "water"):
                 record = source["coverage"][component]
@@ -167,7 +185,9 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
             result["sources"].append({"id": identity, "core_bounds": bounds, "unchanged": True,
                                       "sha256": current["sha256"], "coverage": coverage,
                                       "writer_manifest_sha256": source["writer_manifest_sha256"],
-                                      "structural_gate_sha256": source["structural_gate_sha256"]})
+                                      "structural_gate_sha256": source["structural_gate_sha256"],
+                                      "role": "assembly-component" if component_only else "standalone",
+                                      "standaloneStatus": "NOT_STANDALONE" if component_only else "SOURCE_GATE_PASSED"})
         _need(spawn_source_id in ids, "Spawn source ID is not an accepted source")
         ownership = region_report["ownership"]
         _need(ownership.get("exactCoreCoverage") is True and ownership.get("coordinatesTranslated") is False
@@ -208,7 +228,19 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
               and data["spawn"].value["dimension"].value == original_spawn["dimension"].value,
               "Selected source's verified modern spawn was not preserved")
         selected = next(source for source in sources if source["id"] == spawn_source_id)
+        _need(selected.get("role") != "assembly-component", "Final configuration source cannot be an assembly component")
+        # Both configs must derive solely from the selected safe source. The
+        # assembly CLI may change only its display name after copying them.
+        original_level = anvil.read_level_dat(Path(selected["world_path"]) / "level.dat")
+        original_settings = anvil.read_level_dat(Path(selected["world_path"]) / "data/minecraft/world_gen_settings.dat")
+        left, right = copy.deepcopy(original_level), copy.deepcopy(level)
+        left.root.value["Data"].value.pop("LevelName", None)
+        right.root.value["Data"].value.pop("LevelName", None)
+        _need(left == right and original_settings == settings,
+              "Final configs must preserve the selected safe source; component configs cannot be copied")
         result["spawn"] = _spawn_check(world, data, selected)
+        result["configurationSourceId"] = spawn_source_id
+        result["finalAssembledSafeSpawnRequired"] = any(source.get("role") == "assembly-component" for source in sources)
         result["data_version"] = data["DataVersion"].value
         result["chunkCount"] = expected_chunks
         result["sourceChunkCounts"] = expected_counts

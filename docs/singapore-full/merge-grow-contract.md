@@ -112,6 +112,25 @@ union's size. Zero features requires both children's complete absence proofs.
 Normalized output retains the immutable source-set and every child's evidence,
 run and source-report path/hash for final unchanged-input verification.
 
+## Geometry-only assembly components
+
+An East gate may have `role:"assembly-component"`,
+`standaloneStatus:"NOT_STANDALONE"`, `componentSpawnAccepted:false` and
+`finalAssembledSafeSpawnRequired:true`. This does not turn an unsafe source
+spawn into a standalone PASS. The consumer pins and invokes the gate's actual
+`validate-east-world-gate.mjs` loader, which rederives the exact source, job,
+run, world, metadata and full-volume proof. Its only permitted failed-oracle
+exception is the preserved unsupported/obstructed component-spawn error.
+
+Any plan containing components must explicitly name a different accepted
+source in `spawn_source_id`. The selected source's actual NBT floor, feet and
+head are checked before copying. A component can never provide final spawn or
+configuration, even when its local spawn happens to be safe. The final receipt
+rechecks source roles, verifies final configs match the selected source (only
+the display name may differ), and checks the final world's actual spawn.
+Runtime acceptance remains a separate required gate. Normalized descriptors
+retain the NOT_STANDALONE role, spawn obligation and pinned loader provenance.
+
 The CBD core `[29696,29696,30720,30720]` can be admitted alone (4096 chunks)
 when its own gates pass. Twelve 256-metre east cores may extend coverage to
 `[30720,29696,31488,30720]`, adding 3072 chunks, only after every source's roads
