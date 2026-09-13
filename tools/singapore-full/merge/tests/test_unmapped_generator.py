@@ -62,10 +62,11 @@ class UnmappedGeneratorIntegrationTests(unittest.TestCase):
         self.assertFalse((self.base/"embedded").exists())
 
     def test_air_only_rejects_mismatched_level_version(self):
-        write_level_dat(self.template, NbtFile("",compound({"Data":compound({"DataVersion":Tag(3,3955)})})))
-        with self.assertRaisesRegex(ValueError,"DataVersion 4790"):
-            self.render("wrong-version",base_scope=str(self.scope),unmapped_generator="AIR_ONLY")
-        self.assertFalse((self.base/"wrong-version").exists())
+        for version in (Tag(3,3955),Tag(4,4790),Tag(5,4790.0)):
+            write_level_dat(self.template, NbtFile("",compound({"Data":compound({"DataVersion":version})})))
+            with self.assertRaisesRegex(ValueError,"DataVersion 4790"):
+                self.render("wrong-version",base_scope=str(self.scope),unmapped_generator="AIR_ONLY")
+            self.assertFalse((self.base/"wrong-version").exists())
 
 
 if __name__ == "__main__":

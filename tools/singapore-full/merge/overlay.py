@@ -410,7 +410,7 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     if data is None or data.type_id != 10 or "DataVersion" not in data.value:
         raise ValueError("level template needs Data/DataVersion")
     data_version = data.value["DataVersion"].value
-    if unmapped_generator is not None and data_version != 4790:
+    if unmapped_generator is not None and (data.value["DataVersion"].type_id != 3 or type(data_version) is not int or data_version != 4790):
         raise ValueError("AIR_ONLY requires Minecraft 26.1.2 level DataVersion 4790")
     if data_version < 2844:
         raise ValueError("level template must use modern 1.18+ chunk height and palette format")
