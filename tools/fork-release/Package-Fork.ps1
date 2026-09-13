@@ -33,8 +33,15 @@ $manifest=[ordered]@{schema='fork-package-1';releaseCommit=(git -C $repo rev-par
 [IO.File]::WriteAllText((Join-Path $out 'package-manifest.json'),($manifest|ConvertTo-Json -Depth 10),[Text.UTF8Encoding]::new($false))
 $zip=$out+'.zip'
 if(Test-Path -LiteralPath $zip){throw 'Immutable ZIP already exists.'}
-Compress-Archive -LiteralPath (Get-ChildItem -LiteralPath $out).FullName -DestinationPath $zip -CompressionLevel Optimal
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$writer=[IO.Compression.ZipFile]::Open($zip,[IO.Compression.ZipArchiveMode]::Create)
+try {
+ foreach($file in Get-ChildItem -LiteralPath $out -Recurse -File) {
+  $entryName=$file.FullName.Substring($out.Length+1).Replace('\','/')
+  [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($writer,$file.FullName,$entryName,[IO.Compression.CompressionLevel]::Optimal)
+ }
+} finally { $writer.Dispose() }
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $archive=[IO.Compression.ZipFile]::OpenRead($zip)
 try{
  $entries=@($archive.Entries|Where-Object{!$_.FullName.EndsWith('/')})
