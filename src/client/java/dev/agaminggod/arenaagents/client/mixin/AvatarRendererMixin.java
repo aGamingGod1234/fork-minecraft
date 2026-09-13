@@ -1,6 +1,7 @@
 package dev.agaminggod.arenaagents.client.mixin;
 
 import dev.agaminggod.arenaagents.client.control.AgentControlClient;
+import dev.agaminggod.arenaagents.client.camera.CameraDirectorClient;
 import dev.agaminggod.arenaagents.agent.AgentIdentity;
 import dev.agaminggod.arenaagents.control.AgentControlAgent;
 import dev.agaminggod.arenaagents.control.AgentWorldNamePolicy;
@@ -48,7 +49,12 @@ abstract class AvatarRendererMixin {
 			float partialTick,
 			CallbackInfo callback
 	) {
-		AgentControlAgent agent = avatar.getProfile().name()
+		if (CameraDirectorClient.cleanPlaybackActive()) {
+            state.nameTag = null;
+            state.nameTagAttachment = null;
+            return;
+        }
+        AgentControlAgent agent = avatar.getProfile().name()
 				.flatMap(AgentControlClient::agentForPlayer)
 				.filter(candidate -> hasExpectedOfflineUuid(avatar, candidate))
 				.orElse(null);
