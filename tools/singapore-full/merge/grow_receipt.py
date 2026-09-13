@@ -144,7 +144,8 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
             _need(current["files"] == _records(source["outputs"]), "Source world changed: " + identity)
             source_data = anvil.read_level_dat(source_path / "level.dat").root.value["Data"].value
             source_versions.add(source_data["DataVersion"].value)
-            source_spawns[identity] = source_data["spawn"].value
+            if identity == spawn_source_id:
+                source_spawns[identity] = source_data["spawn"].value
             _evidence(source["writer_manifest_path"], source["writer_manifest_sha256"])
             structural = _evidence(source["structural_gate_path"], source["structural_gate_sha256"])
             _need(structural.get("status") == "PASS", "Source structural gate is not PASS: " + identity)
