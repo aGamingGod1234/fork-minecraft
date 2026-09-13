@@ -30,11 +30,12 @@ public final class ForkProductCapture {
         lastFrameNanos=0;frameCount=0;worstFrameGapNanos=0;lastCueOffset=-1;gate=new ForkCaptureGate();
         int render=c.options.renderDistance().get(),simulation=c.options.simulationDistance().get(),fps=c.options.framerateLimit().get(),fov=c.options.fov().get();
         boolean vsync=c.options.enableVsync().get(),bob=c.options.bobView().get();
+        var inactivity=c.options.inactivityFpsLimit().get();
         var window=c.getWindow();boolean fullscreen=window.isFullscreen();int windowWidth=window.getScreenWidth(),windowHeight=window.getScreenHeight();
-        restorePerformance=()->{c.options.renderDistance().set(render);c.options.simulationDistance().set(simulation);c.options.framerateLimit().set(fps);c.options.enableVsync().set(vsync);c.options.bobView().set(bob);c.options.fov().set(fov);if(fullscreen){if(!window.isFullscreen())window.toggleFullScreen();window.updateFullscreenIfChanged();}else window.setWindowed(windowWidth,windowHeight);};
+        restorePerformance=()->{c.options.renderDistance().set(render);c.options.simulationDistance().set(simulation);c.options.framerateLimit().set(fps);c.options.enableVsync().set(vsync);c.options.bobView().set(bob);c.options.fov().set(fov);c.options.inactivityFpsLimit().set(inactivity);if(fullscreen){if(!window.isFullscreen())window.toggleFullScreen();window.updateFullscreenIfChanged();}else window.setWindowed(windowWidth,windowHeight);};
         focus=new ForkCaptureGate.FocusLease(c.options.pauseOnLostFocus,value->c.options.pauseOnLostFocus=value);
         try {
-            c.options.renderDistance().set(16);c.options.simulationDistance().set(5);c.options.framerateLimit().set(60);c.options.enableVsync().set(false);c.options.bobView().set(false);c.options.fov().set(70);
+            c.options.renderDistance().set(16);c.options.simulationDistance().set(5);c.options.framerateLimit().set(60);c.options.enableVsync().set(false);c.options.bobView().set(false);c.options.fov().set(70);c.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
             c.setScreen(null);window.setWindowed(1920,1080);
             ForkFilmClient.notice("Checking three LIVE agents and complete recorded A/B evidence. Camera warmup precedes the 3-second countdown.");
             handle(gate.start(ForkClient.view(),ForkFilmClient.viewVersion(),millis(),c.player.getUUID().toString()));
@@ -54,6 +55,7 @@ public final class ForkProductCapture {
     public static void tick(){
         if(!active())return;
         var c=Minecraft.getInstance();
+        if(c.getWindow().isIconified()){abort("Minecraft was minimized. Keep its window open while recording.");return;}
         if(c.level!=level||c.player!=player||c.getConnection()==null){abort("World or player changed. Capture stopped.");return;}
         try{
             if(clock!=null&&clock.elapsedTicks()>=timeline.playbackTicks()){finish();return;}
