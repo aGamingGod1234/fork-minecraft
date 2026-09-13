@@ -377,8 +377,15 @@ def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, 
     return best_spawn
 
 
-def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None, base_scope=None, output_role="STANDALONE"):
+def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None, base_scope=None, output_role="STANDALONE", unmapped_generator=None):
     validate_bounds(bounds)
+    if unmapped_generator not in (None, "AIR_ONLY"):
+        raise ValueError("unmapped_generator must be AIR_ONLY when supplied")
+    scope_descriptor = None
+    if unmapped_generator is not None:
+        if not isinstance(base_scope, (str, Path)):
+            raise ValueError("AIR_ONLY requires an explicit pinned --base-scope descriptor path")
+        scope_descriptor = Path(base_scope).resolve()
     if output_role not in ("STANDALONE", "ASSEMBLY_COMPONENT"):
         raise ValueError("output_role must be STANDALONE or ASSEMBLY_COMPONENT")
     if output_role == "ASSEMBLY_COMPONENT" and base_scope is None:
@@ -403,16 +410,32 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     if data is None or data.type_id != 10 or "DataVersion" not in data.value:
         raise ValueError("level template needs Data/DataVersion")
     data_version = data.value["DataVersion"].value
+    if unmapped_generator is not None and data_version != 4790:
+        raise ValueError("AIR_ONLY requires Minecraft 26.1.2 level DataVersion 4790")
     if data_version < 2844:
         raise ValueError("level template must use modern 1.18+ chunk height and palette format")
     settings_path = Path(level_template).resolve().parent / "data" / "minecraft" / "world_gen_settings.dat"
     external_settings = None
+    unmapped_receipt = None
     if settings_path.is_file():
-        external_settings = read_level_dat(settings_path)
-        config = external_settings.root.value.get("data")
-        if config is None or config.type_id != 10:
-            raise ValueError("External world generation settings require a data compound")
-        disable_structures(config)
+        if unmapped_generator == "AIR_ONLY":
+            from worldgen_profile import prepare_worldgen_profile
+            settings_bytes = settings_path.read_bytes()
+            external_settings, unmapped_receipt = prepare_worldgen_profile(
+                settings_bytes, profile="flat-air-only-v1", base_scope=base_scope,
+                context={"sourceSettings": {"path": str(settings_path), "bytes": len(settings_bytes),
+                                            "sha256": hashlib.sha256(settings_bytes).hexdigest()},
+                         "outputSettingsPath": "data/minecraft/world_gen_settings.dat",
+                         "baseScopeDescriptor": {"path": str(scope_descriptor), "bytes": scope_descriptor.stat().st_size,
+                                                 "sha256": digest(scope_descriptor)}})
+        else:
+            external_settings = read_level_dat(settings_path)
+            config = external_settings.root.value.get("data")
+            if config is None or config.type_id != 10:
+                raise ValueError("External world generation settings require a data compound")
+            disable_structures(config)
+    elif unmapped_generator is not None:
+        raise ValueError("AIR_ONLY requires MC26 external world generation settings")
     elif "WorldGenSettings" not in data.value:
         raise ValueError("Template requires missing external data/minecraft/world_gen_settings.dat")
     scratch = world.parent / (".s-" + uuid.uuid4().hex[:12])
@@ -433,6 +456,8 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
               "templateDependencies": ([{"path": "data/minecraft/world_gen_settings.dat", "sha256": digest(settings_path)}] if external_settings else []),
               "regionDirectory": "dimensions/minecraft/overworld/region" if external_settings else "region",
               "levelTemplateSha256": digest(level_template), "crossLayerOverwrittenBlocks": defaultdict(int), "outputs": []}
+    if unmapped_receipt is not None:
+        report["unmappedGenerator"] = unmapped_receipt
     if base_scope is not None:
         report["baseScope"] = base_scope.receipt()
         report["groundProfileId"] = report["baseScope"]["profileId"]
@@ -479,6 +504,10 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         output_settings = stage_world / "data" / "minecraft" / "world_gen_settings.dat"
         output_settings.parent.mkdir(parents=True, exist_ok=True)
         write_level_dat(output_settings, external_settings)
+        if unmapped_receipt is not None:
+            expected = unmapped_receipt["outputSettings"]
+            if output_settings.stat().st_size != expected["bytes"] or digest(output_settings) != expected["sha256"]:
+                raise ValueError("AIR_ONLY output settings differ from the pinned profile receipt")
         report["outputs"].append({"path": output_settings.relative_to(stage_world).as_posix(), "bytes": output_settings.stat().st_size, "sha256": digest(output_settings)})
     if job_lease:
         validate_job_lease(job_lease, world)
@@ -506,6 +535,8 @@ def main():
     parser.add_argument("--max-chunks", type=int, default=512)
     parser.add_argument("--job-lease", help="Coordinator-approved immutable Desktop queue/run attempt lease")
     parser.add_argument("--base-scope", help="Optional pinned country/foreign/coast descriptor for provisional default terrain")
+    parser.add_argument("--unmapped-generator", choices=("AIR_ONLY",),
+                        help="Scoped future worlds only: generate AIR in previously unwritten chunks")
     parser.add_argument("--output-role", choices=("STANDALONE", "ASSEMBLY_COMPONENT"), default="STANDALONE",
                         help="Scoped assembly components are NOT_STANDALONE and require final assembled safe spawn")
     args = parser.parse_args()
@@ -515,7 +546,7 @@ def main():
         parser.error("manifest must be a new path outside the output world")
     if PROJECT_ROOT.resolve() not in manifest.parents:
         parser.error("manifest must remain within the private full-Singapore project")
-    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease, base_scope=args.base_scope, output_role=args.output_role)
+    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease, base_scope=args.base_scope, output_role=args.output_role, unmapped_generator=args.unmapped_generator)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     with manifest.open("x", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2, sort_keys=True)
