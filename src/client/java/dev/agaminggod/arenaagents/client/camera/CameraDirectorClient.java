@@ -268,7 +268,7 @@ public final class CameraDirectorClient {
 		return 1;
 	}
 
-	    private static int playShowcase(FabricClientCommandSource source) {
+	    public static int playShowcase(FabricClientCommandSource source) {
         Minecraft client = source.getClient();
         if (client.level == null || client.player == null) return error(source, "You must be in a world to play the showcase.");
         var paths = new ArrayList<CameraPath>();

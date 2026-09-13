@@ -13,10 +13,11 @@ public final class ForkClient implements ClientModInitializer {
     private static ForkView view;
     public static ForkView view() { return view; }
     @Override public void onInitializeClient() {
+        ForkFilmClient.register();
         ClientPlayNetworking.registerGlobalReceiver(ForkStatusPayload.TYPE,(payload,context)->context.client().execute(()->{
             if(payload.json().equals("camera_stop")) { CameraDirectorClient.stopPlaybackFromGui(); return; }
             ForkView next=JSON.fromJson(payload.json(),ForkView.class);
-            boolean changed=!next.equals(view); view=next;
+            boolean changed=!next.equals(view); view=next; ForkFilmClient.acceptView();
             if(changed && context.client().screen instanceof AgentControlScreen screen) screen.acceptForkView();
         }));
         ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->view=null);
