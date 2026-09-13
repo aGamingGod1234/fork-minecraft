@@ -1,0 +1,70 @@
+{
+  "schema": "fork-cinematic-playlist-spec-1",
+  "status": "MAIN IMPLEMENTED CLIENT REEL; METADATA ONLY, NOT CLIENT CONFIG",
+  "name": "fork_showcase",
+  "createdUtc": "2026-09-13T05:58:54.389Z",
+  "sourcePresets": "media/edit/camera-paths-city-1024.json",
+  "sourceSha256": "2423DD2125CF4E3B6D1852A9BFA665C281CA7596581415679073C3333A38F291",
+  "tickRate": 20,
+  "shots": [
+    {
+      "name": "fork_intro",
+      "startTick": 0,
+      "durationTicks": 100,
+      "endTick": 100,
+      "holdLastPoseAfterTicks": 0
+    },
+    {
+      "name": "fork_city_flythrough",
+      "startTick": 100,
+      "durationTicks": 140,
+      "endTick": 240,
+      "holdLastPoseAfterTicks": 0
+    },
+    {
+      "name": "fork_clinic",
+      "startTick": 240,
+      "durationTicks": 100,
+      "endTick": 340,
+      "holdLastPoseAfterTicks": 0
+    },
+    {
+      "name": "fork_workshop",
+      "startTick": 340,
+      "durationTicks": 100,
+      "endTick": 440,
+      "holdLastPoseAfterTicks": 0
+    },
+    {
+      "name": "fork_courier",
+      "startTick": 440,
+      "durationTicks": 100,
+      "endTick": 540,
+      "holdLastPoseAfterTicks": 0
+    },
+    {
+      "name": "fork_overview",
+      "startTick": 540,
+      "durationTicks": 160,
+      "endTick": 700,
+      "holdLastPoseAfterTicks": 0
+    }
+  ],
+  "totalTicks": 700,
+  "totalSeconds": 35,
+  "transition": "Zero-gap hardcuts under one playback clock; no interpolation between shots",
+  "hud": "Keep clean camera HUD/hand suppression through all cuts and restore exactly once at final completion or cancellation",
+  "player": "No server player movement; all validated points remain within116.38metres of court human",
+  "command": "/camera reel play fork_showcase",
+  "operator": "Start OBS once, run /camera reel play fork_showcase, wait35seconds plus lead/tail, stopOBS",
+  "separateTakes": [
+    "FullLiveA/rewind/B withHUD",
+    "Actual Explore place2blocks",
+    "SeparateSingaporeMap fork_map_overview6seconds"
+  ],
+  "geometryAccepted": true,
+  "actualRuntimePlaylistPassed": false,
+  "stopCommand": "/camera reel stop",
+  "mainCode": "090da334450b77627d2d25bb24b5adedabeee829",
+  "clientCompileTimingChecks": "Main14:02 PASS boundary/stall/pause/resume tests, client compile and entrypoints"
+}

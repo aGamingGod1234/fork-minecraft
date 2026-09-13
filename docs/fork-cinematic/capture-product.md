@@ -1,20 +1,11 @@
-﻿# Automated camera takes, accepted geometry 13:43 SGT
+# One-command city reel
 
-Main installs camera-paths-city-1024.json before launch. Use OBS profile FORK Readiness 1080p30 and Game Capture for Minecraft, with Display Capture hidden.
+After Main confirms the final mod is installed, open FORK - Singapore District. In OBS choose FORK Readiness 1080p30 and game-only capture. Start Recording, run `/camera reel play fork_showcase`, wait for all 35 seconds to finish, then Stop Recording. Cancel only if necessary with `/camera reel stop`. No manual flying.
 
-In the expanded city, start OBS once and run these commands separately, waiting for each to finish:
+Record a separate short Explore take: `/fork explore`, show exploration and place two allowed blocks outside the court for about eight seconds, then `/fork return`. Keep the actual action visible.
 
-1. /camera path play fork_intro — 5 seconds.
-2. /camera path play fork_city_flythrough — 7 seconds.
-3. /camera path play fork_clinic — 5 seconds.
-4. /camera path play fork_workshop — 5 seconds.
-5. /camera path play fork_courier — 5 seconds.
-6. /camera path play fork_overview — 8 seconds. Stop OBS.
+Keep one world session for the full Live A/rewind/B evidence recording. Follow Mainâ€™s gameplay commands with HUD visible, including `/fork return` after `/fork start live`. Record the same six committed rounds in both branches and hold `/fork compare` for twelve seconds. Preserve waits and failures in the original.
 
-No manual flying. Keep one world session for the full Live A/rewind/B evidence recording. For that run, follow Main's gameplay commands with HUD visible, including /fork return after /fork start live. Record the same six rounds for each branch and hold /fork compare for twelve seconds. Preserve any real waits or failures in the source.
+Only after the full run, enter FORK - Singapore Map. Start OBS, run `/camera path play fork_map_overview`, wait six seconds, stop OBS. This is a separate cartographic miniature, not full-island 1:1 coverage.
 
-Only after the full run, enter FORK - Singapore Map. Start OBS, run /camera path play fork_map_overview, wait six seconds, then stop OBS. This is a separate cartographic miniature, not a full-island 1:1 build.
-
-Record the product narration separately with game audio muted. Cinematic handles the entire edit, captions and mix. No editing is needed from Lucas.
-
-City corridor geometry passed Main's dense and swept-volume checks. Actual camera framing, performance and all new takes remain unverified until captured.
+Record the final127word product narration separately with game audio muted. Cinematic handles all editing, captions and mixing. No editing is needed from Lucas.

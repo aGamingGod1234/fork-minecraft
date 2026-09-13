@@ -5,7 +5,7 @@ import {runProcess} from './process-runner.mjs';
 import {fileURLToPath} from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const expectedFrames = [60,60,90,90,90,90,90,120,120,120,120,90,120,120,120,90,90,120,300,120,180,180,120];
+const expectedFrames = [60,60,90,90,90,90,90,60,180,180,240,180,120,90,60,60,30,30,300,120,150,180,150];
 const shaPattern = /^[a-f0-9]{64}$/i;
 const readJson = p => JSON.parse(fs.readFileSync(p, 'utf8').replace(/^\uFEFF/, ''));
 const assert = (ok, message) => { if (!ok) throw Error(message); };
@@ -75,7 +75,7 @@ export function validateStructure(m) {
     assert(Number.isFinite(v.in) && Number.isFinite(v.out) && v.in >= 0 && v.out > v.in, 'Invalid voice source times');
     const end = v.at + v.out - v.in;
     assert(Number.isFinite(v.at) && v.at >= voiceEnd && end <= v.windowEnd && v.windowEnd <= 90, 'Voice overlap or timing overflow');
-    assert(!(v.at < 70 && end > 68), 'Comparison 68–70 seconds must be narration-free');
+    assert(![[19,21],[66,70],[79,85]].some(([start,stop]) => v.at < stop && end > start), 'Locked narration-free interval');
     local(v.source);
     voiceEnd = end;
   }

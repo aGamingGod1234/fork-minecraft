@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {validateStructure, captions} from './film.mjs';
 
 // Metadata fixtures only. These never create footage or authorize a film render.
-const template = JSON.parse(fs.readFileSync(new URL('../../media/edit/film-edit.json', import.meta.url)));
+const template = JSON.parse(fs.readFileSync(new URL('../../media/edit/film-edit-product.json', import.meta.url)));
 function acceptedMetadata() {
   const m = structuredClone(template), hash = 'a'.repeat(64);
   Object.assign(m.acceptance,{acceptedByMain:true,releaseCommit:'b'.repeat(40),packageSha256:hash,worldSha256:hash,cameraBindingSha256:hash,mode:'live',rewindMethod:'Verified bounded restore',actualCoverage:'Fictional court only',newDevelopmentCredit:'Fixture metadata test only',developmentEvidence:'Fixture receipt only'});
@@ -26,8 +26,8 @@ test('complete timeline requires exactly 2700 frames and 23 shots', () => {
 test('an unapproved fixture reduction is rejected', () => {
   const m=acceptedMetadata(); m.acceptance.mode='fixture'; assert.throws(() => validateStructure(m), /Lucas scope/);
 });
-test('narration cannot enter the final two comparison seconds', () => {
-  const m=acceptedMetadata(); Object.assign(m.voice[0],{at:67,windowEnd:70}); assert.throws(() => validateStructure(m), /narration-free/);
+test('narration cannot enter the three locked silent windows', () => {
+  for(const at of [18,65,78]) { const m=acceptedMetadata(); Object.assign(m.voice[0],{at,windowEnd:90}); assert.throws(() => validateStructure(m), /narration-free/); }
 });
 test('source references cannot escape the leased media paths', () => {
   const m=acceptedMetadata(); m.shots[0].segments[0].source='media/source/../../coordinator/private.mkv'; assert.throws(() => validateStructure(m), /Unleased media path/);
