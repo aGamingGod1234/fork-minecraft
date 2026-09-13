@@ -8,7 +8,7 @@ public final class ForkFilmSequence {
     private String phase="idle", branch="", issue="";
     private long deadline, after, serial, epoch, revision;
     private int expected;
-    private boolean workshop;
+    private boolean workshop,preparing,retried;
     private ForkEngine.State a,b;
     public String phase(){return phase;}
     public boolean active(){return !Set.of("idle","done","error").contains(phase);}
@@ -19,16 +19,28 @@ public final class ForkFilmSequence {
     private List<Action> fail(String message){phase="error";return List.of(new Action("abort",message));}
     public List<Action> start(ForkView v,long version,long now){
         if(active()) return List.of(new Action("notice","Film is already running. /camera film stop cancels it."));
-        a=null;b=null;workshop=false;branch=v==null?"":v.state().branch();epoch=v==null?0:v.state().epoch();
+        a=null;b=null;workshop=false;preparing=false;branch=v==null?"":v.state().branch();epoch=v==null?0:v.state().epoch();
         if(v==null)return command("session","fork new live",version,now,25000);
         if(v.state().mode()!=ForkEngine.Mode.LIVE)return fail("Film needs a LIVE session. Restart this world and run /camera film start; Fixture footage is never substituted.");
         if(!v.canControl())return fail("This player cannot control FORK.");
         var actions=new ArrayList<Action>();if(v.pending())actions.add(new Action("command","fork cancel"));
         actions.addAll(command("return","fork return",version,now,15000));return actions;
     }
+    public List<Action> prepare(ForkView v,long version,long now){
+        if(active())return List.of(new Action("notice","Preparation already running"));
+        if(v!=null&&v.state().mode()==ForkEngine.Mode.LIVE&&v.canControl()&&v.atCourt()&&!v.traveling()&&!v.paused()&&!v.pending()&&v.state().allocation()==ForkEngine.Power.CLINIC&&v.state().reroutes()==0&&v.roundPower().stream().allMatch(p->p.equals("CLINIC"))&&v.state().round()>0&&v.state().round()<6){
+            a=null;b=null;workshop=false;preparing=true;branch=v.state().branch();epoch=v.state().epoch();
+            var out=new ArrayList<Action>();out.add(new Action("camera","fork_clinic"));
+            out.addAll(advance(v,version,now));
+            if(v.issue().contains("retry")||v.issue().contains("Attempt ended")){retried=true;out.set(out.size()-1,new Action("command","fork retry"));}
+            return out;
+        }
+        var out=start(v,version,now);preparing=true;return out;
+    }
     public List<Action> stop(){phase="done";return List.of(new Action("abort","Film stopped. Completed LIVE receipts remain saved."));}
     public List<Action> update(ForkView v,long version,long now,boolean cameraActive){
         if(!active())return List.of();
+        if(now>deadline&&preparing&&phase.equals("round")&&!retried){retried=true;return command("round","fork retry",version,now,26000);}
         if(now>deadline)return fail("Timed out during "+phase+". "+(v==null?"No FORK server status received.":v.issue()));
         if(v==null)return List.of();
         if(v.state().mode()!=ForkEngine.Mode.LIVE||!v.canControl())return fail("LIVE session or control permission changed.");
@@ -47,6 +59,7 @@ public final class ForkFilmSequence {
             case "reset":case "rewind":
                 if(fresh&&v.state().epoch()>epoch&&!v.state().branch().equals(branch)&&v.state().round()==0&&!v.paused()){
                     branch=v.state().branch();epoch=v.state().epoch();
+                    if(phase.equals("reset")&&preparing)return command("power","fork power clinic",version,now,10000);
                     if(phase.equals("reset")){phase="reel";after=now+35000;deadline=now+45000;return List.of(new Action("reel",""));}
                     return command("power","fork power workshop",version,now,10000);
                 }break;
@@ -63,14 +76,14 @@ public final class ForkFilmSequence {
                 if(fresh&&v.state().round()==expected&&v.state().revision()==revision+1&&!v.pending()&&v.effects().size()==3&&v.roundPower().size()==expected){
                     phase="round_hold";after=now+2500;deadline=now+10000;return List.of();
                 }
-                if(fresh&&!v.pending()&&v.state().round()<expected&&!v.issue().equals(issue)&&!v.issue().isBlank())return fail("LIVE round did not commit: "+v.issue());
+                if(fresh&&!v.pending()&&v.state().round()<expected&&!v.issue().equals(issue)&&!v.issue().isBlank()){if(preparing&&!retried){retried=true;issue=v.issue();return command("round","fork retry",version,now,26000);}return fail("LIVE round did not commit: "+v.issue());}
                 break;
             case "round_hold":
                 if(v.state().round()!=expected||v.state().revision()!=revision+1)return fail("Round state changed outside the film.");
                 if(now>=after){
                     if(expected<6)return advance(v,version,now);
                     if(!workshop){a=v.state();phase="a_hold";after=now+6000;deadline=now+12000;return List.of(new Action("summary","A"));}
-                    b=v.state();phase="compare";after=now+12000;deadline=now+18000;return List.of(new Action("command","fork compare"),new Action("summary","compare"));
+                    b=v.state();if(preparing){phase="done";return List.of(new Action("done","Real LIVE A/B prepared. Start OBS, then /camera film take for exactly 90 seconds."));}phase="compare";after=now+12000;deadline=now+18000;return List.of(new Action("command","fork compare"),new Action("summary","compare"));
                 }break;
             case "a_hold":
                 if(v.state().round()!=6||a==null)return fail("Clinic branch must finish all six rounds before rewind.");
@@ -88,7 +101,7 @@ public final class ForkFilmSequence {
         return List.of();
     }
     private List<Action> advance(ForkView v,long version,long now){
-        expected=v.state().round()+1;revision=v.state().revision();issue=v.issue();
+        retried=false;expected=v.state().round()+1;revision=v.state().revision();issue=v.issue();
         return command("round","fork advance",version,now,26000);
     }
 }

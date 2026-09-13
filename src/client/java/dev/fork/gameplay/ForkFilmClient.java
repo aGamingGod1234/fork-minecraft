@@ -15,19 +15,23 @@ public final class ForkFilmClient {
     private static FabricClientCommandSource source;
     private static Object level,player;
     private static boolean owned;
+    private static Object preparedLevel;
     public static void acceptView(){version++;}
     public static void register(){
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(ClientCommands.literal("camera").then(ClientCommands.literal("film")
             .then(ClientCommands.literal("start").executes(c->{
-                if(sequence.active()){notice("Film is already running. /camera film stop cancels it.");return 0;}
+                if(sequence.active()||ForkProductCapture.active()){notice("Film is already running. /camera film stop cancels it.");return 0;}
                 var client=c.getSource().getClient();if(client.player==null||client.level==null)return 0;
                 source=c.getSource();level=client.level;player=client.player;owned=false;
                 clock=new CameraDirectorClient.PresentationClock(System.nanoTime(),client.isPaused());
                 apply(sequence.start(ForkClient.view(),version,0));return sequence.active()?1:0;
             }))
-            .then(ClientCommands.literal("stop").executes(c->{apply(sequence.stop());return 1;}))
+            .then(ClientCommands.literal("take").executes(c->{if(sequence.active()) {notice("Wait for preparation, or stop it first.");return 0;}source=c.getSource();try{boolean ready=preparedLevel==c.getSource().getClient().level&&ForkProductCapture.valid(sequence.a(),ForkEngine.Power.CLINIC)&&ForkProductCapture.valid(sequence.b(),ForkEngine.Power.WORKSHOP);if(!ready)notice("Camera-only take: no prepared real A/B comparison is available. Use /camera film prepare first for results.");ForkProductCapture.start(ready?sequence.a():null,ready?sequence.b():null);return 1;}catch(Exception e){notice(e.getMessage());return 0;}}))
+            .then(ClientCommands.literal("prepare").executes(c->{if(sequence.active()||ForkProductCapture.active())return 0;var client=c.getSource().getClient();source=c.getSource();level=client.level;player=client.player;owned=false;clock=new CameraDirectorClient.PresentationClock(System.nanoTime(),client.isPaused());apply(sequence.prepare(ForkClient.view(),version,0));return sequence.active()?1:0;}))
+            .then(ClientCommands.literal("stop").executes(c->{if(ForkProductCapture.active())ForkProductCapture.stop();else apply(sequence.stop());return 1;}))
             .then(ClientCommands.literal("status").executes(c->{notice("Film: "+sequence.phase());return 1;})))));
         ClientTickEvents.END_CLIENT_TICK.register(client->{
+            ForkProductCapture.tick();
             if(!sequence.active())return;
             if(client.level!=level||client.player!=player||client.getConnection()==null){apply(sequence.stop());return;}
             long now=(long)(clock.advance(System.nanoTime(),client.isPaused())*50);
@@ -50,11 +54,11 @@ public final class ForkFilmClient {
                     if(owned&&sequence.owns(ForkClient.view())&&client.getConnection()!=null&&client.level==level&&client.player==player){client.getConnection().sendCommand("fork cancel");if(ForkClient.view()!=null&&!ForkClient.view().atCourt())client.getConnection().sendCommand("fork return");}
                     owned=false;notice(action.value());
                 }
-                case "done" -> {owned=false;stopCamera();notice(action.value());}
+                case "done" -> {preparedLevel=client.level;owned=false;stopCamera();notice(action.value());}
                 default -> notice(action.value());
             }
         }
     }
     private static void stopCamera(){if(CameraDirectorClient.cleanPlaybackActive())CameraDirectorClient.stopPlaybackFromGui();}
-    private static void notice(String text){var c=Minecraft.getInstance();if(source!=null)source.sendFeedback(Component.literal("FORK FILM: "+text));else if(c.gui!=null)c.gui.setOverlayMessage(Component.literal("FORK FILM: "+text),false);}
+    public static void notice(String text){var c=Minecraft.getInstance();if(source!=null)source.sendFeedback(Component.literal("FORK FILM: "+text));else if(c.gui!=null)c.gui.setOverlayMessage(Component.literal("FORK FILM: "+text),false);}
 }

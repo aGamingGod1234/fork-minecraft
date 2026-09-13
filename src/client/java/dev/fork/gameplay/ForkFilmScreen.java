@@ -8,7 +8,9 @@ import net.minecraft.network.chat.Component;
 /** Actual committed branch results, held without pausing the integrated server. */
 public final class ForkFilmScreen extends Screen {
     private final ForkEngine.State a,b;
-    public ForkFilmScreen(ForkEngine.State a,ForkEngine.State b){super(Minecraft.getInstance(),Minecraft.getInstance().font,Component.literal("FORK LIVE results"));this.a=a;this.b=b;}
+    private final boolean prepared;
+    public ForkFilmScreen(ForkEngine.State a,ForkEngine.State b){this(a,b,false);}
+    public ForkFilmScreen(ForkEngine.State a,ForkEngine.State b,boolean prepared){super(Minecraft.getInstance(),Minecraft.getInstance().font,Component.literal("FORK LIVE results"));this.a=a;this.b=b;this.prepared=prepared;}
     @Override public boolean isPauseScreen(){return false;}
     @Override public void extractRenderState(GuiGraphicsExtractor g,int mouseX,int mouseY,float tick){
         g.fill(0,0,width,height,0xee09131d);
@@ -17,7 +19,7 @@ public final class ForkFilmScreen extends Screen {
         g.text(font,"Six committed rounds per branch. Actual results below.",x,y+22,0xffffffff,false);
         renderBranch(g,"A / CLINIC",a,x,y+50);
         if(b!=null)renderBranch(g,"B / WORKSHOP",b,x,y+106);
-        g.text(font,b==null?"Rewinding the court next...":"Singapore Explore follows automatically...",x,y+172,0xffb8c8d1,false);
+        g.text(font,prepared?"Previously prepared real LIVE results":b==null?"Rewinding the court next...":"Singapore Explore follows automatically...",x,y+172,0xffb8c8d1,false);
     }
     private void renderBranch(GuiGraphicsExtractor g,String title,ForkEngine.State s,int x,int y){
         if(s==null)return;

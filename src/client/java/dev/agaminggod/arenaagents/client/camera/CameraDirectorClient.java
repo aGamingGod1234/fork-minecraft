@@ -287,17 +287,31 @@ public final class CameraDirectorClient {
         apply(client, reel.sample(0));
         return 1;
     }
+    public static PresentationClock playTimedTake(List<String> names,List<Integer> durations) {
+        var client=Minecraft.getInstance();
+        if(client.level==null||client.player==null)throw new IllegalStateException("Join the Singapore world first");
+        var paths=names.stream().map(n->{var p=PATHS.get(n);if(p==null)throw new IllegalArgumentException("Missing camera preset: "+n);return p;}).toList();
+        var reel=new CameraReel(paths,durations);
+        stopPlayback(client);previousCamera=client.getCameraEntity();previousCameraType=client.options.getCameraType();captureAndHidePresentation(client);
+        var clock=new PresentationClock(System.nanoTime(),client.isPaused());
+        playback=new Playback(reel,client.level,client.player,clock,false);apply(client,reel.sample(0));return clock;
+    }
     /** Hard cuts between immutable authored paths, with one elapsed clock for the whole reel. */
     public static final class CameraReel {
         private final List<CameraPath> paths;
         private final int durationTicks;
-        public CameraReel(List<CameraPath> paths) {
+        private final List<Integer> durations;
+        public CameraReel(List<CameraPath> paths) { this(paths, paths.stream().map(CameraPath::durationTicks).toList()); }
+        public CameraReel(List<CameraPath> paths,List<Integer> durations) {
+            this.durations=List.copyOf(durations);
+            if(paths.size()!=durations.size()||durations.stream().anyMatch(d->d<1))throw new IllegalArgumentException("Invalid timed reel");
             this.paths = List.copyOf(paths);
             if (this.paths.isEmpty()) throw new IllegalArgumentException("A reel needs camera paths");
             int duration = 0;
-            for (CameraPath path : this.paths) {
+            for (int i=0;i<this.paths.size();i++) {
+                CameraPath path=this.paths.get(i);
                 if (path.durationTicks() < MIN_PLAYBACK_TICKS) throw new IllegalArgumentException("Every reel path needs a positive duration");
-                duration = Math.addExact(duration, path.durationTicks());
+                duration = Math.addExact(duration, this.durations.get(i));
             }
             durationTicks = duration;
         }
@@ -307,8 +321,9 @@ public final class CameraDirectorClient {
             double local = Math.max(0, elapsed);
             for (int i = 0; i < paths.size(); i++) {
                 CameraPath path = paths.get(i);
-                if (local < path.durationTicks() || i == paths.size() - 1) return path.sample(local);
-                local -= path.durationTicks();
+                int slot = durations.get(i);
+                if (local < slot || i == paths.size() - 1) return path.sample(Math.min(local,slot)*path.durationTicks()/slot);
+                local -= slot;
             }
             throw new IllegalStateException("Empty camera reel");
         }
