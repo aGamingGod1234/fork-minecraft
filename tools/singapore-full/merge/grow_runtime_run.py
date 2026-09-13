@@ -133,6 +133,7 @@ def main():
         transcript.close()
         state["elapsedSeconds"] = time.monotonic() - started
         state["exitCode"] = process.returncode if process else None
+        state["status"] = "PROCESS_EXITED" if process is not None and process.returncode == 0 else "PROCESS_FAILED"
         state["finishedUtc"] = datetime.now(timezone.utc).isoformat()
         state["processAlive"] = process is not None and process.poll() is None
         write(ATTEMPT_ROOT / "runtime-state.json", state)
