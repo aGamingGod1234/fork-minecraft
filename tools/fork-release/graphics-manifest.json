@@ -1,0 +1,66 @@
+{
+  "schema": "fork-graphics-1",
+  "minecraft": "26.1.2",
+  "files": [
+    {
+      "filename": "sodium-fabric-0.9.1+mc26.1.2.jar",
+      "kind": "mod",
+      "url": "https://cdn.modrinth.com/data/AANobbMI/versions/vf7UgZpC/sodium-fabric-0.9.1%2Bmc26.1.2.jar",
+      "sha512": "BF7E242A4DF5A70BE567AD58E262EEA7DB54B92333994331B57DC13F2ED36E22D1CF6609E4E76582D3173D5FFDCDE9534441164BC9B70560F3D764AFFCC16AD3",
+      "version": "mc26.1.2-0.9.1-fabric",
+      "sourceApi": "https://api.modrinth.com/v2/version/vf7UgZpC"
+    },
+    {
+      "filename": "iris-fabric-1.11.3+mc26.1.2.jar",
+      "kind": "mod",
+      "url": "https://cdn.modrinth.com/data/YL57xq9U/versions/5H9TsVy4/iris-fabric-1.11.3%2Bmc26.1.2.jar",
+      "sha512": "0C137CFE0DAC2DF2736DAE0FB281DFB058E366822B17F5C0859F6A9DA220F7751B4C6AF477B6396E61772181A276835B31055B46E0D880E8E4E10916B19B46ED",
+      "version": "1.11.3+26.1-fabric",
+      "sourceApi": "https://api.modrinth.com/v2/version/5H9TsVy4"
+    },
+    {
+      "filename": "MakeUp-UltraFast-9.5e.zip",
+      "kind": "shader",
+      "url": "https://cdn.modrinth.com/data/izsIPI7a/versions/T3EhqZo1/MakeUp-UltraFast-9.5e.zip",
+      "sha512": "2DEB6BFDB9191E36ADABA607B4A873CB7405E93068903EDE45458A30C28A4587FEC4EDBA1F8772E6E13DC21596F7748929B63DC33A24CFD198DFF09ACD7209B6",
+      "version": "9.5e",
+      "sourceApi": "https://api.modrinth.com/v2/version/T3EhqZo1"
+    }
+  ],
+  "lowPreset": [
+    "SHADOW_CASTING=true",
+    "SHADOW_QTY_SLIDER=1",
+    "SHADOW_DISTANCE_SLIDER=0",
+    "REFLECTION_SLIDER=2",
+    "DOF=false",
+    "DOF_STRENGTH=0.09",
+    "AO=1",
+    "AOSTEPS=5",
+    "AO_STRENGTH=0.70",
+    "AA_TYPE=2",
+    "MOTION_BLUR=false",
+    "REFRACTION=1",
+    "SUN_REFLECTION=1",
+    "WAVING=1",
+    "V_CLOUDS=1",
+    "CLOUD_STEPS_AVG=10",
+    "CLOUD_VOL_STYLE=0",
+    "BLOOM_SAMPLES=3.0",
+    "BLOOM=true",
+    "CHROMA_ABER=0",
+    "VOL_LIGHT=1",
+    "CLOUD_REFLECTION=true",
+    "WATER_ABSORPTION=0.10",
+    "COLOR_SCHEME=1",
+    "VANILLA_WATER=false",
+    "WATER_COLOR_SOURCE=0",
+    "COLORED_SHADOW=false",
+    "MOTION_BLUR_SAMPLES=4",
+    "MATERIAL_GLOSS=true"
+  ],
+  "licences": {
+    "sodium": "PolyForm Shield 1.0.0 https://github.com/CaffeineMC/sodium/blob/dev/LICENSE.md",
+    "iris": "LGPL-3.0 https://github.com/IrisShaders/Iris",
+    "shader": "LGPL-3.0 https://github.com/javiergcim/MakeUpUltraFast"
+  }
+}
