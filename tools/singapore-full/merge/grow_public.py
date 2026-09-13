@@ -3,7 +3,11 @@
 package_public(candidate_zip, public_metadata, output_dir) creates a NEW directory
 under package.OUTPUT_ROOT. Metadata keys are packageName, saveFolder, worldName,
 sources, omissions, limitations, sourceComplete/routeComplete/fullFidelity=false,
-and private gateEvidence {grow,runtime,plan}, each {path,sha256}. A source has
+and private gateEvidence {grow,runtime,plan}, each {path,sha256}. Optional
+omissionEvidence {records,redactions} preserves public-safe source records in
+SOURCE-OMISSIONS.json. Summaries then also carry the exact original scope;
+outside_render permits both impact flags false, unresolved scope requires null.
+A source has
 filename,snapshotDate,sha256,url,licenseUrl. An omission has sourceId,reason,count,
 affectsCore,affectsHalo. All facts must come from actual frozen records.
 
@@ -69,7 +73,8 @@ def _name(value):
 
 
 def _metadata(metadata):
-    _keys(metadata, ("packageName", "saveFolder", "worldName", "sources", "omissions", "limitations", "gateEvidence", *FLAGS), "metadata")
+    expected = {"packageName", "saveFolder", "worldName", "sources", "omissions", "limitations", "gateEvidence", *FLAGS}
+    _need(isinstance(metadata, dict) and set(metadata) in (expected, expected | {"omissionEvidence"}), "Invalid metadata fields")
     _name(metadata["packageName"])
     _name(metadata["saveFolder"])
     _text(metadata["worldName"], "world name")
@@ -88,12 +93,50 @@ def _metadata(metadata):
     _need(any(urlsplit(s["url"]).netloc == "download.geofabrik.de" for s in metadata["sources"]), "Geofabrik snapshot provenance required")
     _need(isinstance(metadata["omissions"], list), "Exact omission list required, including explicit empty list")
     for omitted in metadata["omissions"]:
-        _keys(omitted, ("sourceId", "reason", "count", "affectsCore", "affectsHalo"), "omission")
+        fields = {"sourceId", "reason", "count", "affectsCore", "affectsHalo"}
+        _need(isinstance(omitted, dict) and set(omitted) in (fields, fields | {"scope"}), "Invalid omission fields")
         _text(omitted["sourceId"], "source ID")
         _text(omitted["reason"], "omission reason")
         _need(type(omitted["count"]) is int and omitted["count"] >= 0, "Omission count must be an exact nonnegative integer")
-        _need(type(omitted["affectsCore"]) is bool and type(omitted["affectsHalo"]) is bool
-              and (omitted["affectsCore"] or omitted["affectsHalo"]), "Omission needs explicit core/halo scope")
+        flags = (omitted["affectsCore"], omitted["affectsHalo"])
+        if "scope" in omitted:
+            expected_flags = {"core": (True, None), "halo_only": (False, True), "outside_render": (False, False),
+                              "lateral-impact-unresolved": (None, None)}
+            _need(omitted["scope"] in expected_flags and all(a is b for a, b in zip(flags, expected_flags[omitted["scope"]])),
+                  "Omission impact flags contradict source scope")
+        else:
+            _need(all(type(v) is bool for v in flags) and any(flags), "Omission needs explicit core/halo scope")
+    if "omissionEvidence" in metadata:
+        evidence = metadata["omissionEvidence"]
+        _keys(evidence, ("records", "redactions"), "omission evidence")
+        _need(isinstance(evidence["records"], list) and isinstance(evidence["redactions"], list), "Invalid omission evidence lists")
+        _need(len(evidence["records"]) == len(metadata["omissions"]), "Omission evidence count mismatch")
+        ids = set()
+        for original, summary in zip(evidence["records"], metadata["omissions"]):
+            _need(isinstance(original, dict) and all(k in original for k in ("featureId", "sourceSha256", "reason", "scope", "classification")),
+                  "Incomplete frozen omission record")
+            _hash(original["sourceSha256"])
+            _need(original["featureId"] not in ids and original["featureId"] == summary["sourceId"]
+                  and original["reason"] == summary["reason"] and original["scope"] == summary.get("scope")
+                  and summary["count"] == 1, "Omission summary differs from original source record")
+            ids.add(original["featureId"])
+        for redaction in evidence["redactions"]:
+            _keys(redaction, ("featureId", "field", "reason"), "public redaction")
+            _need(redaction["featureId"] in ids, "Redaction refers to unknown omission")
+        def public_values(value):
+            if isinstance(value, str):
+                _text(value, "omission record")
+            elif isinstance(value, dict):
+                for key, child in value.items():
+                    _text(key, "omission field")
+                    _need(key.lower() not in {"email", "password", "token", "username", "account", "api_key"}, "Private/contact field in public omission")
+                    public_values(child)
+            elif isinstance(value, list):
+                for child in value:
+                    public_values(child)
+            else:
+                _need(value is None or type(value) in (int, float, bool), "Invalid omission JSON value")
+        public_values(evidence)
     _keys(metadata["limitations"], ("terrain", "heights", "facades", "coverage"), "limitations")
     for key, value in metadata["limitations"].items():
         _text(value, key)
@@ -148,7 +191,9 @@ def _docs(metadata, grow, runtime, files):
         lines.extend([s["filename"] + " | snapshot " + s["snapshotDate"], "SHA256 " + s["sha256"], s["url"], "Licence: " + s["licenseUrl"]])
     lines += ["", "Exact declared omissions (counts are per supplied source record):"]
     for o in metadata["omissions"]:
-        lines.append(f'{o["sourceId"]}: {o["reason"]}; count={o["count"]}; affectsCore={str(o["affectsCore"]).lower()}; affectsHalo={str(o["affectsHalo"]).lower()}')
+        flag = lambda value: "unknown" if value is None else str(value).lower()
+        lines.append(f'{o["sourceId"]}: {o["reason"]}; count={o["count"]}; affectsCore={flag(o["affectsCore"])}; affectsHalo={flag(o["affectsHalo"])}'
+                     + ("; scope=" + o["scope"] if "scope" in o else ""))
     if not metadata["omissions"]:
         lines.append("No omissions declared in the supplied frozen list; this is not a completeness claim.")
     lines += ["", f'Owned chunks: {grow["expectedChunks"]}; bounding extent X/Z [minX,minZ,maxX,maxZ): {grow["extent"]}.',
@@ -160,6 +205,10 @@ def _docs(metadata, grow, runtime, files):
               "This is a representative headless load check, not runtime testing of every chunk. Client visual and AI behaviour acceptance are not claimed.",
               "The map-data licence does not provide Minecraft software or account rights.", "", "Unchanged world payload SHA256:"]
     lines += [record["sha256"] + "  " + path for path, record in sorted(files.items())]
+    evidence = metadata.get("omissionEvidence")
+    if evidence is not None:
+        lines += ["", f'SOURCE-OMISSIONS.json retains {len(evidence["records"])} individual source records, with {len(evidence["redactions"])} explicitly listed contact/privacy field redactions.',
+                  "Scope flags describe source-feature relevance, not an omitted voxel count. Unknown impact remains unknown."]
     sources = "\n".join(lines) + "\n"
     install = (f'{metadata["worldName"]}\n\nMinecraft Java Edition 26.1.2 saved world.\n'
                '1. Close Minecraft or leave the current world. Extract the ZIP to a temporary folder.\n'
@@ -172,7 +221,11 @@ def _docs(metadata, grow, runtime, files):
                'The original README is preserved unchanged; use this file for this package\'s exact installation folder.\n'
                'This package contains a world, not Minecraft software, account access, or an AI-agent gameplay mod.\n'
                'See WORLD-SOURCES.txt for frozen provenance, omissions, estimated fields, coverage and test scope.\n')
-    return {"WORLD-SOURCES.txt": sources.encode("utf-8"), "INSTALL-WORLD.txt": install.encode("utf-8")}
+    documents = {"WORLD-SOURCES.txt": sources.encode("utf-8"), "INSTALL-WORLD.txt": install.encode("utf-8")}
+    if evidence is not None:
+        documents["SOURCE-OMISSIONS.json"] = _canonical({"schema": "fork.public-source-omissions.v1", **evidence,
+                                                       **{key: False for key in FLAGS}}) + b"\n"
+    return documents
 
 
 def _record_stream(stream, target=None):

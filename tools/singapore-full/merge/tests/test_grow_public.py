@@ -131,6 +131,29 @@ class PublicPackageTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     grow_public.package_public(self.zip, meta, self.root / ("bad-meta-" + str(index)))
 
+    def test_preserves_individual_omission_records_and_unknown_impact(self):
+        records = [dict(featureId="way/1", sourceSha256="b" * 64, reason="synthetic_outside", scope="outside_render",
+                        classification="synthetic", geometryBoundsXZ=[-50, -50, -40, -40], tags={"name": "Synthetic Road"}),
+                   dict(featureId="way/2", sourceSha256="b" * 64, reason="synthetic_unknown", scope="lateral-impact-unresolved",
+                        classification="synthetic", geometryBoundsXZ=None)]
+        self.meta["omissions"] = [dict(sourceId=r["featureId"], reason=r["reason"], count=1, scope=r["scope"],
+                                       affectsCore=False if i == 0 else None, affectsHalo=False if i == 0 else None)
+                                   for i, r in enumerate(records)]
+        self.meta["omissionEvidence"] = {"records": records, "redactions": [{"featureId": "way/1", "field": "tags.email",
+                                                                              "reason": "Public contact tag omitted"}]}
+        output = self.root / "with-omissions"
+        receipt = grow_public.package_public(self.zip, self.meta, output)
+        with zipfile.ZipFile(output / receipt["zip"]["path"]) as archive:
+            evidence = json.loads(archive.read("SOURCE-OMISSIONS.json"))
+            self.assertEqual(records, evidence["records"])
+            self.assertEqual(self.meta["omissionEvidence"]["redactions"], evidence["redactions"])
+            sources = archive.read("WORLD-SOURCES.txt").decode()
+            self.assertIn("affectsCore=false; affectsHalo=false; scope=outside_render", sources)
+            self.assertIn("affectsCore=unknown; affectsHalo=unknown; scope=lateral-impact-unresolved", sources)
+        self.meta["omissionEvidence"]["records"][0]["tags"]["email"] = "private@example.com"
+        with self.assertRaises(ValueError):
+            grow_public.package_public(self.zip, self.meta, self.root / "contact-leak")
+
 
 if __name__ == "__main__":
     unittest.main()
