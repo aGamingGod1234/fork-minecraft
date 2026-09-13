@@ -1,0 +1,150 @@
+{
+    "seam":  {
+                 "status":  "FAIL",
+                 "kind":  "actual-shared-halo-block-comparison",
+                 "left":  "svy21_x29712_z30496_s128_h32",
+                 "right":  "svy21_x29840_z30496_s128_h32",
+                 "region":  {
+                                "x":  [
+                                          29808,
+                                          29872
+                                      ],
+                                "z":  [
+                                          30496,
+                                          30624
+                                      ],
+                                "y":  [
+                                          -4,
+                                          319
+                                      ]
+                            },
+                 "compared":  2654208,
+                 "mismatches":  45240,
+                 "assemblyAccepted":  false,
+                 "createdUtc":  "2026-09-13T07:26:25.496Z"
+             },
+    "projection":  {
+                       "status":  "PASS",
+                       "independentProjection":  "WGS84 TM series, independent of pipeline proj4",
+                       "source":  "https://app.sla.gov.sg/sirent/Page/ReferenceStations",
+                       "toleranceMeters":  0.1,
+                       "maxResidualMeters":  0.0006322277154531609,
+                       "residuals":  [
+                                         {
+                                             "id":  "SNYU",
+                                             "residualMeters":  0.0002818273997847093
+                                         },
+                                         {
+                                             "id":  "SRPT",
+                                             "residualMeters":  0.0001504876371293356
+                                         },
+                                         {
+                                             "id":  "SNPT",
+                                             "residualMeters":  0.00013686407951533572
+                                         },
+                                         {
+                                             "id":  "SLYG",
+                                             "residualMeters":  0.0006322277154531609
+                                         },
+                                         {
+                                             "id":  "SNSC",
+                                             "residualMeters":  0.0001465015512285774
+                                         },
+                                         {
+                                             "id":  "SNUS",
+                                             "residualMeters":  0.0006318972771031167
+                                         },
+                                         {
+                                             "id":  "SSMK",
+                                             "residualMeters":  0.000347190841550488
+                                         },
+                                         {
+                                             "id":  "SSTS",
+                                             "residualMeters":  0.00014797533070686064
+                                         },
+                                         {
+                                             "id":  "SMS1",
+                                             "residualMeters":  0.0004593814538521469
+                                         }
+                                     ],
+                       "additionalChecks":  [
+                                                "false origin exact",
+                                                "nine inverse roundtrips",
+                                                "east/south axes",
+                                                "empty registry rejected",
+                                                "source-only cannot accept world",
+                                                "malformed height and missing reference reported"
+                                            ]
+                   },
+    "tiles":  [
+                  {
+                      "kind":  "tile",
+                      "structurallyValid":  true,
+                      "initialMilestoneAccepted":  true,
+                      "fullWorldAccepted":  false,
+                      "measured":  {
+                                       "controlPoints":  16,
+                                       "maxPositionErrorMeters":  0.5704921890543285,
+                                       "maxInverseErrorDegrees":  1.4210854715202004E-14
+                                   },
+                      "errors":  [
+
+                                 ],
+                      "warnings":  [
+                                       "Ground is provisional: no surveyed terrain or vertical datum acceptance",
+                                       "Separate tile only; seamless whole-island world is unverified",
+                                       "Facade identity and photographic resemblance are unverified",
+                                       "Actual terrain is unverified",
+                                       "No per-feature source height versus generated top audit; clipping gate remains unmet"
+                                   ],
+                      "inputSha256":  "05f9f06e9cbd3d31975edd4d310196f016cab096026b232b4b79e8c41bcb50f0"
+                  },
+                  {
+                      "kind":  "tile",
+                      "structurallyValid":  true,
+                      "initialMilestoneAccepted":  true,
+                      "fullWorldAccepted":  false,
+                      "measured":  {
+                                       "controlPoints":  16,
+                                       "maxPositionErrorMeters":  0.6566125928017243,
+                                       "maxInverseErrorDegrees":  1.4210854715202004E-14
+                                   },
+                      "errors":  [
+
+                                 ],
+                      "warnings":  [
+                                       "Ground is provisional: no surveyed terrain or vertical datum acceptance",
+                                       "Separate tile only; seamless whole-island world is unverified",
+                                       "Facade identity and photographic resemblance are unverified",
+                                       "Actual terrain is unverified",
+                                       "No per-feature source height versus generated top audit; clipping gate remains unmet"
+                                   ],
+                      "inputSha256":  "d07abbc4e366b39259d2a2326663593a3b1bd74c1977708526be2e5f093f9c03"
+                  }
+              ],
+    "districtSource":  {
+                           "elements":  13958,
+                           "buildings":  1209,
+                           "height":  {
+                                          "mappedMeters":  1015,
+                                          "inferredLevels":  73,
+                                          "missing":  103,
+                                          "invalid":  18
+                                      },
+                           "facade":  {
+                                          "mappedMaterialOrColour":  217,
+                                          "missingAppearance":  1209,
+                                          "photographicValidation":  0
+                                      },
+                           "terrain":  {
+                                           "surveyed":  0
+                                       },
+                           "missingReferences":  [
+
+                                                 ],
+                           "missingReferenceCount":  0,
+                           "sourceClaimsAreSurveyed":  false,
+                           "auditedUtc":  "2026-09-13T07:19:19.121Z",
+                           "inputSha256":  "1218ed4f5103caa13c49feb457dbf9c8131bdd0eb065cfed235a0e5aabdef2f9"
+                       }
+}
