@@ -69,7 +69,7 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(receipt["streaming"]["verifiedChunks"], 4)
         self.assertEqual(receipt["streaming"]["maxBufferedRunsPerChunk"], 1)
         self.assertEqual(receipt["streaming"]["spawnSelection"], "incremental-minimum")
-        self.assertFalse(any(path.name.startswith(".world.staging-") for path in self.base.iterdir()))
+        self.assertFalse(any(path.name.startswith(".s-") for path in self.base.iterdir()))
         sx, sy, sz = receipt["spawn"]
         self.assertEqual(block_at(chunks, sx, sy, sz), "minecraft:air")
         self.assertEqual(block_at(chunks, sx, sy + 1, sz), "minecraft:air")

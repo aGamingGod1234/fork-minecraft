@@ -389,7 +389,7 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         disable_structures(config)
     elif "WorldGenSettings" not in data.value:
         raise ValueError("Template requires missing external data/minecraft/world_gen_settings.dat")
-    scratch = world.parent / ("." + world.name + ".staging-" + uuid.uuid4().hex)
+    scratch = world.parent / (".s-" + uuid.uuid4().hex[:12])
     scratch.mkdir(parents=True, exist_ok=False)
     stage_world = scratch / "world"
     spool_path = scratch / "runs.sqlite"
