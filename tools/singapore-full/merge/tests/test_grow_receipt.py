@@ -211,6 +211,28 @@ class GrownWorldReceiptTests(unittest.TestCase):
         self.assertFalse(result["assemblyAccepted"])
         self.assertIn("changed child evidence", result["issues"][0])
 
+    def test_national_component_receipt_preserves_raw_role_and_pins(self):
+        from test_grow_contract import GrowContractTests
+        from grow_contract import _national_role, _national_metadata
+        fixture = GrowContractTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        gate, source, writer, outputs, adapter_sha = fixture.national_fixture()
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha):
+            provenance, _ = _national_metadata(gate, source)
+            source.update(**_national_role(gate), **provenance, national_verification="STRICT_LOADER_PASS")
+            self.assertTrue(grow_receipt._component_status(source, gate, "safe-cbd"))
+            with self.assertRaisesRegex(package.GateError, "cannot supply final spawn"):
+                grow_receipt._component_status(source, gate, source["id"])
+            for changed in ({**gate, "standaloneAccepted": True},
+                            {**gate, "validationRole": "STANDALONE"},
+                            {**gate, "rawOracleErrors": [{"kind": "another failure"}]}):
+                with self.assertRaises(ValueError):
+                    grow_receipt._component_status(source, changed, "safe-cbd")
+            source["national_validator_sha256"] = "0" * 64
+            with self.assertRaisesRegex(package.GateError, "provenance changed"):
+                grow_receipt._component_status(source, gate, "safe-cbd")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

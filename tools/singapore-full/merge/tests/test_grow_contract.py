@@ -10,6 +10,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from grow_contract import FRAME, REGION_DIRECTORY, WORLD_SETTINGS, GrowContractError, digest, iter_owned_chunks, validate_plan
 from grow_contract import _benchmark_structural, _coverage, _component_role, _validate_spawn_selection
+from grow_contract import _national_role, _national_metadata, _national_structural, _structural
 
 
 class GrowContractTests(unittest.TestCase):
@@ -407,6 +408,118 @@ class GrowContractTests(unittest.TestCase):
         writer = digest(source["writer_manifest_path"])
         self.assertEqual(_coverage("water", source["coverage"]["water"], [0, 0, 16, 16], writer),
                          _coverage("water", source["coverage"]["water"], (0, 0, 16, 16), writer))
+
+    def national_fixture(self):
+        source = self.source("national", [0, 0, 1024, 1024])
+        root = Path(source["writer_manifest_path"]).parent
+        def record(path):
+            return {"path": str(path), "sha256": digest(path), "bytes": path.stat().st_size}
+        adapter = root / "validate-watch-pipeline.mjs"
+        adapter.write_text("// synthetic pinned API fixture; subprocess is mocked\n")
+        executable = root / "node.exe"
+        executable.write_bytes(b"synthetic non-executable fixture")
+        oracle = self.write(root / "oracle.json", {"status": "FAIL"})
+        pipeline = self.write(root / "pipeline-result.json", {"fixture": True})
+        job = self.write(root / "job.json", {"fixture": True})
+        request = {"kind": "national-pipeline-validation-request", "queueJobId": "fixture-job",
+                   "coreBounds": source["core_bounds"], "pipelineResult": record(pipeline),
+                   "jobSpecification": {"path": str(job), "sha256": digest(job)}}
+        request_path = self.write(root / "request.json", request)
+        execution = {"schemaVersion": 1, "kind": "national-validation-execution", "validationRole": "ASSEMBLY_COMPONENT",
+                     "queueRoot": str(root),
+                     "validationGateName": "authority.v3.accepted.json", "request": record(request_path),
+                     "validatorArtifacts": [record(adapter)], "validators": {"oracle": record(adapter), "settings": record(adapter)},
+                     "executable": record(executable)}
+        execution_path = self.write(root / "execution.json", execution)
+        (root / "validation").mkdir()
+        authority = self.write(root / "validation/authority.v3.accepted.json",
+                               {field: execution[field] for field in ("validatorArtifacts", "validators", "executable")})
+        self.authority_patch = patch("grow_contract.NATIONAL_AUTHORITY_SHA", digest(authority))
+        self.authority_patch.start()
+        self.addCleanup(self.authority_patch.stop)
+        writer = Path(source["writer_manifest_path"])
+        outputs = sorted(json.loads(writer.read_text())["outputs"], key=lambda row: row["path"])
+        gate = {"schemaVersion": 1, "kind": "national-pipeline-structural-result", "status": "PASS",
+                "validationRole": "ASSEMBLY_COMPONENT", "componentDisposition": "NOT_STANDALONE",
+                "assemblyComponentAccepted": True, "standaloneAccepted": False,
+                "finalAssemblyRequirements": {"safeSpawn": True, "runtimeValidation": True},
+                "rawOracleStatus": "FAIL", "rawOracleSpawnClear": False,
+                "rawOracleErrors": [{"kind": "spawn is not clear and supported"}], "spawnExceptionApplied": True,
+                "planBindingSha256": "f" * 64, "comparisonBounds": source["core_bounds"],
+                "comparisonScope": "owned-core-full-volume", "minY": -64, "maxYExclusive": 320,
+                "comparedCells": 402653184, "mismatchedCells": 0, "comparedCoreChunkCount": 4096,
+                "fileHashErrors": [], "worldRoot": source["world_path"], "queueJobId": "fixture-job",
+                "pipelineResult": record(pipeline), "jobSpecification": record(job),
+                "evidence": {"writerManifest": record(writer), "oracleProof": record(oracle), "validationTools": [record(adapter)]},
+                "outputFiles": [{**row, "path": str(Path(source["world_path"]) / row["path"])} for row in outputs]}
+        gate.update({field: False for field in ("productionAccepted", "runtimeAccepted", "runtimeLoadAccepted", "playableAccepted", "fullWorldAccepted")})
+        gate_path = self.write(Path(source["structural_gate_path"]), gate)
+        binding = {"schemaVersion": 1, "kind": "national-validation-binding-receipt", "status": "PASS",
+                   "validationRole": "ASSEMBLY_COMPONENT", "componentDisposition": "NOT_STANDALONE", "standaloneAccepted": False,
+                   "assembledSafeSpawnRequired": True, "assembledRuntimeRequired": True, "planBindingSha256": gate["planBindingSha256"],
+                   "requestSha256": digest(request_path), "executionSha256": digest(execution_path),
+                   "gate": record(gate_path), "oracleProof": record(oracle)}
+        binding_path = self.write(root / "binding.json", binding)
+        source.update(national_binding_path=str(binding_path), national_execution_path=str(execution_path))
+        return gate, source, writer, outputs, digest(adapter)
+
+    def test_national_reconstructs_exact_plan_before_normalization(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture()
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha), patch("grow_contract.subprocess.run") as run:
+            run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(gate), stderr="")
+            normalized = _national_structural(gate, source, digest(writer), outputs, (0, 0, 1024, 1024), Path(source["world_path"]), writer)
+            script = run.call_args.args[0][4]
+            self.assertIn("preparePipelineValidation", script)
+            self.assertIn("verifyPipelineGate", script)
+        self.assertEqual("STRICT_LOADER_PASS", normalized["national_verification"])
+        self.assertEqual("NOT_STANDALONE", normalized["standalone_status"])
+        self.assertEqual("FAIL", normalized["national_raw_oracle_status"])
+        self.assertFalse(normalized["component_spawn_accepted"])
+        self.assertNotIn("national_plan_path", normalized)
+
+    def test_national_fails_changed_bindings_or_unapproved_adapter(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture()
+        with patch("grow_contract.subprocess.run") as run:
+            with self.assertRaisesRegex(GrowContractError, "approved National"):
+                _national_metadata(gate, source)
+            run.assert_not_called()
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha):
+            _national_metadata(gate, source)
+            path = Path(source["national_execution_path"])
+            path.write_text(path.read_text() + " ")
+            with self.assertRaisesRegex(GrowContractError, "retained binding"):
+                _national_metadata(gate, source)
+
+    def test_national_rechecks_original_oracle_and_exact_authority(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture()
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha):
+            oracle = Path(gate["evidence"]["oracleProof"]["path"])
+            oracle.write_text("changed proof")
+            with self.assertRaisesRegex(GrowContractError, "raw oracle proof bytes"):
+                _national_metadata(gate, source)
+        with patch("grow_contract.NATIONAL_AUTHORITY_SHA", "0" * 64):
+            with self.assertRaisesRegex(GrowContractError, "authority pin"):
+                _national_metadata(gate, source)
+
+    def test_national_cannot_downgrade_role_or_accept_other_oracle_errors(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture()
+        for changes in ({"kind": "actual-world-structural-validation"}, {"validationRole": "STANDALONE"},
+                        {"standaloneAccepted": True}, {"componentDisposition": "PASS"},
+                        {"finalAssemblyRequirements": {"safeSpawn": True, "runtimeValidation": False}},
+                        {"rawOracleErrors": [{"kind": "other failure"}]}, {"spawnExceptionApplied": 1}):
+            with self.subTest(changes=changes), self.assertRaises(GrowContractError):
+                _structural({**gate, **changes}, digest(writer), outputs, (0, 0, 1024, 1024), source, Path(source["world_path"]), writer)
+        with self.assertRaisesRegex(GrowContractError, "complete owned core"):
+            _national_structural({**gate, "comparedCells": 1}, source, digest(writer), outputs, (0, 0, 1024, 1024), Path(source["world_path"]), writer)
+
+    def test_national_never_normalizes_a_failed_strict_reverification(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture()
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha), patch("grow_contract.subprocess.run") as run:
+            for returned in (SimpleNamespace(returncode=1, stdout="", stderr="changed source"),
+                             SimpleNamespace(returncode=0, stdout=json.dumps({**gate, "rawOracleStatus": "PASS"}), stderr="")):
+                run.return_value = returned
+                with self.assertRaisesRegex(GrowContractError, "strict National"):
+                    _national_structural(gate, source, digest(writer), outputs, (0, 0, 1024, 1024), Path(source["world_path"]), writer)
 
 
 if __name__ == "__main__":

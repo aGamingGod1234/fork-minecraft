@@ -15,6 +15,9 @@ WORLD_SETTINGS = "data/minecraft/world_gen_settings.dat"
 REGION = re.compile(r"^dimensions/minecraft/overworld/region/r\.-?\d+\.-?\d+\.mca$")
 COMPONENT_LOADERS = frozenset(("validate-east-world-gate.mjs", "validate-ring-world-gate.mjs",
                               "validate-transfer-world-gate.mjs"))
+NATIONAL_KIND = "national-pipeline-structural-result"
+NATIONAL_ADAPTER_SHA = "88b26cb058826f6bc7ecf5aea976110520952220111b58c1a784047386ab7724"
+NATIONAL_AUTHORITY_SHA = "a4ec709268fa3345a9b15111365b6000feb45c1f806e73140c9c599f00e01c49"
 
 
 class GrowContractError(ValueError):
@@ -235,7 +238,143 @@ def _validate_spawn_selection(plan, sources):
     return _spawn_check(Path(selected["world_path"]), data, selected)
 
 
+def _national_role(gate):
+    if (gate.get("schemaVersion") != 1 or gate.get("kind") != NATIONAL_KIND or gate.get("status") != "PASS"
+            or gate.get("synthetic") is True or gate.get("validationRole") != "ASSEMBLY_COMPONENT"
+            or gate.get("componentDisposition") != "NOT_STANDALONE"
+            or gate.get("assemblyComponentAccepted") is not True or gate.get("standaloneAccepted") is not False
+            or set(gate.get("finalAssemblyRequirements", {})) != {"safeSpawn", "runtimeValidation"}
+            or any(gate["finalAssemblyRequirements"].get(field) is not True for field in ("safeSpawn", "runtimeValidation"))
+            or any(gate.get(field) is not False for field in
+                   ("productionAccepted", "runtimeAccepted", "runtimeLoadAccepted", "playableAccepted", "fullWorldAccepted"))):
+        raise GrowContractError("National gate must retain its exact component-only role and final obligations")
+    clear = gate.get("rawOracleSpawnClear")
+    if type(clear) is not bool or type(gate.get("spawnExceptionApplied")) is not bool or (gate.get("rawOracleStatus"), gate.get("rawOracleErrors"), gate.get("spawnExceptionApplied")) != (
+            ("PASS", [], False) if clear else ("FAIL", [{"kind": "spawn is not clear and supported"}], True)):
+        raise GrowContractError("National raw oracle outcome is not the exact retained spawn-only disposition")
+    return {"role": "assembly-component", "standalone_status": "NOT_STANDALONE",
+            "component_spawn_accepted": clear, "final_assembled_safe_spawn_required": True,
+            "component_gate_kind": NATIONAL_KIND, "national_raw_oracle_status": gate["rawOracleStatus"],
+            "national_raw_oracle_errors": gate["rawOracleErrors"], "national_spawn_exception_applied": not clear}
+
+
+def _national_metadata(gate, source):
+    """Bind retained small records and approved code, without inspecting source/world runs."""
+    gate_path = Path(source["structural_gate_path"]).resolve(strict=True)
+    binding_path = Path(source["national_binding_path"]).resolve(strict=True)
+    execution_path = Path(source["national_execution_path"]).resolve(strict=True)
+    binding, execution = load(binding_path), load(execution_path)
+    if (binding.get("schemaVersion") != 1 or binding.get("kind") != "national-validation-binding-receipt"
+            or binding.get("status") != "PASS" or binding.get("validationRole") != "ASSEMBLY_COMPONENT"
+            or binding.get("componentDisposition") != "NOT_STANDALONE" or binding.get("standaloneAccepted") is not False
+            or binding.get("assembledSafeSpawnRequired") is not True or binding.get("assembledRuntimeRequired") is not True
+            or execution.get("schemaVersion") != 1 or execution.get("kind") != "national-validation-execution"
+            or execution.get("validationRole") != "ASSEMBLY_COMPONENT"
+            or execution.get("validationGateName") != "authority.v3.accepted.json"):
+        raise GrowContractError("National V3 binding/execution role is not accepted")
+    if (Path(binding["gate"]["path"]).resolve(strict=True) != gate_path
+            or _sha(binding["gate"]["sha256"], "National gate") != digest(gate_path)
+            or _sha(binding["executionSha256"], "National execution") != digest(execution_path)
+            or _sha(binding["planBindingSha256"], "National plan") != _sha(gate["planBindingSha256"], "gate plan")):
+        raise GrowContractError("National retained binding differs from gate/execution/plan")
+    authority_path = (Path(execution["queueRoot"]) / "validation" / "authority.v3.accepted.json").resolve(strict=True)
+    if digest(authority_path) != NATIONAL_AUTHORITY_SHA:
+        raise GrowContractError("exact approved National V3 authority pin required")
+    authority = load(authority_path)
+    if any(execution.get(field) != authority.get(field) for field in ("validatorArtifacts", "validators", "executable")):
+        raise GrowContractError("National execution differs from complete approved authority inventory")
+    request_path = Path(execution["request"]["path"]).resolve(strict=True)
+    request_hash = digest(request_path)
+    if request_hash != _sha(binding["requestSha256"], "binding request") or request_hash != _sha(execution["request"]["sha256"], "execution request"):
+        raise GrowContractError("National request bytes changed")
+    request = load(request_path)
+    if (request.get("kind") != "national-pipeline-validation-request" or request.get("coreBounds") != gate["comparisonBounds"]
+            or request.get("queueJobId") != gate["queueJobId"]):
+        raise GrowContractError("National request identity differs from actual gate")
+    for name in ("pipelineResult", "jobSpecification"):
+        declared, actual = request[name], gate[name]
+        if (Path(declared["path"]).resolve() != Path(actual["path"]).resolve()
+                or _sha(declared["sha256"], name) != _sha(actual["sha256"], name)
+                or ("bytes" in declared and declared["bytes"] != actual["bytes"])):
+            raise GrowContractError("National request input differs from actual gate: " + name)
+    if (Path(binding["oracleProof"]["path"]).resolve() != Path(gate["evidence"]["oracleProof"]["path"]).resolve()
+            or _sha(binding["oracleProof"]["sha256"], "binding oracle") != _sha(gate["evidence"]["oracleProof"]["sha256"], "gate oracle")):
+        raise GrowContractError("National binding changes the original raw oracle proof")
+    oracle = gate["evidence"]["oracleProof"]
+    oracle_path = Path(oracle["path"]).resolve(strict=True)
+    if digest(oracle_path) != _sha(oracle["sha256"], "raw National oracle") or oracle_path.stat().st_size != oracle["bytes"]:
+        raise GrowContractError("National original raw oracle proof bytes changed")
+    tools = gate["evidence"]["validationTools"]
+    inventory = {}
+    for record in tools:
+        path = Path(record["path"]).resolve(strict=True)
+        pin = _sha(record["sha256"], "National validation artifact")
+        if str(path) in inventory or digest(path) != pin or path.stat().st_size != record["bytes"]:
+            raise GrowContractError("National validation artifact changed or duplicated")
+        inventory[str(path)] = pin
+    approved = {str(Path(record["path"]).resolve(strict=True)): _sha(record["sha256"], "approved artifact")
+                for record in authority["validatorArtifacts"]}
+    if inventory != approved or len(approved) != len(authority["validatorArtifacts"]):
+        raise GrowContractError("National gate inventory differs from complete approved authority inventory")
+    for record in execution["validatorArtifacts"] + list(execution["validators"].values()):
+        if inventory.get(str(Path(record["path"]).resolve(strict=True))) != _sha(record["sha256"], "execution validator"):
+            raise GrowContractError("National execution validator is outside actual pinned gate inventory")
+    adapters = [path for path, pin in inventory.items()
+                if Path(path).name == "validate-watch-pipeline.mjs" and pin == NATIONAL_ADAPTER_SHA]
+    if len(adapters) != 1:
+        raise GrowContractError("exact approved National V3 adapter pin required")
+    provenance = {"national_binding_path": str(binding_path), "national_binding_sha256": digest(binding_path),
+                  "national_authority_path": str(authority_path), "national_authority_sha256": NATIONAL_AUTHORITY_SHA,
+                  "national_execution_path": str(execution_path), "national_execution_sha256": digest(execution_path),
+                  "national_request_path": str(request_path), "national_request_sha256": request_hash,
+                  "national_plan_binding_sha256": gate["planBindingSha256"],
+                  "national_validator_path": adapters[0], "national_validator_sha256": NATIONAL_ADAPTER_SHA}
+    return provenance, execution
+
+
+def _national_structural(gate, source, writer_hash, outputs, core, world, writer_path):
+    role = _national_role(gate)
+    if (gate.get("comparisonScope") != "owned-core-full-volume" or gate.get("comparisonBounds") != list(core)
+            or core[2] - core[0] != 1024 or core[3] - core[1] != 1024
+            or gate.get("minY") != -64 or gate.get("maxYExclusive") != 320
+            or type(gate.get("comparedCells")) is not int or gate["comparedCells"] != 402653184
+            or type(gate.get("mismatchedCells")) is not int or gate["mismatchedCells"] != 0
+            or gate.get("comparedCoreChunkCount") != 4096 or gate.get("fileHashErrors") != []
+            or Path(gate["worldRoot"]).resolve(strict=True) != world
+            or Path(gate["evidence"]["writerManifest"]["path"]).resolve(strict=True) != writer_path
+            or _sha(gate["evidence"]["writerManifest"]["sha256"], "National writer") != writer_hash):
+        raise GrowContractError("National gate does not prove this complete owned core and writer")
+    bound_outputs = sorted(({"path": Path(o["path"]).resolve(strict=True).relative_to(world).as_posix(),
+                             "bytes": o["bytes"], "sha256": _sha(o["sha256"], "National output")}
+                            for o in gate["outputFiles"]), key=lambda o: o["path"])
+    if bound_outputs != outputs:
+        raise GrowContractError("National gate output bindings differ from immutable writer outputs")
+    provenance, execution = _national_metadata(gate, source)
+    executable = Path(execution["executable"]["path"]).resolve(strict=True)
+    if digest(executable) != _sha(execution["executable"]["sha256"], "National executable"):
+        raise GrowContractError("National declared verification executable changed")
+    # This rehashes live immutable inputs under the caller's existing approved
+    # hashing lease. It reconstructs the retained plan and never launches an oracle.
+    script = ("import fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';"
+              "const read=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\\uFEFF/,''));"
+              "const m=await import(pathToFileURL(process.argv[2]).href);const e=read(process.argv[3]);"
+              "const p=m.preparePipelineValidation(read(e.request.path),path.dirname(e.request.path),"
+              "{oraclePath:e.validators.oracle.path,settingsValidatorPath:e.validators.settings.path,"
+              "validatorArtifacts:e.validatorArtifacts,validationRole:'ASSEMBLY_COMPONENT'});"
+              "console.log(JSON.stringify(m.verifyPipelineGate(p,process.argv[4])));")
+    result = subprocess.run([str(executable), "--max-old-space-size=384", "--input-type=module", "-e", script,
+                             "fork-national-readonly-bindings", provenance["national_validator_path"],
+                             provenance["national_execution_path"], str(Path(source["structural_gate_path"]).resolve())],
+                            capture_output=True, text=True, encoding="utf-8", timeout=120)
+    if result.returncode != 0 or json.loads(result.stdout) != gate:
+        raise GrowContractError("strict National reconstructed-plan verification failed: " + result.stderr[-2000:])
+    return {**role, **provenance, "national_verification": "STRICT_LOADER_PASS"}
+
+
 def _structural(gate, writer_hash, outputs, core, source=None, world=None, writer_path=None):
+    if (gate.get("kind") == NATIONAL_KIND or "validationRole" in gate or "componentDisposition" in gate
+            or "assemblyComponentAccepted" in gate):
+        return _national_structural(gate, source, writer_hash, outputs, core, world, writer_path)
     if gate.get("kind") in ("independent-benchmark-result-gate", "measured-independent-benchmark-validation"):
         return _benchmark_structural(gate, source, writer_hash, outputs, core, world, writer_path)
     if gate.get("status") != "PASS" or gate.get("synthetic") is True:

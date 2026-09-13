@@ -106,6 +106,18 @@ def _spawn_check(world, data, source):
 
 
 def _component_status(source, structural, spawn_source_id):
+    if (structural.get("kind") == "national-pipeline-structural-result" or "validationRole" in structural
+            or "componentDisposition" in structural or "assemblyComponentAccepted" in structural):
+        from grow_contract import _national_role, _national_metadata
+        role = _national_role(structural)
+        _need(source["id"] != spawn_source_id, "A National assembly component cannot supply final spawn or configuration")
+        _need(all(source.get(field) == value for field, value in role.items())
+              and source.get("national_verification") == "STRICT_LOADER_PASS",
+              "National normalized component role differs from strict verified evidence")
+        provenance, _ = _national_metadata(structural, source)
+        _need(all(source.get(field) == value for field, value in provenance.items()),
+              "National component binding/request/execution/validator provenance changed")
+        return True
     component = structural.get("role") == "assembly-component"
     _need(component == (source.get("role") == "assembly-component"), "Normalized source role differs from actual gate")
     if component:
