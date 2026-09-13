@@ -23,6 +23,7 @@ public final class ForkEntrypoint implements ModInitializer {
     public static ForkSession session(MinecraftServer server) { return SESSIONS.get(server); }
     public static boolean active(MinecraftServer server) { return SESSIONS.containsKey(server); }
     @Override public void onInitialize() {
+        net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry.clientboundPlay().register(ForkStatusPayload.TYPE,ForkStatusPayload.CODEC);
         CommandRegistrationCallback.EVENT.register((dispatcher, registries, environment) -> {
             var root = Commands.literal("fork").requires(GoalControl::mayControl)
                 .executes(c -> help(c.getSource()));
@@ -44,15 +45,18 @@ public final class ForkEntrypoint implements ModInitializer {
             root.then(fresh);
             for (var power : ForkEngine.Power.values())
                 root.then(Commands.literal("power").then(Commands.literal(power.name().toLowerCase(Locale.ROOT))
-                    .executes(c -> run(c.getSource(), () -> { var s=require(c.getSource()); s.adapter.engine().power(power); return s.summary(); }))));
-            root.then(Commands.literal("advance").executes(c -> run(c.getSource(), () -> require(c.getSource()).advance(false))));
-            root.then(Commands.literal("retry").executes(c -> run(c.getSource(), () -> require(c.getSource()).advance(true))));
+                    .executes(c -> run(c.getSource(), () -> { var s=requireCourt(c.getSource()); s.adapter.engine().power(power); return s.summary(); }))));
+            root.then(Commands.literal("advance").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).advance(false))));
+            root.then(Commands.literal("retry").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).advance(true))));
             root.then(Commands.literal("cancel").executes(c -> run(c.getSource(), () -> { var s=require(c.getSource()); s.cancel(); return s.summary(); })));
             root.then(Commands.literal("recover").executes(c -> run(c.getSource(), () -> require(c.getSource()).recoverBodies())));
-            root.then(Commands.literal("rewind").executes(c -> run(c.getSource(), () -> { var s=require(c.getSource()); s.adapter.rewind(); return "INITIAL verified. " + s.summary(); })));
+            root.then(Commands.literal("rewind").executes(c -> run(c.getSource(), () -> require(c.getSource()).rewind(c.getSource().getPlayerOrException()))));
+            root.then(Commands.literal("locator").executes(c -> run(c.getSource(), () -> require(c.getSource()).locator())));
+            root.then(Commands.literal("return").executes(c -> run(c.getSource(), () -> require(c.getSource()).returnToCourt(c.getSource().getPlayerOrException()))));
+            root.then(Commands.literal("visit").then(Commands.argument("place",com.mojang.brigadier.arguments.StringArgumentType.word()).executes(c -> run(c.getSource(), () -> require(c.getSource()).visit(c.getSource().getPlayerOrException(),com.mojang.brigadier.arguments.StringArgumentType.getString(c,"place"))))));
             root.then(Commands.literal("inspect").executes(c -> run(c.getSource(), () -> require(c.getSource()).inspect())));
             root.then(Commands.literal("compare").executes(c -> run(c.getSource(), () -> require(c.getSource()).compare())));
-            root.then(Commands.literal("demolish").executes(c -> run(c.getSource(), () -> require(c.getSource()).demolish())));
+            root.then(Commands.literal("demolish").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).demolish())));
             dispatcher.register(root);
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> { var s=session(server); if(s!=null) s.tick(); });
@@ -67,6 +71,9 @@ public final class ForkEntrypoint implements ModInitializer {
     }
     private static ForkSession require(CommandSourceStack source) {
         var s=session(source.getServer()); if(s==null) throw new IllegalStateException("Use /fork start fixture or /fork start live"); return s;
+    }
+    private static ForkSession requireCourt(CommandSourceStack source) throws Exception {
+        var s=require(source);s.requireCourt(source.getPlayerOrException());return s;
     }
     private static int help(CommandSourceStack source) {
         source.sendSuccess(() -> Component.literal("FORK | start fixture/live (first run) | new fixture/live (explicit restart) | power clinic/workshop | advance | retry | cancel | rewind | recover | inspect | compare | demolish"), false); return 1;

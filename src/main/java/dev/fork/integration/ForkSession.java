@@ -38,6 +38,11 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     private int broadcasts;
     private long bodyDeadline=System.nanoTime()+15_000_000_000L;
     private boolean bodyFailure;
+    private final Map<UUID,Travel> travel = new HashMap<>();
+    private final Set<UUID> visitors = new HashSet<>();
+    private final Map<UUID,String> travelMessages = new HashMap<>();
+    private record Travel(Vec3 target, boolean returning, long deadline,
+            net.minecraft.server.level.TicketType ticket, net.minecraft.world.level.ChunkPos chunk) {}
     public static boolean hasSavedRun(MinecraftServer server) {
         return Files.exists(server.getWorldPath(LevelResource.ROOT).resolve("fork/epoch.txt"));
     }
@@ -154,6 +159,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         return summary();
     }
     public void cancel() {
+        for(var id:new ArrayList<>(travel.keySet())) finishTravel(id,"Travel cancelled; position preserved");
         adapter.engine().cancel();
         for(var id:actors.values()) body(id).ifPresent(OfflineAgentPlayers::stop);
         JsonObject p=new JsonObject(); p.addProperty("epoch",adapter.engine().state().epoch());
@@ -214,6 +220,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         return "Paused. "+cells.size()+" facade cells removed. /fork rewind required before advance.";
     }
     public void tick() {
+        tickTravel();
         var e=adapter.engine(); boolean pending=e.pending()!=null;
         if(!ready()&&!bodyFailure&&System.nanoTime()>=bodyDeadline) {
             bodyFailure=true;cancel();e.pause();providerIssue="Missing role body. /fork recover; no round committed";broadcast(providerIssue);
@@ -227,7 +234,117 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         for(var p:server.getPlayerList().getPlayers()) {
             p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); p.setInvulnerable(true);
             if(show) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(ForkPresentation.compact(e.state(),e.paused(),pending))));
+            if(broadcasts%20==0) sync(p);
         }
+    }
+    private boolean human(net.minecraft.server.level.ServerPlayer p) {
+        return actors.keySet().stream().noneMatch(role->body(actors.get(role)).map(b->b.getUUID().equals(p.getUUID())).orElse(false));
+    }
+    public boolean atCourt(net.minecraft.server.level.ServerPlayer p) {
+        var v=p.position(); return p.level()==level && v.x>=origin.getX() && v.x<origin.getX()+16
+            && v.y>=origin.getY() && v.y<origin.getY()+16 && v.z>=origin.getZ() && v.z<origin.getZ()+16;
+    }
+    public void requireCourt(net.minecraft.server.level.ServerPlayer p) {
+        if(!human(p)||!atCourt(p)||!visitors.isEmpty()||!travel.isEmpty()) throw new IllegalStateException("Return to court before changing this branch");
+    }
+    private boolean travelWindow() {
+        var e=adapter.engine(); return (e.state().round()==0||e.state().complete()) && e.pending()==null && !e.paused() && ready();
+    }
+    private List<JsonObject> acceptedPlaces() {
+        var result=new ArrayList<JsonObject>();
+        if(layout.has("publicPlaces")) for(var entry:layout.getAsJsonArray("publicPlaces")) {
+            var p=entry.getAsJsonObject();
+            if(p.has("accepted")&&p.get("accepted").getAsBoolean()&&p.has("arrival")&&p.has("id")&&p.has("name")
+                && p.get("id").getAsString().matches("[a-z0-9_-]{1,48}")
+                && (!p.has("dimension")||p.get("dimension").getAsString().equals(ForkContract.DIMENSION))) result.add(p);
+            if(result.size()==32) break;
+        }
+        return result;
+    }
+    private Vec3 destination(JsonObject p) {
+        var a=p.getAsJsonArray("arrival"); if(a.size()!=3) throw new IllegalArgumentException("Invalid accepted arrival");
+        boolean absolute=p.has("coordinateSpace")&&p.get("coordinateSpace").getAsString().equals("absolute");
+        return new Vec3(a.get(0).getAsDouble()+(absolute?0:origin.getX()),a.get(1).getAsDouble()+(absolute?0:origin.getY()),a.get(2).getAsDouble()+(absolute?0:origin.getZ()));
+    }
+    private Vec3 courtArrival() {
+        if(layout.has("playerArrival")) {
+            var a=layout.get("playerArrival");
+            if(a.isJsonArray()) { var p=new JsonObject();p.add("arrival",a);return destination(p); }
+            if(a.isJsonObject()&&a.getAsJsonObject().has("arrival")) return destination(a.getAsJsonObject());
+        }
+        return new Vec3(origin.getX()+8.5,origin.getY()+1,origin.getZ()+7.5);
+    }
+    public String visit(net.minecraft.server.level.ServerPlayer p,String id) {
+        if(!human(p)||!atCourt(p)||!travelWindow()||!travel.isEmpty()) throw new IllegalStateException("Visit requires court, round 0/6, three bodies and no pending work");
+        var place=acceptedPlaces().stream().filter(x->x.get("id").getAsString().equals(id)).findFirst().orElseThrow(()->new IllegalArgumentException("Place is not accepted by World/Main"));
+        beginTravel(p,destination(place),false); return "Checking accepted arrival (10s maximum). Cancel or Return stays available.";
+    }
+    public String returnToCourt(net.minecraft.server.level.ServerPlayer p) {
+        if(!human(p)) throw new IllegalStateException("Human travel only");
+        finishTravel(p.getUUID(),"Previous travel cancelled");
+        if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel pending round before return");
+        beginTravel(p,courtArrival(),true); return "Returning to court after safe arrival check (10s maximum).";
+    }
+    private void beginTravel(net.minecraft.server.level.ServerPlayer p,Vec3 target,boolean returning) {
+        if(!Double.isFinite(target.x)||!Double.isFinite(target.y)||!Double.isFinite(target.z)) throw new IllegalArgumentException("Invalid arrival");
+        var pos=BlockPos.containing(target);
+        if(!level.getWorldBorder().isWithinBounds(pos)||target.y<level.getMinY()+1||target.y>=level.getMaxY()-2) throw new IllegalArgumentException("Arrival outside world bounds");
+        stopCamera(p);
+        var ticket=new net.minecraft.server.level.TicketType(200,net.minecraft.server.level.TicketType.FLAG_LOADING);
+        var chunk=new net.minecraft.world.level.ChunkPos(pos);
+        level.getChunkSource().addTicketWithRadius(ticket,chunk,2);
+        travel.put(p.getUUID(),new Travel(target,returning,System.nanoTime()+10_000_000_000L,ticket,chunk));
+        travelMessages.put(p.getUUID(),"Checking arrival; Cancel or Return available");
+    }
+    private void finishTravel(UUID id,String message) {
+        var t=travel.remove(id);
+        if(t!=null) level.getChunkSource().removeTicketWithRadius(t.ticket(),t.chunk(),2);
+        travelMessages.put(id,message);
+    }
+    private void tickTravel() {
+        visitors.removeIf(id->server.getPlayerList().getPlayer(id)==null);
+        for(var id:new ArrayList<>(travel.keySet())) {
+            var t=travel.get(id);var p=server.getPlayerList().getPlayer(id);
+            if(p==null||System.nanoTime()>=t.deadline()) { finishTravel(id,"Travel timed out; position preserved");continue; }
+            var pos=BlockPos.containing(t.target());
+            if(!level.hasChunkAt(pos)||!level.hasChunkAt(pos.offset(-1,0,-1))||!level.hasChunkAt(pos.offset(1,0,1))
+                ||!level.hasChunkAt(pos.offset(-1,0,1))||!level.hasChunkAt(pos.offset(1,0,-1))) continue;
+            var floor=level.getBlockState(pos.below()); var shape=floor.getCollisionShape(level,pos.below());
+            boolean safe=level.getBlockState(pos).isAir()&&level.getBlockState(pos.above()).isAir()
+                && !shape.isEmpty()&&shape.bounds().maxY>=1 && floor.getFluidState().isEmpty()
+                && level.noCollision(p,p.getBoundingBox().move(t.target().subtract(p.position())))
+                && !floor.is(Blocks.MAGMA_BLOCK)&&!floor.is(Blocks.CACTUS)&&!floor.is(Blocks.CAMPFIRE);
+            if(!safe) { finishTravel(id,"Unsafe arrival; position preserved. Return remains available.");continue; }
+            stopCamera(p);
+            p.teleportTo(level,t.target().x,t.target().y,t.target().z,Set.of(),180,0,true);p.setDeltaMovement(Vec3.ZERO);
+            if(t.returning()) visitors.remove(id);else visitors.add(id);
+            finishTravel(id,t.returning()?"At court":"Visiting accepted place; branch and actors preserved");
+        }
+    }
+    private void stopCamera(net.minecraft.server.level.ServerPlayer p) {
+        if(net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p,ForkStatusPayload.TYPE))
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,new ForkStatusPayload("camera_stop"));
+    }
+    public String rewind(net.minecraft.server.level.ServerPlayer p) {
+        requireCourt(p); for(var human:server.getPlayerList().getPlayers()) stopCamera(human);
+        adapter.rewind(); return "INITIAL verified. "+summary();
+    }
+    public String locator() {
+        return "Singapore | "+(layout.has("coverage")?layout.get("coverage").getAsString():"World coverage not supplied")
+            +" | Court "+origin.getX()+", "+origin.getY()+", "+origin.getZ()
+            +" | Accepted places: "+acceptedPlaces().stream().map(p->p.get("name").getAsString()).toList()
+            +" | Building footprints are not public interiors. Map data: OpenStreetMap contributors (ODbL), where supplied by World.";
+    }
+    private void sync(net.minecraft.server.level.ServerPlayer p) {
+        if(!human(p)||!net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p,ForkStatusPayload.TYPE)) return;
+        var e=adapter.engine();var receipts=e.receipts();
+        var archive=e.archives().stream().filter(a->a.state().complete()).findFirst().orElse(null);
+        var places=acceptedPlaces().stream().map(a->new ForkView.Place(a.get("id").getAsString(),a.get("name").getAsString())).toList();
+        var view=new ForkView(e.state(),archive==null?null:archive.state(),receipts.isEmpty()?List.of():receipts.getLast().effects(),
+            receipts.stream().map(r->r.state().allocation().name()).toList(),archive==null?List.of():archive.receipts().stream().map(r->r.state().allocation().name()).toList(),e.pending()!=null,e.paused(),
+            GoalControl.mayControl(p.createCommandSourceStack()),atCourt(p),travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
+            visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places);
+        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,new ForkStatusPayload(ForkEntrypoint.JSON.toJson(view)));
     }
     private void broadcast(String text) { server.getPlayerList().broadcastSystemMessage(Component.literal(text),false); }
     private String describe(ForkEngine.State s) {

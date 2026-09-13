@@ -1,6 +1,9 @@
 package dev.agaminggod.arenaagents.client.gui;
 
 import dev.agaminggod.arenaagents.agent.AgentConstants;
+import dev.fork.gameplay.ForkClient;
+import dev.fork.gameplay.ForkPresentation;
+import dev.fork.gameplay.ForkView;
 import dev.agaminggod.arenaagents.agent.AgentGameMode;
 import dev.agaminggod.arenaagents.agent.AgentModelNames;
 import dev.agaminggod.arenaagents.agent.AgentVisualIdentity;
@@ -88,6 +91,11 @@ public final class AgentControlScreen extends Screen {
 	private final SingleSubmissionGate summonSubmission = new SingleSubmissionGate();
 	private int liveScroll;
 	private int liveFeedScroll;
+	private int forkScroll;
+	private boolean forkLocator;
+	private boolean forkCamera;
+	private String forkPreset = "";
+	private String forkPlace = "";
 	private boolean compactGroupComposer;
 	private ConsoleMutationState mutationState = ConsoleMutationState.initial(0L);
 	private Page page = Page.OVERVIEW;
@@ -198,6 +206,7 @@ public final class AgentControlScreen extends Screen {
 
 	@Override
 	protected void init() {
+		if(ForkClient.view()!=null) page=Page.OVERVIEW;
 		nameInput = null;
 		groupNameInput = null;
 		promptInput = null;
@@ -354,6 +363,7 @@ public final class AgentControlScreen extends Screen {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+		if(ForkClient.view()!=null) { forkScroll=Math.max(0,forkScroll+(verticalAmount>0?-3:3));return true; }
 		if ((page == Page.OVERVIEW || page == Page.GROUP) && rosterGrid != null
 				&& rosterGrid.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) {
 			rebuildWidgets();
@@ -440,6 +450,13 @@ public final class AgentControlScreen extends Screen {
 
 	private void addNavigation() {
 		AgentControlLayout layout = layout();
+		if(ForkClient.view()!=null) {
+			String[] labels={"Run","Locator","Director","Close"};
+			Runnable[] actions={()->{forkLocator=false;forkCamera=false;forkScroll=0;rebuildWidgets();},()->{forkLocator=true;forkCamera=false;forkScroll=0;rebuildWidgets();},()->{forkCamera=true;forkLocator=false;forkScroll=0;rebuildWidgets();},this::onClose};
+			int w=layout.sideNavigation()?layout.contentLeft()-layout.panelLeft()-24:(layout.contentWidth()-3*GAP)/4;
+			for(int i=0;i<4;i++) addRenderableWidget(consoleButton(labels[i],layout.sideNavigation()?layout.panelLeft()+10:layout.contentLeft()+i*(w+GAP),layout.navigationTop()+(layout.sideNavigation()?i*31:0),w,ROW_HEIGHT,false,actions[i]));
+			return;
+		}
 		boolean groupAvailable = snapshot != null && snapshot.groupAvailable();
 		boolean agentWorkflow = page == Page.OVERVIEW || page == Page.CREATE || page == Page.TASK
 				|| page == Page.MANAGE || page == Page.REMOVE_CONFIRM;
@@ -493,7 +510,78 @@ public final class AgentControlScreen extends Screen {
 		else super.onClose();
 	}
 
+	public void acceptForkView() { if(minecraft!=null) rebuildWidgets(); }
+
+	private void initFork() {
+		var v=ForkClient.view();var l=layout();int w=(l.contentWidth()-3*GAP)/4;
+		if(forkCamera) {
+			var presets=dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.presetNames();
+			if(!presets.contains(forkPreset)) forkPreset=presets.isEmpty()?"":presets.getFirst();
+			if(!presets.isEmpty()) addRenderableWidget(new ConsoleCycleButton<>(font,l.contentLeft(),l.contentTop(),l.contentWidth(),ROW_HEIGHT,Component.literal("Preset"),presets,forkPreset,Component::literal,id->forkPreset=id));
+			var play=consoleButton("Play preset",l.contentLeft(),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->{dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.playFromGui(forkPreset,false);minecraft.setScreen(null);});play.active=!presets.isEmpty();addRenderableWidget(play);
+			addRenderableWidget(consoleButton("Stop camera",l.contentLeft()+2*(w+GAP),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,dev.agaminggod.arenaagents.client.camera.CameraDirectorClient::stopPlaybackFromGui));
+		} else if(forkLocator) {
+			var places=v.places();
+			if(places.stream().noneMatch(p->p.id().equals(forkPlace))) forkPlace=places.isEmpty()?"":places.getFirst().id();
+			if(!places.isEmpty()) addRenderableWidget(new ConsoleCycleButton<>(font,l.contentLeft(),l.contentTop(),w*2+GAP,ROW_HEIGHT,Component.literal("Place"),places.stream().map(ForkView.Place::id).toList(),forkPlace,id->Component.literal(places.stream().filter(p->p.id().equals(id)).findFirst().orElseThrow().name()),id->forkPlace=id));
+			else { var b=consoleButton("No accepted places",l.contentLeft(),l.contentTop(),w*2+GAP,ROW_HEIGHT,false,()->{});b.active=false;addRenderableWidget(b); }
+			var visit=consoleButton("Visit",l.contentLeft()+2*(w+GAP),l.contentTop(),w,ROW_HEIGHT,false,()->sendForkCommand("fork visit "+forkPlace));
+			visit.active=serverCanControl()&&v.canTravel()&&!places.isEmpty();addRenderableWidget(visit);
+			var back=consoleButton("Return",l.contentLeft()+3*(w+GAP),l.contentTop(),w,ROW_HEIGHT,false,()->sendForkCommand("fork return"));back.active=serverCanControl();addRenderableWidget(back);
+			addRenderableWidget(consoleButton("Cancel travel",l.contentLeft(),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork cancel")));
+			addRenderableWidget(consoleButton("Locator details",l.contentLeft()+2*(w+GAP),l.contentTop()+30,w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork locator")));
+		} else {
+			String[] labels={"Clinic","Workshop","Advance","Cancel","Rewind","Inspect","Compare","Retry"};
+			String[] commands={"power clinic","power workshop","advance","cancel","rewind","inspect","compare","retry"};
+			for(int i=0;i<labels.length;i++) {
+				int index=i;var b=consoleButton(labels[i],l.contentLeft()+(i%4)*(w+GAP),l.contentTop()+(i/4)*30,w,ROW_HEIGHT,false,()->sendForkCommand("fork "+commands[index]));
+				b.active=serverCanControl();
+				if(i==0||i==1||i==2||i==7) b.active &=v.atCourt()&&!v.pending()&&!v.paused()&&!v.traveling()&&!v.state().complete();
+				if(i==4) b.active &=v.atCourt()&&!v.traveling();
+				if(i==6) b.active &=v.state().complete()&&v.archived()!=null;
+				addRenderableWidget(b);
+			}
+		}
+		addRenderableWidget(consoleButton("Previous",l.contentLeft(),l.footerY(),w,ROW_HEIGHT,false,()->forkScroll=Math.max(0,forkScroll-forkVisibleLines())));
+		addRenderableWidget(consoleButton("Next",l.contentLeft()+w+GAP,l.footerY(),w,ROW_HEIGHT,false,()->forkScroll+=forkLocator&&forkScroll==0?1:forkVisibleLines()));
+		addRenderableWidget(consoleButton("Return to court",l.contentLeft()+2*(w+GAP),l.footerY(),w*2+GAP,ROW_HEIGHT,false,()->sendForkCommand("fork return")));
+	}
+	private int forkVisibleLines() { return Math.max(1,(layout().contentHeight()-74)/12); }
+	private List<String> forkLines() {
+		var v=ForkClient.view();var source=forkCamera?List.of("Camera presets installed by Cinematic",forkPreset.isEmpty()?"No presets installed; Main must install the accepted camera-paths.json before launch.":"Selected: "+forkPreset,"Choose a preset, then Play. No manual flying is needed.","Return and Rewind stop playback and restore the human camera."):forkLocator?List.of("Singapore locator",v.locator(),"Travel: human only, round 0 or 6, no pending work.","Court and all three roles stay unchanged during visits.",v.issue()):ForkPresentation.details(v);
+		var lines=new ArrayList<String>();
+		for(String raw:source) {
+			String rest=raw;
+			while(!rest.isEmpty()) {
+				int end=rest.length();while(end>1&&font.width(rest.substring(0,end))>contentWidth()) end--;
+				if(end<rest.length()) { int space=rest.lastIndexOf(' ',end);if(space>0) end=space; }
+				lines.add(rest.substring(0,end));rest=rest.substring(end).stripLeading();
+			}
+		}
+		return lines;
+	}
+	private void renderFork(GuiGraphicsExtractor graphics) {
+		if(forkLocator&&forkScroll==0) { renderForkLocator(graphics);return; }
+		var lines=forkLines();int count=forkVisibleLines();int start=Math.clamp(forkScroll-(forkLocator?1:0),0,Math.max(0,lines.size()-count));forkScroll=start+(forkLocator?1:0);
+		for(int i=0;i<count&&i+start<lines.size();i++) graphics.text(font,lines.get(i+start),contentLeft(),layout().contentTop()+62+i*12,TEXT,false);
+		graphics.text(font,"Lines "+(start+1)+"-"+Math.min(lines.size(),start+count)+" / "+lines.size()+" | Scroll or Next",contentLeft(),layout().contentBottom()-9,MUTED,false);
+	}
+	private void renderForkLocator(GuiGraphicsExtractor graphics) {
+		int top=layout().contentTop()+61,available=Math.max(8,layout().contentBottom()-top-27);
+		int h=Math.min(available,(int)(contentWidth()/1.96954)),w=(int)(h*1.96954),left=contentLeft()+(contentWidth()-w)/2;
+		int[][] points=dev.fork.gameplay.ForkLocator.OUTLINE;
+		for(int i=1;i<points.length;i++) {
+			int x0=left+points[i-1][0]*w/1000,y0=top+points[i-1][1]*h/1000;
+			int x1=left+points[i][0]*w/1000,y1=top+points[i][1]*h/1000;
+			int steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));
+			for(int s=0;s<=steps;s++) { int x=x0+(x1-x0)*s/Math.max(1,steps),y=y0+(y1-y0)*s/Math.max(1,steps);graphics.fill(x,y,x+1,y+1,ACCENT); }
+		}
+		graphics.text(font,fit("Singapore | Natural Earth 5.1.1 (public domain)",contentWidth()),contentLeft(),layout().contentBottom()-23,TEXT,false);
+		graphics.text(font,fit("Main island only. Not playable coverage. Next: places",contentWidth()),contentLeft(),layout().contentBottom()-11,MUTED,false);
+	}
+
 	private void initOverview() {
+		if(ForkClient.view()!=null) { initFork();return; }
 		AgentControlLayout layout = layout();
 		boolean filtersVisible = filtersVisible();
 		if (layout.splitWorkspace()) {
@@ -849,7 +937,7 @@ public final class AgentControlScreen extends Screen {
 
 	private void sendForkCommand(String command) {
 		if(minecraft==null||minecraft.getConnection()==null||!serverCanControl()) return;
-		if(command.equals("fork rewind")) dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.stopPlaybackFromGui();
+		if(command.equals("fork rewind")||command.equals("fork return")||command.startsWith("fork visit")) dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.stopPlaybackFromGui();
 		// FORK owns its own receipts; do not wait on an unrelated Arena roster revision.
 		minecraft.getConnection().sendCommand(command);
 		minecraft.setScreen(null);
@@ -1051,6 +1139,14 @@ public final class AgentControlScreen extends Screen {
 
 	private void renderShell(GuiGraphicsExtractor graphics) {
 		AgentControlLayout layout = layout();
+		if(ForkClient.view()!=null) {
+			if(layout.sideNavigation()) {
+				graphics.fill(layout.panelLeft(),layout.panelTop(),layout.contentLeft()-14,layout.panelBottom(),NAV_SURFACE);
+				graphics.text(font,"FORK",layout.panelLeft()+14,layout.panelTop()+10,ACCENT,false);
+				graphics.text(font,"Field Console",layout.panelLeft()+14,layout.panelTop()+25,MUTED,false);
+			}
+			return;
+		}
 		int left = layout.panelLeft();
 		if (layout.sideNavigation()) {
 			int navigationRight = layout.contentLeft() - 14;
@@ -1087,6 +1183,9 @@ public final class AgentControlScreen extends Screen {
 
 	private void renderHeader(GuiGraphicsExtractor graphics) {
 		AgentControlLayout layout = layout();
+		if(ForkClient.view()!=null) {
+			graphics.text(font,"FORK | "+ForkClient.view().state().mode(),contentLeft(),layout.panelTop()+9,TEXT,false);return;
+		}
 		if (!layout.sideNavigation() || page == Page.GROUP) return;
 		String heading = switch (page) {
 			case OVERVIEW -> "Your agents";
@@ -1298,6 +1397,7 @@ public final class AgentControlScreen extends Screen {
 	}
 
 	private void renderOverview(GuiGraphicsExtractor graphics) {
+		if(ForkClient.view()!=null) { renderFork(graphics);return; }
 		AgentControlLayout layout = layout();
 		if (snapshot == null) {
 			Optional<String> error = AgentControlClient.snapshotError();
@@ -1392,6 +1492,7 @@ public final class AgentControlScreen extends Screen {
 	}
 
 	private void renderStatus(GuiGraphicsExtractor graphics) {
+		if(ForkClient.view()!=null) return;
 		if (!feedback.isBlank()) {
 			AgentControlLayout layout = layout();
 			int y = layout.sideNavigation() ? layout.footerY() - 14 : layout.contentTop() - 9;
@@ -1760,6 +1861,7 @@ public final class AgentControlScreen extends Screen {
 	}
 
 	private boolean serverCanControl() {
+		if(ForkClient.view()!=null) return ForkClient.view().canControl();
 		return snapshot != null && snapshot.canControl();
 	}
 

@@ -53,6 +53,8 @@ public final class CameraDirectorClient {
 	private static Entity previousCamera;
 	private static CameraType previousCameraType;
 	private static boolean registered;
+	private static long playbackClock;
+	public static List<String> presetNames() { return List.copyOf(PATHS.keySet()); }
 
 	private CameraDirectorClient() {
 	}
@@ -123,7 +125,7 @@ public final class CameraDirectorClient {
 		stopPlayback(client);
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
-		playback = new Playback(path, client.level, client.player, client.level.getGameTime(), loop);
+		playback = new Playback(path, client.level, client.player, playbackClock, loop);
 		apply(client, path.sample(0.0D));
 		guiFeedback("Playing camera path '" + path.name() + "'" + (loop ? " on loop." : "."), false);
 	}
@@ -251,7 +253,7 @@ public final class CameraDirectorClient {
 		stopPlayback(client);
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
-		playback = new Playback(path, client.level, client.player, client.level.getGameTime(), loop);
+		playback = new Playback(path, client.level, client.player, playbackClock, loop);
 		apply(client, path.sample(0.0D));
 		source.sendFeedback(Component.literal("Playing camera path '" + name + "'" + (loop ? " on loop" : "") + ". Use /camera path stop-playback to return."));
 		return 1;
@@ -302,13 +304,15 @@ public final class CameraDirectorClient {
 	}
 
 	private static void tick(Minecraft client) {
+		// Presentation time must remain independent of FORK's fixed daylight clock.
+		if(client.level!=null&&!client.isPaused()) playbackClock++;
 		if (recording != null && !recordingInCurrentLevel(client)) recording = null;
 		if (playback == null) return;
 		if (client.level == null || client.player == null || playback.level() != client.level || playback.player() != client.player) {
 			stopPlayback(client);
 			return;
 		}
-		long elapsed = client.level.getGameTime() - playback.startedAt();
+		long elapsed = playbackClock - playback.startedAt();
 		if (elapsed >= playback.path().durationTicks()) {
 			if (!playback.loop()) {
 				apply(client, playback.path().sample(playback.path().durationTicks()));
@@ -317,7 +321,7 @@ public final class CameraDirectorClient {
 			}
 			long duration = Math.max(1L, playback.path().durationTicks());
 			elapsed %= duration;
-			playback = new Playback(playback.path(), playback.level(), playback.player(), client.level.getGameTime() - elapsed, true);
+			playback = new Playback(playback.path(), playback.level(), playback.player(), playbackClock - elapsed, true);
 		}
 		apply(client, playback.path().sample(elapsed));
 	}

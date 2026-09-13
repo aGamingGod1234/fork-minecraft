@@ -23,6 +23,13 @@ public final class ForkEngineVerification {
             check(e.state().batteries().size() == 2, "Immutable battery identities");
         }
         check(e.state().service().equals("110111") && e.state().charge() == 0 && e.state().repair() == 3 && e.state().downtime() == 1 && e.state().gridActiveRound() == 4, "B fixture");
+        var view=new ForkView(e.state(),e.archives().getFirst().state(),e.receipts().getLast().effects(),
+            e.receipts().stream().map(r->r.state().allocation().name()).toList(),e.archives().getFirst().receipts().stream().map(r->r.state().allocation().name()).toList(),false,false,true,true,true,false,"","Singapore",List.of());
+        String presented=String.join("\n",ForkPresentation.details(view));
+        check(presented.contains("equal six-round runs")&&presented.contains("Service: [1] [1] [0] [1] [1] [1]")&&presented.contains("Service: [1] [1] [1] [1] [1] [1]"),"Readable equal six-cell comparison");
+        check(presented.contains("MEDIC:")&&presented.contains("ENGINEER:")&&presented.contains("COURIER:")&&presented.contains("B1:")&&presented.contains("Power by round:"),"Console exposes all roles, resources and round allocations");
+        check(view.places().isEmpty()&&view.roundPower().size()==6&&view.archivedPower().size()==6,"Unaccepted destinations absent; six allocations each");
+        System.out.println("PASS console six-cell A/B comparison, full role effects/resources and six-round allocation histories");
         rejects(e::begin);
         epoch = e.beginRewind(); e.finishRewind(epoch, true); e.power(Power.WORKSHOP);
         var t = e.begin(); var b = e.fixture(t); var initial = e.state();
