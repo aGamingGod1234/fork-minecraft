@@ -95,14 +95,31 @@ class GrowRuntimeTests(unittest.TestCase):
                 grow_runtime.prepare_runtime_plan(self.source, [0, 0, 16, 16], self.sentinels,
                                                   attempt_root=self.root / "other-attempt")
 
-    def test_only_four_explicit_production_bindings(self):
+    def test_only_five_explicit_production_bindings(self):
         self.override.stop()
         try:
-            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2"}, set(grow_runtime.RUNTIME_BINDINGS))
+            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1"}, set(grow_runtime.RUNTIME_BINDINGS))
             for district, (source, attempt) in grow_runtime.RUNTIME_BINDINGS.items():
                 self.assertEqual(package.OUTPUT_ROOT / ("grow-" + district) / "world", source)
                 self.assertEqual(package.OUTPUT_ROOT.parent / "runtime-check" / district, attempt)
                 self.assertEqual(district, grow_runtime._district_binding(source, attempt))
+        finally:
+            self.override.start()
+
+    def test_ring_launcher_and_runtime_paths_are_exactly_bound(self):
+        import grow_runtime_run
+        district = "cbd-east-ring-v1"
+        self.assertEqual(("grow-cbd-east-ring-v1", "FORK-CBD-East-Ring-v1", "Singapore CBD and surrounding district"),
+                         grow_runtime_run.DISTRICTS[district])
+        self.override.stop()
+        try:
+            source = package.OUTPUT_ROOT / "grow-cbd-east-ring-v1" / "world"
+            attempt = package.OUTPUT_ROOT.parent / "runtime-check" / district
+            self.assertEqual(district, grow_runtime._district_binding(source, attempt))
+            with self.assertRaisesRegex(ValueError, "approved district binding"):
+                grow_runtime._district_binding(source, attempt.parent / "cbd-east-v2")
+            with self.assertRaisesRegex(ValueError, "approved district binding"):
+                grow_runtime._district_binding(package.OUTPUT_ROOT / "grow-cbd-east-ring-v1-copy" / "world", attempt)
         finally:
             self.override.start()
 

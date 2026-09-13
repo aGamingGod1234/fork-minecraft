@@ -26,6 +26,7 @@ DISTRICTS = {
     "changi-v1": ("grow-changi-v1", "FORK-Changi-1024", "Changi"),
     "cbd-east-v1": ("grow-cbd-east-v1", "FORK-CBD-East-v1", "Singapore CBD"),
     "cbd-east-v2": ("grow-cbd-east-v2", "FORK-CBD-East-v2", "Singapore CBD and adjoining east district"),
+    "cbd-east-ring-v1": ("grow-cbd-east-ring-v1", "FORK-CBD-East-Ring-v1", "Singapore CBD and surrounding district"),
 }
 
 
