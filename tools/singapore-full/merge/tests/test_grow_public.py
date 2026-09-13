@@ -154,6 +154,31 @@ class PublicPackageTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             grow_public.package_public(self.zip, self.meta, self.root / "contact-leak")
 
+    def test_preserves_duplicate_feature_occurrences_per_source_and_reason(self):
+        self.meta["sources"][0]["coreBounds"] = [-16, 0, 0, 16]
+        source_hash = self.meta["sources"][0]["sha256"]
+        records = [dict(featureId="way/1", sourceSha256=source_hash, reason=reason, scope="core", classification="synthetic")
+                   for reason in ("first_reason", "second_reason")]
+        self.meta["omissions"] = [dict(sourceId="way/1", sourceSha256=source_hash, occurrenceIndex=i, reason=r["reason"],
+                                       count=1, scope="core", affectsCore=True, affectsHalo=None) for i, r in enumerate(records)]
+        self.meta["omissionEvidence"] = {"records": records, "redactions": [dict(featureId="way/1", sourceSha256=source_hash,
+            occurrenceIndex=1, field="tags.email", reason="Public contact tag omitted")]}
+        output = self.root / "occurrences"
+        receipt = grow_public.package_public(self.zip, self.meta, output)
+        with zipfile.ZipFile(output / receipt["zip"]["path"]) as archive:
+            evidence = json.loads(archive.read("SOURCE-OMISSIONS.json"))
+            self.assertEqual(records, evidence["records"])
+            self.assertEqual(self.meta["omissions"], evidence["occurrences"])
+            self.assertEqual([{ "sourceSha256": source_hash, "coreBounds": [-16, 0, 0, 16]}], evidence["sourceCores"])
+            self.assertIn("2 source occurrences cover 1 unique feature IDs", archive.read("WORLD-SOURCES.txt").decode())
+        self.meta["omissionEvidence"]["redactions"][0]["occurrenceIndex"] = 9
+        with self.assertRaises(ValueError):
+            grow_public.package_public(self.zip, self.meta, self.root / "wrong-occurrence")
+        self.meta["omissionEvidence"]["redactions"] = []
+        self.meta["omissions"][1]["occurrenceIndex"] = 0
+        with self.assertRaises(ValueError):
+            grow_public.package_public(self.zip, self.meta, self.root / "duplicate-occurrence")
+
 
 if __name__ == "__main__":
     unittest.main()

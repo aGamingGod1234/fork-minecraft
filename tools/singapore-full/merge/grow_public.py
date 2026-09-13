@@ -80,8 +80,10 @@ def _metadata(metadata):
     _text(metadata["worldName"], "world name")
     _need(all(metadata[k] is False for k in FLAGS), "Preview completeness flags must remain false")
     _need(isinstance(metadata["sources"], list) and metadata["sources"], "Frozen public sources required")
+    core_sources = set()
     for source in metadata["sources"]:
-        _keys(source, ("filename", "snapshotDate", "sha256", "url", "licenseUrl"), "source")
+        source_fields = {"filename", "snapshotDate", "sha256", "url", "licenseUrl"}
+        _need(isinstance(source, dict) and set(source) in (source_fields, source_fields | {"coreBounds"}), "Invalid source fields")
         _name(source["filename"])
         _hash(source["sha256"])
         _need(isinstance(source["snapshotDate"], str) and date.fromisoformat(source["snapshotDate"]).isoformat() == source["snapshotDate"], "Invalid snapshot date")
@@ -90,14 +92,22 @@ def _metadata(metadata):
               and not parsed.query and not parsed.fragment and not parsed.username and "%" not in parsed.path
               and ".." not in parsed.path.split("/"), "Source URL must be a plain official public URL")
         _need(source["licenseUrl"] == ODBL, "OSM source must declare the official ODbL licence")
+        if "coreBounds" in source:
+            bounds = source["coreBounds"]
+            _need(isinstance(bounds, list) and len(bounds) == 4 and all(type(v) is int and v % 16 == 0 for v in bounds)
+                  and bounds[0] < bounds[2] and bounds[1] < bounds[3], "Invalid associated source core bounds")
+            core_sources.add(source["sha256"])
     _need(any(urlsplit(s["url"]).netloc == "download.geofabrik.de" for s in metadata["sources"]), "Geofabrik snapshot provenance required")
     _need(isinstance(metadata["omissions"], list), "Exact omission list required, including explicit empty list")
     for omitted in metadata["omissions"]:
         fields = {"sourceId", "reason", "count", "affectsCore", "affectsHalo"}
-        _need(isinstance(omitted, dict) and set(omitted) in (fields, fields | {"scope"}), "Invalid omission fields")
+        _need(isinstance(omitted, dict) and set(omitted) in (fields, fields | {"scope"}, fields | {"scope", "sourceSha256", "occurrenceIndex"}), "Invalid omission fields")
         _text(omitted["sourceId"], "source ID")
         _text(omitted["reason"], "omission reason")
         _need(type(omitted["count"]) is int and omitted["count"] >= 0, "Omission count must be an exact nonnegative integer")
+        if "sourceSha256" in omitted:
+            _need(_hash(omitted["sourceSha256"]) in core_sources and type(omitted["occurrenceIndex"]) is int
+                  and omitted["occurrenceIndex"] >= 0, "Omission occurrence requires a frozen source/core and index")
         flags = (omitted["affectsCore"], omitted["affectsHalo"])
         if "scope" in omitted:
             expected_flags = {"core": (True, None), "halo_only": (False, True), "outside_render": (False, False),
@@ -112,17 +122,29 @@ def _metadata(metadata):
         _need(isinstance(evidence["records"], list) and isinstance(evidence["redactions"], list), "Invalid omission evidence lists")
         _need(len(evidence["records"]) == len(metadata["omissions"]), "Omission evidence count mismatch")
         ids = set()
+        occurrence_slots = set()
         for original, summary in zip(evidence["records"], metadata["omissions"]):
             _need(isinstance(original, dict) and all(k in original for k in ("featureId", "sourceSha256", "reason", "scope", "classification")),
                   "Incomplete frozen omission record")
             _hash(original["sourceSha256"])
-            _need(original["featureId"] not in ids and original["featureId"] == summary["sourceId"]
+            identity = original["featureId"]
+            if "sourceSha256" in summary:
+                _need(summary["sourceSha256"] == original["sourceSha256"], "Occurrence source hash differs from original")
+                slot = (summary["sourceSha256"], summary["occurrenceIndex"])
+                _need(slot not in occurrence_slots, "Duplicate source occurrence index")
+                occurrence_slots.add(slot)
+                identity = (*slot, original["featureId"])
+            _need(identity not in ids and original["featureId"] == summary["sourceId"]
                   and original["reason"] == summary["reason"] and original["scope"] == summary.get("scope")
                   and summary["count"] == 1, "Omission summary differs from original source record")
-            ids.add(original["featureId"])
+            ids.add(identity)
         for redaction in evidence["redactions"]:
-            _keys(redaction, ("featureId", "field", "reason"), "public redaction")
-            _need(redaction["featureId"] in ids, "Redaction refers to unknown omission")
+            redaction_fields = {"featureId", "field", "reason"}
+            _need(isinstance(redaction, dict) and set(redaction) in (redaction_fields, redaction_fields | {"sourceSha256", "occurrenceIndex"}), "Invalid public redaction fields")
+            identity = redaction["featureId"]
+            if "sourceSha256" in redaction:
+                identity = (redaction["sourceSha256"], redaction["occurrenceIndex"], redaction["featureId"])
+            _need(identity in ids, "Redaction refers to unknown omission occurrence")
         def public_values(value):
             if isinstance(value, str):
                 _text(value, "omission record")
@@ -189,11 +211,14 @@ def _docs(metadata, grow, runtime, files):
              "Underlying OpenStreetMap data is licensed under ODbL 1.0.", COPYRIGHT, ODBL, "", "Frozen sources:"]
     for s in metadata["sources"]:
         lines.extend([s["filename"] + " | snapshot " + s["snapshotDate"], "SHA256 " + s["sha256"], s["url"], "Licence: " + s["licenseUrl"]])
+        if "coreBounds" in s:
+            lines.append("Associated owned core [minX,minZ,maxX,maxZ): " + str(s["coreBounds"]))
     lines += ["", "Exact declared omissions (counts are per supplied source record):"]
     for o in metadata["omissions"]:
         flag = lambda value: "unknown" if value is None else str(value).lower()
         lines.append(f'{o["sourceId"]}: {o["reason"]}; count={o["count"]}; affectsCore={flag(o["affectsCore"])}; affectsHalo={flag(o["affectsHalo"])}'
-                     + ("; scope=" + o["scope"] if "scope" in o else ""))
+                     + ("; scope=" + o["scope"] if "scope" in o else "")
+                     + (f'; sourceSha256={o["sourceSha256"]}; occurrenceIndex={o["occurrenceIndex"]}' if "sourceSha256" in o else ""))
     if not metadata["omissions"]:
         lines.append("No omissions declared in the supplied frozen list; this is not a completeness claim.")
     lines += ["", f'Owned chunks: {grow["expectedChunks"]}; bounding extent X/Z [minX,minZ,maxX,maxZ): {grow["extent"]}.',
@@ -209,6 +234,8 @@ def _docs(metadata, grow, runtime, files):
     if evidence is not None:
         lines += ["", f'SOURCE-OMISSIONS.json retains {len(evidence["records"])} individual source records, with {len(evidence["redactions"])} explicitly listed contact/privacy field redactions.',
                   "Scope flags describe source-feature relevance, not an omitted voxel count. Unknown impact remains unknown."]
+        if any("sourceSha256" in o for o in metadata["omissions"]):
+            lines.append(f'{len(evidence["records"])} source occurrences cover {len({o["featureId"] for o in evidence["records"]})} unique feature IDs; occurrences are not deduplicated.')
     sources = "\n".join(lines) + "\n"
     install = (f'{metadata["worldName"]}\n\nMinecraft Java Edition 26.1.2 saved world.\n'
                '1. Close Minecraft or leave the current world. Extract the ZIP to a temporary folder.\n'
@@ -223,8 +250,11 @@ def _docs(metadata, grow, runtime, files):
                'See WORLD-SOURCES.txt for frozen provenance, omissions, estimated fields, coverage and test scope.\n')
     documents = {"WORLD-SOURCES.txt": sources.encode("utf-8"), "INSTALL-WORLD.txt": install.encode("utf-8")}
     if evidence is not None:
-        documents["SOURCE-OMISSIONS.json"] = _canonical({"schema": "fork.public-source-omissions.v1", **evidence,
-                                                       **{key: False for key in FLAGS}}) + b"\n"
+        contents = {"schema": "fork.public-source-omissions.v1", **evidence, **{key: False for key in FLAGS}}
+        if any("sourceSha256" in o for o in metadata["omissions"]):
+            contents["occurrences"] = metadata["omissions"]
+            contents["sourceCores"] = [{"sourceSha256": s["sha256"], "coreBounds": s["coreBounds"]} for s in metadata["sources"] if "coreBounds" in s]
+        documents["SOURCE-OMISSIONS.json"] = _canonical(contents) + b"\n"
     return documents
 
 
