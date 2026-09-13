@@ -31,7 +31,11 @@ public final class ForkCaptureGate {
     }
     public Action update(ForkView v,Projection p,long serial,long now,long epochNow,boolean bodiesVisible,boolean firstFrameReady,boolean paused){
         if(!active())return null;
-        if(paused)return fail("The take was paused. Resume the game and start a new take.");
+        if(paused){
+            if(phase.equals("arm")||phase.equals("running"))return fail("The take was paused. Resume the game and start a new take.");
+            if(now>deadline)return fail("Capture preparation stayed paused too long. Resume the game and try again.");
+            return null; // Before arming, a loading/menu pause must not consume or start the take.
+        }
         if(serial!=lastVersion){lastVersion=serial;lastSeen=now;}
         if(now>deadline&&!phase.equals("running"))return fail("Capture preparation timed out during "+phase+". "+(v==null?"No LIVE server acknowledgment.":v.issue()));
         if(v==null)return null;

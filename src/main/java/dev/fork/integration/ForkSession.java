@@ -410,7 +410,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var places=acceptedPlaces().stream().map(a->new ForkView.Place(a.get("id").getAsString(),a.get("name").getAsString())).toList();
         var view=new ForkView(e.state(),archive==null?null:archive.state(),receipts.isEmpty()?List.of():receipts.getLast().effects(),
             receipts.stream().map(r->r.state().allocation().name()).toList(),archive==null?List.of():archive.receipts().stream().map(r->r.state().allocation().name()).toList(),e.pending()!=null,e.paused(),
-            GoalControl.mayControl(p.createCommandSourceStack())&&!presenting(),atCourt(p),!presenting()&&travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
+            ForkView.captureControl(GoalControl.mayControl(p.createCommandSourceStack()),presenting(),p.getUUID(),presentationOwner),atCourt(p),!presenting()&&travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
             visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places,ready(),presentationView());
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,new ForkStatusPayload(ForkEntrypoint.JSON.toJson(view)));
     }

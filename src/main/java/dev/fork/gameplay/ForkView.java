@@ -17,5 +17,9 @@ public record ForkView(ForkEngine.State state, ForkEngine.State archived, List<F
     }
     public record Presentation(String bundleId,boolean ready,boolean active,String owner,long startEpochMs,
             long durationMs,long restoreAfterMs,String event,long eventOffsetMs,int round,String sourceDigest,String error,boolean buildPlaced) {}
+    /** Capture ownership is distinct from the server lock against changing a presented branch. */
+    public static boolean captureControl(boolean authorized,boolean presenting,java.util.UUID player,java.util.UUID owner) {
+        return authorized&&(!presenting || player!=null&&player.equals(owner));
+    }
     public record Place(String id, String name) {}
 }
