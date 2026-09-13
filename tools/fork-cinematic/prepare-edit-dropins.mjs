@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {captions} from './film.mjs';
+const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const m=JSON.parse(fs.readFileSync('media/edit/film-edit.json','utf8'));
+const lines=fs.readFileSync('docs/fork-cinematic/narration-live-neutral.md','utf8').split('\n').filter(s=>/^\d+\. /.test(s)).map(s=>s.replace(/^\d+\. /,''));
+if(lines.join(' ').split(/\s+/).length!==120)throw Error('Expected120-word narration');
+m.status='INTERNAL SOURCE ASSIGNMENT - gameplay and human voice missing';
+m.shots[0].requiredPicture='Actual accepted road fork in the new Market Street scene. Framing and geographic acceptance required; no toy-court substitution.';
+m.shots[2].requiredPicture='Substantial actual camera crane through loaded Market Street scenery. Preserve actual playback speed and accept live framing first.';
+m.shots[3].requiredPicture='Explicit cut to the attributed Singapore orientation map with the256x256metre Market Street district marker. No full-island game claim.';
+m.voice.forEach((v,i)=>v.text=lines[i]);
+const card=(textFile,frames)=>({kind:'card',textFile,frames,reviewed:false});
+m.shots[1].segments=[card('media/edit/cards/title.txt',60)];
+m.shots[21].segments=[card('media/edit/cards/new-development.txt',90),card('media/edit/cards/foundation.txt',90)];
+m.shots[22].segments=[card('media/edit/cards/end.txt',120)];
+const locator='media/source/locator-film-v3-1080p.png';
+if(fs.existsSync(locator))m.shots[3].segments=[{kind:'image',source:locator,sha256:hash(locator),in:0,frames:90,audio:false,captionSafeReviewed:false}];
+m.credits=['FORK requires Minecraft Java Edition. Unofficial project; not approved by Mojang or Microsoft.','District map data: OpenStreetMap contributors. https://www.openstreetmap.org/copyright','Locator: Made with Natural Earth, Admin0 v5.1.1,1:10m,public domain. https://www.naturalearthdata.com/','New development with Astra: power rules, rewind, comparison and film tooling. Owner evidence and final release acceptance required.','Reused Agent Arena: bodies, lifecycle, console, camera paths and approved provider transport. Preserve upstream licence and notices.','Audio: captured game ambience and participating human narrator. No external music. Narrator identity pending confirmation.'];
+fs.writeFileSync('media/edit/film-edit-live-neutral.json',JSON.stringify(m,null,2)+'\n');
+// A timing worksheet, never a final caption file or a claim about recorded speech.
+fs.writeFileSync('media/edit/narration-timing-DRAFT.srt',captions(m.voice.map(v=>({...v,in:0,out:v.windowEnd-v.at}))));
+fs.writeFileSync('.work/fork/cinematic/edit-dropins-evidence.json',JSON.stringify({utc:new Date().toISOString(),frames:2700,shots:23,wordCount:120,assignedStaticSlots:locator&&fs.existsSync(locator)?[2,4,22,23]:[2,22,23],realGameplaySlotsAssigned:0,humanVoice:false,finalRenderAllowed:false,developmentExcerpt:{source:'src/main/java/dev/fork/core/ForkContract.java',sha256:hash('src/main/java/dev/fork/core/ForkContract.java'),lines:['public static final int ROUNDS = 6;','public static final int REPAIRS_FOR_GRID = 3;'],attribution:'Main reports Astra ULTRA; actual contract source read. Await final credit acceptance.'}},null,2));
+console.log('Prepared23-shot live-neutral edit; final rendering remains gated on actual accepted media.');

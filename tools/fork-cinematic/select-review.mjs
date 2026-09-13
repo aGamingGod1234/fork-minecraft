@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+const relative=process.argv[2];
+if(!relative||path.isAbsolute(relative))throw Error('Supply reviewed media/output diagnostic folder');
+const root=process.cwd(),folder=path.resolve(root,relative);
+if(!folder.startsWith(path.resolve(root,'media/output')+path.sep))throw Error('Unowned review path');
+const manifest=JSON.parse(fs.readFileSync(path.join(folder,'diagnostic-manifest.json'),'utf8'));
+if(!manifest.technicalCheckPassed||!manifest.gameViewConfirmed||!manifest.sourcePrivacyReviewed)throw Error('Review actual game picture and source privacy before showing video');
+const file=path.join(folder,'fork-real-input-15s.mp4');
+const sha256=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+if(sha256!==manifest.outputSha256)throw Error('Changed reviewed diagnostic');
+fs.writeFileSync('.work/fork/cinematic/current-review.json',JSON.stringify({utc:new Date().toISOString(),source:path.relative(root,file).replaceAll('\\','/'),sha256,label:'Real15-second capture diagnostic. Not the final film. Mode acceptance and full human viewing remain separate checks.'},null,2));
+console.log('Real reviewed clip selected for existing preview; no server restart needed.');

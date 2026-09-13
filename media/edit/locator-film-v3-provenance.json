@@ -1,0 +1,29 @@
+{
+  "utc": "2026-09-13T04:32:52.213Z",
+  "sourceSvgSha256": "1915b3dffc084c49d75bf84b823cae001ecfc55e165a591692b63b6600225085",
+  "sourceCredit": "Made with Natural Earth. Admin0 v5.1.1,1:10m,public domain; exact World credits retained",
+  "modifications": "Film copy reduced; identical source outline and district marker. Extended limitations in docs/fork-cinematic/locator-notices.md.",
+  "bounds": {
+    "minMcX": 0,
+    "maxMcX": 255,
+    "minMcZ": 0,
+    "maxMcZ": 255,
+    "minGeoLat": 1.281850162,
+    "maxGeoLat": 1.284149838,
+    "minGeoLon": 103.848849873,
+    "maxGeoLon": 103.851150127,
+    "projection": "local",
+    "scale": 1
+  },
+  "marker": {
+    "latitude": 1.283,
+    "longitude": 103.85,
+    "x": 743.9810433067569,
+    "y": 782.8034108863566,
+    "meaning": "District source centre, not a surveyed court coordinate"
+  },
+  "outputSvg": "media/edit/locator-film-v3.svg",
+  "outputSvgSha256": "1278885d5ac330939f9c6e50f2815dc7d422ff1b4db2ef8a4c47e67cb4d21446",
+  "finalReleaseAcceptance": "PENDING Main/world/mode acceptance",
+  "priorSvgSha256": "7a81a826d91ede4f2133c1081d0c7190dcc495903fdcf84e1fa2c20cab16cb55"
+}

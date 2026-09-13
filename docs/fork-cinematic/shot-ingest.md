@@ -2,6 +2,8 @@
 
 The 23 rows are fixed editorial slots, not claims that footage exists. First capture the complete A/rewind/B sequence, then scenic inserts. Record source filename, SHA256, actual seconds in/out, mode and acceptance evidence in film-edit.json. Never trim away a failed action and imply success.
 
+Revision4.2 supersedes the preliminary opening fallback below: use the accepted actual road fork and substantial crane in the new Market Street scene. No toy court substitute. The map marker denotes the256x256metre district centre, not a surveyed court point. The active edit file is film-edit-live-neutral.json; exact outcome lines are used only after the recorded run passes review.
+
 | # | Film time | Frames | Picture / evidence required |
 |---|---|---|---|
 | 1 | 0–2s | 0–59 | Open on the accepted fork-shaped junction. If no junction passes, use the two power routes at court. |

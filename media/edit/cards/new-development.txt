@@ -1,0 +1,4 @@
+NEW WITH ASTRA
+Power choice, rewind and comparison
+ForkContract: ROUNDS = 6
+REPAIRS_FOR_GRID = 3

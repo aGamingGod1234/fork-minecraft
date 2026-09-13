@@ -2,6 +2,8 @@
 
 Cinematic handles the edit, captions, audio mix and export. Lucas only operates the game, records the screen/voice, and watches playback.
 
+The active exact command sequence is capture-now.md. It supersedes the preliminary folder and manual interior-capture directions below. Use the prepared OBS folder or Videos, automated camera presets for scenic shots, and ordinary HUD view for the comparison. No human action is requested while Lucas is away eating.
+
 Once Main supplies the accepted FORK profile and exact controls:
 
 1. Keep one legitimate Minecraft client open on Laptop. In OBS select the prepared `FORK Readiness1080p30` profile, check the game picture and desktop audio meters, and record locally to the Cinematic `media/source` folder. Use MKV to protect an interrupted take. Do not show login, credentials or unrelated windows.
