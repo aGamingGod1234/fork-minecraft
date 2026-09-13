@@ -52,7 +52,11 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var manager=CodexAgentManager.get(server);
         if(!manager.records().isEmpty()) throw new IllegalStateException("FORK requires a clean profile with no existing Arena actors");
         String override=System.getProperty("fork.courtFile");
+        Path worldCourt=server.getWorldPath(LevelResource.ROOT).resolve("fork-court.json");
+        Path profileCourt=net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("fork-court.json");
         if(override!=null) layout=JsonParser.parseString(Files.readString(Path.of(override))).getAsJsonObject();
+        else if(Files.isRegularFile(worldCourt)) layout=JsonParser.parseString(Files.readString(worldCourt)).getAsJsonObject();
+        else if(Files.isRegularFile(profileCourt)) layout=JsonParser.parseString(Files.readString(profileCourt)).getAsJsonObject();
         else try(var input=ForkSession.class.getResourceAsStream("/data/fork/world/court-v1.json")) {
             if(input==null) throw new IllegalStateException("Missing packaged court JSON");
             layout=JsonParser.parseString(new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();

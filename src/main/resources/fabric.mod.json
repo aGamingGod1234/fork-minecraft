@@ -13,7 +13,8 @@
                                      "dev.fork.integration.ForkEntrypoint"
                                  ],
                         "client":  [
-                                       "dev.agaminggod.arenaagents.client.ArenaAgentsClient"
+                                       "dev.agaminggod.arenaagents.client.ArenaAgentsClient",
+                                       "dev.fork.gameplay.ForkClient"
                                    ]
                     },
     "mixins":  [
