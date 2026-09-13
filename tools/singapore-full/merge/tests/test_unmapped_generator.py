@@ -6,12 +6,12 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anvil import Tag, NbtFile, read_level_dat, write_level_dat, write_nbt
 from overlay import compound, write_overlay
-from test_worldgen_profile import WorldgenProfileTests, fixture_document
+import test_worldgen_profile as profile_fixture
 
 
 class UnmappedGeneratorIntegrationTests(unittest.TestCase):
     def setUp(self):
-        self.fixture = WorldgenProfileTests("test_explicit_profile_and_real_scope_object_required")
+        self.fixture = profile_fixture.WorldgenProfileTests("test_explicit_profile_and_real_scope_object_required")
         self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.base = self.fixture.root
@@ -21,7 +21,7 @@ class UnmappedGeneratorIntegrationTests(unittest.TestCase):
         write_level_dat(self.template, NbtFile("", compound({"Data": compound({"DataVersion": Tag(3,4790)})})))
         self.settings = self.template.parent / "data" / "minecraft" / "world_gen_settings.dat"
         self.settings.parent.mkdir(parents=True)
-        write_level_dat(self.settings, fixture_document())
+        write_level_dat(self.settings, profile_fixture.fixture_document())
         self.runs = self.base / "empty.jsonl"
         self.runs.write_bytes(b"")
 
