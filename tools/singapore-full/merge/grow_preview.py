@@ -103,13 +103,19 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
     core = _bounds(core_bounds, "requested core")
     evidence = _bound_json(entry.get("evidence_path"), entry.get("evidence_sha256"),
                            "preview evidence")
-    _require(evidence.get("kind") == KIND and evidence.get("status") == "RENDERED_SUBSET"
+    _require(evidence.get("kind") == KIND and evidence.get("status") in ("RENDERED_SUBSET", "EMPTY_RENDERED_SUBSET")
              and evidence.get("component") == component
              and evidence.get("synthetic") is False,
              "Wrong preview kind/status/component or synthetic evidence")
     _require(evidence.get("coreBounds") == core, "Preview core mismatch")
     _require(evidence.get("writerManifestSha256") == writer_hash,
              "Preview writer mismatch")
+    is_empty = evidence.get("status") == "EMPTY_RENDERED_SUBSET"
+    _require(not is_empty or component == "water", "Only inland water can be an empty subset")
+    _require(is_empty or evidence.get("emptyInlandSubset", False) is False,
+             "Nonempty status contradicts empty subset flag")
+    _require(evidence.get("sourceWaterAbsenceProven", False) is False,
+             "Rendered subset cannot prove source-water absence")
     _false_gates(evidence, "preview")
     if component == "water":
         _require(evidence.get("runSource") == "inland-water",
@@ -191,7 +197,8 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
     _pin(runs_path, runs_hash, "consumed roads runs")
     _require(report.get("outputSha256") == runs_hash, "Report runs mismatch")
     if component == "water":
-        found_inland = False
+        scan = _validate_empty_inland_scan(evidence, report, core) if is_empty else None
+        found_inland, observed = False, Counter()
         with open(_fs_path(runs_path), encoding="utf-8-sig") as stream:
             for line in stream:
                 if not line.strip():
@@ -200,10 +207,23 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
                     run = json.loads(line)
                 except ValueError as exc:
                     raise PreviewEvidenceError("Malformed inland-water run") from exc
-                if isinstance(run, dict) and run.get("layer") == 30:
+                _require(isinstance(run, dict), "Malformed consumed run")
+                if is_empty:
+                    x, z, layer = run.get("x"), run.get("z"), run.get("layer")
+                    _require(type(x) is int and type(z) is int and type(layer) is int
+                             and core[0] <= x < core[2] and core[1] <= z < core[3],
+                             "Empty inland input is not entirely core-clipped")
+                    _require(layer != 30, "Empty inland input actually emits layer-30 water")
+                    observed[str(layer)] += 1
+                elif run.get("layer") == 30:
                     found_inland = True
                     break
-        _require(found_inland, "No actual consumed layer-30 inland-water runs")
+        if is_empty:
+            _require(sum(observed.values()) == scan["allRuns"]
+                     and observed == Counter(scan["layers"]),
+                     "Full consumed-run recount contradicts empty scan")
+        else:
+            _require(found_inland, "No actual consumed layer-30 inland-water runs")
     _require(isinstance(writer_inputs, list), "Actual writer inputs required")
     size = Path(_fs_path(runs_path)).stat().st_size
     _require(any(isinstance(item, dict) and item.get("sha256") == runs_hash
@@ -287,6 +307,9 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
             "sourceComplete": False, "routeComplete": False, "fullFidelity": False,
             "fullWorldAccepted": False, "waterAccepted": False,
             "component": component, "run_source": evidence.get("runSource", "roads"),
+            "emptyInlandSubset": is_empty, "sourceWaterAbsenceProven": False,
+            "empty_scan_path": evidence.get("emptyScanPath") if is_empty else None,
+            "empty_scan_sha256": evidence.get("emptyScanSha256") if is_empty else None,
             "quarantinedSourceFeatures": deepcopy(quarantines),
             "globalSourceGeometryComplete": False if quarantines else None}
 
@@ -385,7 +408,7 @@ def validate_multi_water_preview(entry, core_bounds, writer_hash, writer_inputs,
                      and normalized.get("status") in ("included", "pass", "no_features"),
                      "Strict coast consumer did not accept its actual proof")
         else:
-            _require(child.get("status") == "RENDERED_SUBSET"
+            _require(child.get("status") in ("RENDERED_SUBSET", "EMPTY_RENDERED_SUBSET")
                      and child.get("kind") == KIND and child.get("runSource") == "inland-water",
                      "Inland child must remain an explicit rendered subset")
             _require(child.get("reportSha256") == child["sourceReportSha256"],
@@ -418,6 +441,11 @@ def validate_multi_water_preview(entry, core_bounds, writer_hash, writer_inputs,
                  and (combined is None or type(aggregate.get(field)) is int),
                  "Aggregate diagnostic totals contradict child proofs")
     inland = proofs["inland-water"]
+    empty_inland = inland.get("status") == "EMPTY_RENDERED_SUBSET"
+    _require(aggregate.get("emptyInlandSubset", False) is empty_inland,
+             "Aggregate must expose its empty inland subset")
+    _require(not empty_inland or aggregate.get("sourceWaterAbsenceProven") is False,
+             "Empty aggregate cannot prove source-water absence")
     _require(aggregate.get("omissions") == inland.get("omissions"),
              "Aggregate must preserve every inland source diagnostic")
     quarantines = inland.get("quarantinedSourceFeatures", [])
@@ -430,6 +458,58 @@ def validate_multi_water_preview(entry, core_bounds, writer_hash, writer_inputs,
             "source_sha256": source_hash, "feature_count": count,
             "source_set_path": str(source_path), "source_set_sha256": source_hash,
             "contributors": children, "omissions": deepcopy(inland["omissions"]),
+            "emptyInlandSubset": empty_inland, "sourceWaterAbsenceProven": False,
             "quarantinedSourceFeatures": deepcopy(quarantines),
             "sourceComplete": False, "routeComplete": False, "fullFidelity": False,
             "fullWorldAccepted": False, "waterAccepted": False}
+
+
+def _validate_empty_inland_scan(evidence, report, core):
+    """Validate a complete scan of a core-clipped input, not source absence."""
+    _require(evidence.get("emptyInlandSubset") is True
+             and evidence.get("sourceWaterAbsenceProven") is False
+             and evidence.get("sourceCoverageComplete") is False,
+             "Empty inland subset needs explicit incompleteness flags")
+    _require(type(evidence.get("featureCount")) is int and evidence["featureCount"] == 0
+             and type(evidence.get("emittedFeatureCount")) is int
+             and evidence["emittedFeatureCount"] == 0 and evidence.get("emittedFeatureIds") == [],
+             "Empty inland subset cannot claim emitted water features")
+    scan = _bound_json(evidence.get("emptyScanPath"), evidence.get("emptyScanSha256"),
+                       "complete consumed-run scan")
+    _require(scan.get("kind") == "fork-consumed-component-run-scan"
+             and scan.get("schemaVersion") == 1 and scan.get("status") == "PASS"
+             and scan.get("synthetic") is False and scan.get("coreBounds") == core,
+             "Empty inland subset needs a real full consumed-run scan for this core")
+    for scan_key, evidence_key in (
+            ("writerManifestSha256", "writerManifestSha256"),
+            ("sourceSha256", "sourceSha256"), ("sourceReportSha256", "reportSha256"),
+            ("runsSha256", "runsSha256")):
+        _require(scan.get(scan_key) == evidence.get(evidence_key),
+                 "Empty inland scan binding mismatch: " + scan_key)
+    _require(isinstance(scan.get("runsPath"), str) and bool(scan["runsPath"]),
+             "Empty inland scan must name its consumed run file")
+    _require(str(Path(_fs_path(scan.get("runsPath"))).resolve()).casefold() ==
+             str(Path(_fs_path(evidence["runsPath"])).resolve()).casefold(),
+             "Empty inland scan names another consumed run file")
+    size = Path(_fs_path(evidence["runsPath"])).stat().st_size
+    _require(type(scan.get("runsBytes")) is int and scan["runsBytes"] == size,
+             "Empty inland scan did not bind all consumed bytes")
+    count = scan.get("allRuns")
+    _require(type(count) is int and count >= 0
+             and type(scan.get("coreRuns")) is int and scan["coreRuns"] == count
+             and type(report.get("runCount")) is int and report["runCount"] == count,
+             "Empty inland scan must cover the complete core-clipped input")
+    layers = scan.get("layers")
+    _require(isinstance(layers, dict)
+             and all(isinstance(key, str) and key.lstrip("-").isdigit()
+                     and str(int(key)) == key and type(value) is int and value >= 0
+                     for key, value in layers.items())
+             and sum(layers.values()) == count and layers.get("30", 0) == 0,
+             "Empty inland scan has unaccounted or emitted water layers")
+    inland = scan.get("inlandWater", {})
+    _require(inland.get("emittedFeatureIds") == []
+             and type(inland.get("componentRuns")) is int and inland["componentRuns"] == 0
+             and type(inland.get("componentVoxels")) is int and inland["componentVoxels"] == 0
+             and scan.get("sourceComplete") is False and scan.get("fullWorldAccepted") is False,
+             "Scan cannot turn zero emission into source-water absence")
+    return scan
