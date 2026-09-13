@@ -95,10 +95,10 @@ class GrowRuntimeTests(unittest.TestCase):
                 grow_runtime.prepare_runtime_plan(self.source, [0, 0, 16, 16], self.sentinels,
                                                   attempt_root=self.root / "other-attempt")
 
-    def test_only_five_explicit_production_bindings(self):
+    def test_only_six_explicit_production_bindings(self):
         self.override.stop()
         try:
-            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1"}, set(grow_runtime.RUNTIME_BINDINGS))
+            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1", "cbd-south-v1"}, set(grow_runtime.RUNTIME_BINDINGS))
             for district, (source, attempt) in grow_runtime.RUNTIME_BINDINGS.items():
                 self.assertEqual(package.OUTPUT_ROOT / ("grow-" + district) / "world", source)
                 self.assertEqual(package.OUTPUT_ROOT.parent / "runtime-check" / district, attempt)
@@ -120,6 +120,22 @@ class GrowRuntimeTests(unittest.TestCase):
                 grow_runtime._district_binding(source, attempt.parent / "cbd-east-v2")
             with self.assertRaisesRegex(ValueError, "approved district binding"):
                 grow_runtime._district_binding(package.OUTPUT_ROOT / "grow-cbd-east-ring-v1-copy" / "world", attempt)
+        finally:
+            self.override.start()
+
+    def test_cbd_south_package_binding_rejects_other_attempts(self):
+        import grow_runtime_run
+        self.assertEqual(("grow-cbd-south-v1", "FORK-Singapore-CBD-South-1792x2048",
+                          "Singapore CBD and adjoining south district"),
+                         grow_runtime_run.DISTRICTS["cbd-south-v1"])
+        self.override.stop()
+        try:
+            source = package.OUTPUT_ROOT / "grow-cbd-south-v1" / "world"
+            runtime = package.OUTPUT_ROOT.parent / "runtime-check" / "cbd-south-v1"
+            self.assertEqual("cbd-south-v1", grow_runtime._district_binding(source, runtime))
+            for other in (runtime.parent / "cbd-east-v2", runtime.parent / "cbd-south-v2", runtime / "extra"):
+                with self.subTest(other=other), self.assertRaisesRegex(ValueError, "approved district binding"):
+                    grow_runtime._district_binding(source, other)
         finally:
             self.override.start()
 

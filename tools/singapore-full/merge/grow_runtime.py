@@ -15,7 +15,7 @@ ATTEMPT_ROOT = package.OUTPUT_ROOT.parent / "runtime-check" / "lim-chu-kang-v1"
 RUNTIME_BINDINGS = {
     district: (package.OUTPUT_ROOT / ("grow-" + district) / "world",
                package.OUTPUT_ROOT.parent / "runtime-check" / district)
-    for district in ("lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1")
+    for district in ("lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1", "cbd-south-v1")
 }
 
 

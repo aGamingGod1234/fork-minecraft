@@ -27,6 +27,7 @@ DISTRICTS = {
     "cbd-east-v1": ("grow-cbd-east-v1", "FORK-CBD-East-v1", "Singapore CBD"),
     "cbd-east-v2": ("grow-cbd-east-v2", "FORK-CBD-East-v2", "Singapore CBD and adjoining east district"),
     "cbd-east-ring-v1": ("grow-cbd-east-ring-v1", "FORK-CBD-East-Ring-v1", "Singapore CBD and surrounding district"),
+    "cbd-south-v1": ("grow-cbd-south-v1", "FORK-Singapore-CBD-South-1792x2048", "Singapore CBD and adjoining south district"),
 }
 
 
