@@ -24,7 +24,7 @@ class GrowRuntimeTests(unittest.TestCase):
         (self.source / "dimensions/minecraft/overworld/region").mkdir(parents=True)
         (self.attempt / "world").mkdir(parents=True)
         (self.attempt / "world/level.dat").write_bytes(b"synthetic post-runtime placeholder")
-        self.override = mock.patch.object(grow_runtime, "ATTEMPT_ROOT", self.attempt)
+        self.override = mock.patch.object(grow_runtime, "RUNTIME_BINDINGS", {"synthetic": (self.source, self.attempt)})
         self.override.start()
         self.addCleanup(self.override.stop)
         rows = [{"x": 2, "z": 2, "yMin": 1, "yMax": 3, "block": "minecraft:stone", "layer": "building",
@@ -83,6 +83,28 @@ class GrowRuntimeTests(unittest.TestCase):
         self.assertEqual(["forceload add 8 8"], plan["forceload_commands"])
         self.assertEqual(7, len(plan["sentinels"]))
         self.assertEqual({"spawn"}, {item["kind"] for item in plan["sentinels"][-3:]})
+        self.assertEqual(1, plan["crop_chunk_count"])
+        self.assertIn("1-chunk crop", plan["runtime_scope"])
+        self.assertNotIn("4096", plan["runtime_scope"])
+
+    def test_candidate_cannot_use_another_district_attempt(self):
+        with mock.patch.object(grow_runtime, "RUNTIME_BINDINGS", {
+                "first": (self.source, self.attempt),
+                "second": (self.root / "other-source", self.root / "other-attempt")}):
+            with self.assertRaisesRegex(ValueError, "approved district binding"):
+                grow_runtime.prepare_runtime_plan(self.source, [0, 0, 16, 16], self.sentinels,
+                                                  attempt_root=self.root / "other-attempt")
+
+    def test_only_four_explicit_production_bindings(self):
+        self.override.stop()
+        try:
+            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2"}, set(grow_runtime.RUNTIME_BINDINGS))
+            for district, (source, attempt) in grow_runtime.RUNTIME_BINDINGS.items():
+                self.assertEqual(package.OUTPUT_ROOT / ("grow-" + district) / "world", source)
+                self.assertEqual(package.OUTPUT_ROOT.parent / "runtime-check" / district, attempt)
+                self.assertEqual(district, grow_runtime._district_binding(source, attempt))
+        finally:
+            self.override.start()
 
     def test_false_source_sentinel_rejected(self):
         self.sentinels[0]["block"] = "minecraft:glass"

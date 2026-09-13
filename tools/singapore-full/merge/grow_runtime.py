@@ -12,11 +12,24 @@ import package
 import runtime_receipt
 
 ATTEMPT_ROOT = package.OUTPUT_ROOT.parent / "runtime-check" / "lim-chu-kang-v1"
+RUNTIME_BINDINGS = {
+    district: (package.OUTPUT_ROOT / ("grow-" + district) / "world",
+               package.OUTPUT_ROOT.parent / "runtime-check" / district)
+    for district in ("lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2")
+}
 
 
 def _need(value, message):
     if not value:
         raise ValueError(message)
+
+
+def _district_binding(candidate, attempt):
+    candidate, attempt = package._resolve(candidate), package._resolve(attempt)
+    for district, (approved_candidate, approved_attempt) in RUNTIME_BINDINGS.items():
+        if candidate == package._resolve(approved_candidate) and attempt == package._resolve(approved_attempt):
+            return district
+    raise ValueError("Candidate and runtime attempt must match one approved district binding")
 
 
 def _state(name, properties):
@@ -67,7 +80,7 @@ def _read_states(world, positions):
 
 def prepare_runtime_plan(candidate, bounds, sentinels, *, attempt_root=ATTEMPT_ROOT, max_selected_chunks=256):
     candidate, attempt = package._resolve(candidate), package._resolve(attempt_root)
-    _need(attempt == package._resolve(ATTEMPT_ROOT), "Runtime attempt must match the isolated Lim Chu Kang root")
+    district = _district_binding(candidate, attempt)
     _need(len(bounds) == 4 and all(type(v) is int and v % 16 == 0 for v in bounds)
           and bounds[0] < bounds[2] and bounds[1] < bounds[3], "Invalid chunk-aligned crop bounds")
     _need(type(max_selected_chunks) is int and 1 <= max_selected_chunks <= 256, "Selected chunk cap must be 1..256")
@@ -111,7 +124,9 @@ def prepare_runtime_plan(candidate, bounds, sentinels, *, attempt_root=ATTEMPT_R
     _need(len(chunks) <= max_selected_chunks, "Sentinel chunks exceed the resident chunk cap")
     _need(package.snapshot_tree(candidate) == before, "Candidate changed while preparing runtime sentinels")
     chunk_markers = [f"FORK_RUNTIME_CHUNK_{cx}_{cz}_OK" for cx, cz in chunks]
-    plan = {"schema": "fork.grown-runtime-plan.v1", "candidate_path": str(candidate), "candidate_before": before,
+    total_chunks = ((bounds[2] - bounds[0]) // 16) * ((bounds[3] - bounds[1]) // 16)
+    plan = {"schema": "fork.grown-runtime-plan.v1", "district": district,
+            "candidate_path": str(candidate), "candidate_before": before, "crop_chunk_count": total_chunks,
             "bounds": list(bounds), "attempt_root": str(attempt), "selected_chunks": [list(c) for c in chunks],
             "expected_chunk_markers": chunk_markers, "sentinels": definitions,
             "forceload_commands": [f"forceload add {cx * 16 + 8} {cz * 16 + 8}" for cx, cz in chunks],
@@ -119,7 +134,7 @@ def prepare_runtime_plan(candidate, bounds, sentinels, *, attempt_root=ATTEMPT_R
                                for (cx, cz), marker in zip(chunks, chunk_markers)],
             "block_commands": [f"execute if block {' '.join(map(str, item['pos']))} {item['state']} run say {item['marker']}" for item in definitions],
             "finish_commands": ["save-all flush", "stop"], "max_selected_chunks": max_selected_chunks,
-            "runtime_scope": "Representative selected chunks and source-proven blocks; all 4096 chunks are NOT runtime-tested"}
+            "runtime_scope": f"Representative {len(chunks)} selected chunks and source-proven blocks within a {total_chunks}-chunk crop; no whole-crop runtime acceptance is claimed"}
     plan["plan_sha256"] = hashlib.sha256(package._canonical(plan)).hexdigest()
     return plan
 
@@ -158,7 +173,8 @@ def verify_grow_runtime(spec, plan, transcript_path):
         expected = unsigned.pop("plan_sha256")
         _need(hashlib.sha256(package._canonical(unsigned)).hexdigest() == expected, "Runtime plan hash changed")
         attempt = package._resolve(plan["attempt_root"])
-        _need(attempt == package._resolve(ATTEMPT_ROOT), "Wrong runtime attempt")
+        district = _district_binding(plan["candidate_path"], attempt)
+        _need(plan.get("district", district) == district, "Plan district differs from candidate/runtime binding")
         _need(package._resolve(spec["copied_world_path"]) == attempt / "world", "Wrong isolated runtime copy")
         _need(package.snapshot_tree(plan["candidate_path"]) == plan["candidate_before"], "Candidate changed during runtime")
         definitions_path = Path(spec["sentinel_definitions_path"])
@@ -201,7 +217,10 @@ def verify_grow_runtime(spec, plan, transcript_path):
         jar = package._file_record(Path(spec["jar_path"]))
         _need(jar["sha256"] == spec["expected_jar_sha256"].lower() and spec["minecraft_version"] == "26.1.2"
               and isinstance(spec["java_identity"], str) and spec["java_identity"].strip(), "Runtime JAR/version/Java identity mismatch")
-        result.update({"runtimeLoadAccepted": True, "plan_sha256": expected, "selected_chunk_count": len(plan["selected_chunks"]),
+        bounds = plan["bounds"]
+        crop_chunks = ((bounds[2] - bounds[0]) // 16) * ((bounds[3] - bounds[1]) // 16)
+        result.update({"runtimeLoadAccepted": True, "plan_sha256": expected, "district": district,
+                       "crop_chunk_count": crop_chunks, "selected_chunk_count": len(plan["selected_chunks"]),
                        "block_sentinel_count": len(plan["sentinels"]), "candidateUnchanged": True,
                        "candidate_path": plan["candidate_path"], "copied_world_path": spec["copied_world_path"],
                        "minecraft_version": spec["minecraft_version"], "java_identity": spec["java_identity"],
