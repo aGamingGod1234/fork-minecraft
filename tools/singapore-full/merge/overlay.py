@@ -337,6 +337,7 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
               "inputRuns": input_count, "chunkCount": count, "dataVersion": data_version,
               "minecraftTarget": "26.1.2", "runtimeLoadAccepted": False, "jobLease": lease_receipt,
               "templateDependencies": ([{"path": "data/minecraft/world_gen_settings.dat", "sha256": digest(settings_path)}] if external_settings else []),
+              "regionDirectory": "dimensions/minecraft/overworld/region" if external_settings else "region",
               "levelTemplateSha256": digest(level_template), "crossLayerOverwrittenBlocks": defaultdict(int), "outputs": []}
     # Resolve all conflicts before creating an output. Generation remains a bounded in-memory strip operation.
     chunks = {}
@@ -346,12 +347,13 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     if job_lease:
         validate_job_lease(job_lease, world)
     world.mkdir(parents=True, exist_ok=False)
-    (world / "region").mkdir()
+    region_directory = world / report["regionDirectory"]
+    region_directory.mkdir(parents=True)
     grouped = defaultdict(dict)
     for (cx, cz), chunk in chunks.items():
         grouped[(cx // 32, cz // 32)][(cx, cz)] = chunk
     for (rx, rz), region_chunks in sorted(grouped.items()):
-        path = world / "region" / f"r.{rx}.{rz}.mca"
+        path = region_directory / f"r.{rx}.{rz}.mca"
         write_region(path, region_chunks)
         reopened = read_region(path)
         if set(reopened) != set(region_chunks):

@@ -43,7 +43,7 @@ class OverlayTests(unittest.TestCase):
         target = self.base / name
         receipt = write_overlay([source], target, bounds, self.template, allowed_root=self.base)
         chunks = {}
-        for path in (target / "region").glob("*.mca"):
+        for path in target.rglob("r.*.mca"):
             chunks.update(read_region(path))
         return receipt, chunks, target
 
@@ -151,6 +151,9 @@ class OverlayTests(unittest.TestCase):
         generated = read_level_dat(world / "data" / "minecraft" / "world_gen_settings.dat").root.value["data"].value
         self.assertEqual(generated["generate_structures"].value, 0)
         self.assertEqual(report["templateDependencies"][0]["path"], "data/minecraft/world_gen_settings.dat")
+        self.assertEqual(report["regionDirectory"], "dimensions/minecraft/overworld/region")
+        self.assertTrue((world / report["regionDirectory"]).is_dir())
+        self.assertFalse((world / "region").exists())
 
     def test_missing_modern_worldgen_dependency_fails_before_write(self):
         template = read_level_dat(self.template)
