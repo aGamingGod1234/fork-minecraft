@@ -1,0 +1,178 @@
+{
+  "schema": "fork-cinematic-camera-binding-1",
+  "createdUtc": "2026-09-13T03:46:02.422Z",
+  "status": "PRESETS AUTHORED - LIVE FRAMING UNRUN",
+  "origin": [
+    46,
+    0,
+    22
+  ],
+  "dimension": "minecraft:overworld",
+  "humanFeet": [
+    54.5,
+    1,
+    29.5
+  ],
+  "humanYaw": 180,
+  "humanPitch": 0,
+  "geography": "Market Street CBD 256m candidate, 1 block/metre, pending final visual acceptance",
+  "worldSha256": null,
+  "acceptedByMain": false,
+  "inputAuthority": "Main corrected-ground0 camera/anchor packet, 13 September 2026",
+  "cameraPathSourceSha256": "c55ef335372137ab69a98986681d0fdf0378d432840ac39d94c430689d8378a3",
+  "presetFile": "media/edit/camera-paths-ground0.json",
+  "presetSha256": "f202d88e7e07d56b5979665473147bd2487fa77e12a0bc59a72e46da832f6717",
+  "installation": "Main installs into the dedicated client profile config/arenaagents/camera-paths.json before launch; Cinematic does not write profile/world/mod",
+  "interpolation": "Existing two-endpoint Catmull-Rom position; smoothstep pitch and shortest-turn yaw; no new camera code",
+  "safety": {
+    "twoKeyframesAvoidIntermediateOvershoot": true,
+    "playerPositionUnchanged": true,
+    "teleportOrServerMutation": false,
+    "loadedChunksVerified": false,
+    "visualCollisionVerified": false,
+    "actualWorldBindingVerified": false,
+    "interiorWalkProof": false
+  },
+  "shots": [
+    {
+      "name": "fork_intro",
+      "command": "/camera path play fork_intro",
+      "durationTicks": 120,
+      "nominalSecondsAt20TPS": 6,
+      "positionStart": [
+        54.5,
+        7,
+        34.5
+      ],
+      "positionEnd": [
+        54.5,
+        6.7,
+        34
+      ],
+      "lookAt": [
+        54.5,
+        0,
+        28.5
+      ],
+      "purpose": "Two power routes; elevated gentle push",
+      "liveFraming": "UNRUN"
+    },
+    {
+      "name": "fork_clinic",
+      "command": "/camera path play fork_clinic",
+      "durationTicks": 100,
+      "nominalSecondsAt20TPS": 5,
+      "positionStart": [
+        49.5,
+        2.6,
+        29.5
+      ],
+      "positionEnd": [
+        49.5,
+        2.6,
+        29
+      ],
+      "lookAt": [
+        49.5,
+        2.6,
+        25.5
+      ],
+      "purpose": "Clinic approach and medic; verify doorway clearance",
+      "liveFraming": "UNRUN"
+    },
+    {
+      "name": "fork_workshop",
+      "command": "/camera path play fork_workshop",
+      "durationTicks": 100,
+      "nominalSecondsAt20TPS": 5,
+      "positionStart": [
+        57.5,
+        2.6,
+        29.5
+      ],
+      "positionEnd": [
+        57.65,
+        2.6,
+        29
+      ],
+      "lookAt": [
+        58.5,
+        2.6,
+        25.5
+      ],
+      "purpose": "Engineer and workshop; verify repair indicator readability",
+      "liveFraming": "UNRUN"
+    },
+    {
+      "name": "fork_courier",
+      "command": "/camera path play fork_courier",
+      "durationTicks": 100,
+      "nominalSecondsAt20TPS": 5,
+      "positionStart": [
+        51.5,
+        2.6,
+        35.5
+      ],
+      "positionEnd": [
+        51.05,
+        2.6,
+        35.3
+      ],
+      "lookAt": [
+        49.5,
+        2.6,
+        34.5
+      ],
+      "purpose": "Courier and spare; short oblique push",
+      "liveFraming": "UNRUN"
+    },
+    {
+      "name": "fork_overview",
+      "command": "/camera path play fork_overview",
+      "durationTicks": 160,
+      "nominalSecondsAt20TPS": 8,
+      "positionStart": [
+        54.5,
+        10,
+        36.5
+      ],
+      "positionEnd": [
+        55.1,
+        10,
+        36.1
+      ],
+      "lookAt": [
+        54,
+        1,
+        27
+      ],
+      "purpose": "Elevated court overview; first framing test",
+      "liveFraming": "UNRUN"
+    },
+    {
+      "name": "fork_comparison",
+      "command": "/camera path play fork_comparison",
+      "durationTicks": 400,
+      "nominalSecondsAt20TPS": 20,
+      "positionStart": [
+        54.5,
+        10,
+        36.5
+      ],
+      "positionEnd": [
+        54.5,
+        10,
+        36.5
+      ],
+      "lookAt": [
+        54,
+        1,
+        27
+      ],
+      "purpose": "Stationary 20-second hold for actual result/compare UI",
+      "liveFraming": "UNRUN"
+    }
+  ],
+  "stopCommand": "/camera path stop-playback",
+  "stopRules": "Stop before rewind, travel, world copy or scene replacement. Existing playback returns to the player at its end; a long frozen world tick can extend wall time."
+}
