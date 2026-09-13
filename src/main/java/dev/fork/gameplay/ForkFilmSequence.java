@@ -40,7 +40,7 @@ public final class ForkFilmSequence {
     public List<Action> stop(){phase="done";return List.of(new Action("abort","Film stopped. Completed LIVE receipts remain saved."));}
     public List<Action> update(ForkView v,long version,long now,boolean cameraActive){
         if(!active())return List.of();
-        if(now>deadline&&preparing&&phase.equals("round")&&!retried){retried=true;return command("round","fork retry",version,now,26000);}
+        if(now>deadline&&preparing&&phase.equals("round")&&!retried&&owns(v)){retried=true;return command("round","fork retry",version,now,26000);}
         if(now>deadline)return fail("Timed out during "+phase+". "+(v==null?"No FORK server status received.":v.issue()));
         if(v==null)return List.of();
         if(v.state().mode()!=ForkEngine.Mode.LIVE||!v.canControl())return fail("LIVE session or control permission changed.");
