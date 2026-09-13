@@ -1,0 +1,5 @@
+FORK
+Choose a future.
+github.com/aGamingGod1234/fork-minecraft
+Requires Minecraft Java Edition
+Unofficial project. Not approved by Mojang or Microsoft.

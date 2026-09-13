@@ -1,0 +1,4 @@
+REUSED FOUNDATION
+Agent Arena
+Bodies, lifecycle, console, camera paths
+and approved provider transport
