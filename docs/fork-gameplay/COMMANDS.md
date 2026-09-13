@@ -1,5 +1,17 @@
 # FORK adapter handoff
 
+Runtime repair increment: handshake snapshots now use Minecraft's server task executor instead of waiting for a gameplay tick. The five-second handshake deadline is unchanged. Authentication still validates the existing secret and registry revision. The suspected trigger is paused integrated-server gameplay; actual recipient paused/unpaused handshake and Live20-second proof must be recorded by Main.
+
+The actionbar now shows only `FORK | MODE | Rn/6 | allocation | status` (under64characters). Inspect and compare retain full metrics. The fictional test court is not accepted as the final Singapore scene; new real-data geography remains a World/Main acceptance task.
+
+The reused console Overview action area now has Clinic, Workshop, Advance, Cancel, Rewind, Inspect, Compare and Director buttons. Narrow layouts expose Advance/Cancel/Inspect/Compare; allocation/rewind remain available as commands. Buttons send FORK commands directly and return to the world so the server acknowledgment is visible. Console Rewind stops the existing camera playback before requesting server restore. For typed `/fork rewind`, first use `/camera path stop-playback`; stopping playback does not teleport the human.
+
+Main's repair verification: build main+client; launch the matched Laptop package; test coordinator handshake once while the world is active and once with Esc pause, retaining logs. Explicitly restart into `/fork new live`, choose power and advance. Coordinator logs now include `[FORK runtime]` attempt start, each role proposal with requested/effective reported profile, elapsed milliseconds, and batch/error result. A batch-sent entry is not the server receipt: verify the server's committed round/value too. All three roles must complete within the unchanged20-second whole-attempt budget. A timeout/error must leave the round/resources unchanged and allow exactly one explicit retry.
+
+After a stopped-world restart, `/fork start` refuses to silently regenerate a previous session. `/fork new fixture` or `/fork new live` explicitly starts a fresh session, preserves earlier receipt/archive files and advances the persisted epoch. It does not resume the earlier round or claim an in-memory archive was restored. New role request/workspace IDs are isolated by fresh branch, epoch and request.
+
+If a role body is absent for15seconds, FORK cancels pending work and pauses without a commit. `/fork recover` requests only missing bodies with another15-second bound; `/fork rewind` must then verify all three bodies and INITIAL before advance.
+
 Main Fabric entrypoint: `dev.fork.integration.ForkEntrypoint`. Keep the existing Arena initializer. No client entrypoint. Package accepted World JSON at `/data/fork/world/court-v1.json`. The diagnostic override is `-Dfork.courtFile=<accepted JSON>`.
 
 Use a fresh dedicated FORK world/profile with no existing Arena registry actors. Main owns its single game/coordinator topology. `/fork start fixture` places exactly the accepted 16-cube at (0,64,0), creates three dedicated bodies through existing `OfflineAgentPlayers`, and captures INITIAL. No provider access is required for fixture bodies. This is an explicit diagnostic mode, not approval to submit fixtures.
@@ -7,7 +19,7 @@ Use a fresh dedicated FORK world/profile with no existing Arena registry actors.
 Manual recipient action gate:
 
 1. Launch the recipient package, enter its world and open chat as operator.
-2. `/tp @s 8.5 65 14.5` to view the fixed court. This is the human arrival, not a scored action.
+2. `/tp @s 8.5 65 7.5 180 0` uses World's verified clear human view. This is the human arrival, not a scored action; it does not change the court origin.
 3. `/fork start fixture`. Wait until all three named bodies appear.
 4. `/fork power workshop`.
 5. `/fork advance`. Expected visible chat/HUD: FIXTURE, round 1/6, service 1_____, downtime 0, repair 1/3, charge 1. Workshop floor repair indicator changes.

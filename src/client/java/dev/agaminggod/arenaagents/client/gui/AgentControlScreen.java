@@ -836,35 +836,34 @@ public final class AgentControlScreen extends Screen {
 	}
 
 	private void addOverviewActions(int x, int y, int width) {
-		ConsoleButton create = primaryButton("Create an agent", x, y, width, ROW_HEIGHT, () -> show(Page.CREATE));
-		create.active = canControl();
-		addRenderableWidget(create);
-		ConsoleButton task = consoleButton("Give a task", x, y + 32, width, 24, false, () -> show(Page.TASK));
-		task.active = canUseAutomation() && selectedAgent() != null;
-		addRenderableWidget(task);
-		ConsoleButton manage = consoleButton("Manage selected agent", x, y + 64, width, 24, false,
-				() -> show(Page.MANAGE));
-		manage.active = canControl() && selectedAgent() != null;
-		addRenderableWidget(manage);
-		addRenderableWidget(consoleButton("Open Director", x, y + 96, width, ROW_HEIGHT, false,
-				this::openDirector));
+		String[] labels={"Clinic","Workshop","Advance","Cancel","Rewind","Inspect","Compare","Director"};
+		String[] commands={"fork power clinic","fork power workshop","fork advance","fork cancel","fork rewind","fork inspect","fork compare"};
+		int half=(width-GAP)/2;
+		for(int i=0;i<labels.length;i++) {
+			int index=i;
+			ConsoleButton button=consoleButton(labels[i],x+(i%2)*(half+GAP),y+(i/2)*32,half,ROW_HEIGHT,false,
+					()->{if(index==7)openDirector();else sendForkCommand(commands[index]);});
+			button.active=canControl();addRenderableWidget(button);
+		}
+	}
+
+	private void sendForkCommand(String command) {
+		if(minecraft==null||minecraft.getConnection()==null||!serverCanControl()) return;
+		if(command.equals("fork rewind")) dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.stopPlaybackFromGui();
+		// FORK owns its own receipts; do not wait on an unrelated Arena roster revision.
+		minecraft.getConnection().sendCommand(command);
+		minecraft.setScreen(null);
 	}
 
 	private void addCompactOverviewActions(int x, int y, int width) {
 		int buttonWidth = (width - GAP * 3) / 4;
-		ConsoleButton create = primaryButton("Create", x, y, buttonWidth, ROW_HEIGHT, () -> show(Page.CREATE));
-		create.active = canControl();
-		addRenderableWidget(create);
-		ConsoleButton task = consoleButton("Give task", x + buttonWidth + GAP, y, buttonWidth, ROW_HEIGHT,
-				false, () -> show(Page.TASK));
-		task.active = canUseAutomation() && selectedAgent() != null;
-		addRenderableWidget(task);
-		ConsoleButton manage = consoleButton("Manage", x + (buttonWidth + GAP) * 2, y, buttonWidth, ROW_HEIGHT,
-				false, () -> show(Page.MANAGE));
-		manage.active = canControl() && selectedAgent() != null;
-		addRenderableWidget(manage);
-		addRenderableWidget(consoleButton("Director", x + (buttonWidth + GAP) * 3, y,
-				width - (buttonWidth + GAP) * 3, ROW_HEIGHT, false, this::openDirector));
+		String[] labels={"Advance","Cancel","Inspect","Compare"};
+		String[] commands={"fork advance","fork cancel","fork inspect","fork compare"};
+		for(int i=0;i<4;i++) {
+			int index=i;
+			ConsoleButton button=consoleButton(labels[i],x+(buttonWidth+GAP)*i,y,buttonWidth,ROW_HEIGHT,false,()->sendForkCommand(commands[index]));
+			button.active=canControl();addRenderableWidget(button);
+		}
 	}
 
 	private void openDirector() {

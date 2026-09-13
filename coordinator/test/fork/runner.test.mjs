@@ -34,3 +34,15 @@ test('existing bridge codec admits the exact whole-batch FORK protocol',()=>{
   assert.equal(reply.payload.intents.length,3);
   assert.throws(()=>normalizeForkPacket('fork_request',{...payload,state:{...payload.state,mode:'RECORDED'}}));
 });
+test('A canary never enters B requests after rewind or runner restart',async()=>{
+  const prompts=[],ids=[];
+  const service={async createAgent(p){ids.push(p.agentId);return {async setGoalRevision(){},async decide(input){prompts.push(JSON.parse(input));return {action:'wait'};}};},async removeAgent(){}};
+  const runner=new ForkRunner(service,()=>{});
+  const a=request('A');a.state.diagnostic='A-only-canary';await runner.request(a);
+  runner.receipt({ticket:a.ticket,state:a.state});runner.cancel();
+  await runner.request(request('B'));
+  const restarted=new ForkRunner(service,()=>{});const b=request('B-restart');b.ticket.epoch=3;b.state.epoch=3;await restarted.request(b);
+  const later=prompts.filter(p=>p.ticket.branch!=='A');assert.equal(later.length,6);
+  for(const p of later) assert.ok(!JSON.stringify(p).includes('A-only-canary'));
+  assert.equal(new Set(ids).size,9);
+});

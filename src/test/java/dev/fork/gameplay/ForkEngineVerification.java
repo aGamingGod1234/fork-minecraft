@@ -66,5 +66,10 @@ public final class ForkEngineVerification {
         }
         System.out.println("PASS canonical A/B, next-round grid, conservation, duplicate receipts, incomplete, timeout, illegal wait, reroute, cancel, stale epoch, three 4096-cell AIR/sentinel restores and changed-sentinel rejection");
         System.out.println("PASS delayed duplicate projection, exact six World sentinels, one explicit Live retry across timeout and cancel");
+        var initialHud=ForkPresentation.compact(new ForkEngine(Mode.LIVE).state(),false,false);
+        check(initialHud.length()<64&&initialHud.contains("LIVE")&&initialHud.contains("Choose power")&&!initialHud.contains("null"),"Initial compact HUD");
+        var runningHud=ForkPresentation.compact(adapterEngine.state(),false,true);
+        check(runningHud.length()<64&&runningHud.contains("FIXTURE")&&runningHud.contains("R2/6")&&runningHud.contains("Thinking"),"Pending compact HUD");
+        System.out.println("PASS compact mode-visible HUD under64characters with no null allocation");
     }
 }

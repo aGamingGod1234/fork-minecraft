@@ -36,6 +36,11 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     private String providerIssue = "";
     private boolean wasPending;
     private int broadcasts;
+    private long bodyDeadline=System.nanoTime()+15_000_000_000L;
+    private boolean bodyFailure;
+    public static boolean hasSavedRun(MinecraftServer server) {
+        return Files.exists(server.getWorldPath(LevelResource.ROOT).resolve("fork/epoch.txt"));
+    }
 
     public ForkSession(MinecraftServer server, ForkEngine.Mode mode) throws Exception {
         this.server=server; level=server.overworld();
@@ -131,6 +136,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         });
     }
     public String advance(boolean retry) {
+        if(bodyFailure) throw new IllegalStateException("Body recovery required: /fork recover; no round committed");
         if(!ready()) throw new IllegalStateException("Waiting for all three Arena bodies; no round committed");
         var e=adapter.engine();
         if(e.pending()!=null) throw new IllegalStateException("Round pending; cancel remains available");
@@ -193,7 +199,9 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             player.getInventory().clearContent(); player.setInvulnerable(true);
             if(player.level()!=level || player.position().distanceToSqr(new Vec3(origin.getX()+c.x()+0.5,origin.getY()+c.y(),origin.getZ()+c.z()+0.5))>0.001) return false;
         }
-        return blocks && actors.size()==3 && checkpoint.verify(this);
+        boolean verified=blocks && actors.size()==3 && checkpoint.verify(this);
+        if(verified) { bodyFailure=false;providerIssue=""; }
+        return verified;
     }
     public String demolish() {
         if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel the pending round first");
@@ -207,19 +215,23 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     }
     public void tick() {
         var e=adapter.engine(); boolean pending=e.pending()!=null;
+        if(!ready()&&!bodyFailure&&System.nanoTime()>=bodyDeadline) {
+            bodyFailure=true;cancel();e.pause();providerIssue="Missing role body. /fork recover; no round committed";broadcast(providerIssue);
+        }
         if(wasPending && !pending && lastAttempt!=null && lastAttempt.baseRevision()==e.state().revision()) { cancel(); providerIssue="Attempt ended without commit; one explicit retry or rewind"; broadcast(summary()); }
         wasPending=pending;
         settleActors(e.state());
         level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_CLOCK).getOrThrow(net.minecraft.world.clock.WorldClocks.OVERWORLD),6000);
         var weather=level.getWeatherData(); weather.setClearWeatherTime(6000); weather.setRaining(false); weather.setThundering(false);
+        boolean show=++broadcasts%40==0;
         for(var p:server.getPlayerList().getPlayers()) {
             p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); p.setInvulnerable(true);
-            if(++broadcasts%40==0) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(summary())));
+            if(show) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(ForkPresentation.compact(e.state(),e.paused(),pending))));
         }
     }
     private void broadcast(String text) { server.getPlayerList().broadcastSystemMessage(Component.literal(text),false); }
     private String describe(ForkEngine.State s) {
-        return s.mode()+" | round "+s.round()+"/6 | service "+s.service()+"_".repeat(6-s.round())+" | downtime "+s.downtime()+" | repair "+s.repair()+"/3 | grid "+(s.gridActiveRound()==0?"inactive":"round "+s.gridActiveRound())+" | charge "+s.charge()+" | "+s.allocation();
+        return s.mode()+" | round "+s.round()+"/6 | service "+s.service()+"_".repeat(6-s.round())+" | downtime "+s.downtime()+" | repair "+s.repair()+"/3 | grid "+(s.gridActiveRound()==0?"inactive":"round "+s.gridActiveRound())+" | charge "+s.charge()+" | "+(s.allocation()==null?"choose power":s.allocation());
     }
     public String summary() { var e=adapter.engine(); return "FORK "+describe(e.state())+" | "+(e.paused()?"PAUSED":e.pending()!=null?"PENDING":e.state().complete()?"COMPLETE":"READY")+(visualIssue.isEmpty()?"":" | "+visualIssue)+(providerIssue.isEmpty()?"":" | "+providerIssue); }
     public String inspect() {
@@ -232,5 +244,14 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var a=e.archives().stream().filter(x->x.state().complete()).findFirst().orElseThrow(()->new IllegalStateException("No complete archived branch"));
         if(!e.state().complete()) throw new IllegalStateException("Comparison requires equal six-round runs");
         return "A: "+describe(a.state())+"\nB: "+describe(e.state())+"\nA allocation: "+a.state().allocationHistory()+"\nB allocation: "+e.state().allocationHistory();
+    }
+    public String recoverBodies() {
+        if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel pending work first");
+        for(var role:ForkEngine.Role.values()) {
+            var id=actors.get(role);var profile=profiles.get(id);var c=anchor(role,false);
+            if(body(id).isEmpty()) OfflineAgentPlayers.spawn(server,id,profile,new Vec3(origin.getX()+c.x()+0.5,origin.getY()+c.y(),origin.getZ()+c.z()+0.5),180,0,level.dimension(),AgentGameMode.ADVENTURE);
+        }
+        bodyDeadline=System.nanoTime()+15_000_000_000L;bodyFailure=false;
+        return "Recovery requested (15s). Once all three bodies appear, /fork rewind must verify INITIAL before advance.";
     }
 }

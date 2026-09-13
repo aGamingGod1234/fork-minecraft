@@ -189,6 +189,7 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 	private final Map<AgentId, RecoveryObservationIdentity> recoveryObservationIdentities = new HashMap<>();
 	private final Map<UUID, ActivatedGoalSpecRequest> activatedGoalSpecRequests = new LinkedHashMap<>();
 	private volatile Runnable handshakeSnapshotHook = () -> { };
+	private final java.util.concurrent.atomic.AtomicInteger pendingHandshakeSnapshots = new java.util.concurrent.atomic.AtomicInteger();
 	private volatile java.util.function.Consumer<AutoCloseable> handshakeCommittedHook = ignored -> { };
 	private boolean disconnectInProgress;
 	private long coordinatorLifecycleGeneration;
@@ -1707,21 +1708,40 @@ public final class MultiplexedServerBridge implements AgentRuntimeHooks, AutoClo
 			return captureHandshakeSnapshot(false);
 		}
 		CompletableFuture<HandshakeSnapshot> snapshot = new CompletableFuture<>();
-		if (!serverTasks.offer(BoundedServerTaskQueue.Lane.CONTROL, () -> {
-			try {
-				snapshot.complete(captureHandshakeSnapshot(true));
-			} catch (RuntimeException exception) {
-				snapshot.completeExceptionally(exception);
-			}
-		})) {
+		long admissionAtRequest = admissionTicks;
+		if (pendingHandshakeSnapshots.incrementAndGet() > PREAUTH_SESSION_CAP) {
+			pendingHandshakeSnapshots.decrementAndGet();
 			throw new BridgeProtocolException(
 					"SERVER_TASK_QUEUE_FULL", "Could not capture the coordinator handshake on the server thread");
+		}
+		try {
+			// Integrated-server gameplay ticks stop while paused; its main task executor still runs.
+			// Authentication must not wait on the gameplay/action queue. No scored actions run here.
+			manager.server().execute(() -> {
+				try {
+					if (!source.open.get() || source.handshakeRemainingNanos() <= 0L) {
+						snapshot.completeExceptionally(handshakeTimeout());
+						return;
+					}
+					publishPendingDisconnects();
+					snapshot.complete(captureHandshakeSnapshot(true));
+				} catch (RuntimeException exception) {
+					snapshot.completeExceptionally(exception);
+				} finally {
+					pendingHandshakeSnapshots.decrementAndGet();
+				}
+			});
+		} catch (RuntimeException exception) {
+			pendingHandshakeSnapshots.decrementAndGet();
+			throw exception;
 		}
 		long remainingNanos = source.handshakeRemainingNanos();
 		if (remainingNanos <= 0L) throw handshakeTimeout();
 		try {
 			return snapshot.get(remainingNanos, TimeUnit.NANOSECONDS);
 		} catch (TimeoutException exception) {
+			LOGGER.warn("Coordinator snapshot task exceeded the existing handshake budget (gameplay admission ticks before={}, after={}, pending snapshots={})",
+					admissionAtRequest, admissionTicks, pendingHandshakeSnapshots.get());
 			throw handshakeTimeout();
 		} catch (InterruptedException exception) {
 			Thread.currentThread().interrupt();
