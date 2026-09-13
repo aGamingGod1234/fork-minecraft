@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from grow_contract import FRAME, REGION_DIRECTORY, WORLD_SETTINGS, GrowContractError, digest, iter_owned_chunks, validate_plan
-from grow_contract import _benchmark_structural
+from grow_contract import _benchmark_structural, _coverage
 
 
 class GrowContractTests(unittest.TestCase):
@@ -227,6 +227,86 @@ class GrowContractTests(unittest.TestCase):
             run.return_value = SimpleNamespace(returncode=0, stdout=json.dumps(loaded), stderr="")
             with self.assertRaisesRegex(GrowContractError, "identity differs"):
                 _benchmark_structural(*arguments)
+
+    def multi_fixture(self):
+        root, core, writer_hash = self.root, [0, 0, 16, 16], "d" * 64
+        records, pinned, inputs, ids = [], [], [], []
+        for name, source_hash, feature in (("coast-water", "c" * 64, "coast-one"), ("inland-water", "e" * 64, "lake-one")):
+            runs = root / (name + ".runs.jsonl")
+            runs.write_bytes((name + " masked emitted runs\n").encode())
+            runs_hash = digest(runs)
+            inputs.append({"name": runs.name, "bytes": runs.stat().st_size, "sha256": runs_hash})
+            if name == "coast-water":
+                country = root / "country.json"
+                foreign = root / "foreign.json"
+                country.write_bytes(b"country mask")
+                foreign.write_bytes(b"foreign exclusions")
+                raw = root / "coast.raw.runs.jsonl"
+                raw.write_bytes(b"unclipped source runs")
+                report = self.write(root / "coast-source.json", {"schema": "fork.coast-surface.v1", "status": "emitted-unclipped",
+                                    "maskSha256": source_hash, "outputSha256": digest(raw), "statistics": {"unknownCells": 0}})
+                masked = self.write(root / "coast-mask.json", {"schema": "fork.masked-runs.v1", "allLayersFiltered": True,
+                                    "sourcesUnchanged": True, "outputSha256": runs_hash, "inputs": [{"sha256": digest(raw)}],
+                                    "countryMaskSha256": digest(country), "foreignExclusionsSha256": digest(foreign)})
+                oracle = self.write(root / "coast-oracle.json", {"status": "PASS", "synthetic": False, "component": "water",
+                                    "coreBounds": core, "writerManifestSha256": writer_hash, "sourceSha256": source_hash,
+                                    "runsSha256": runs_hash, "countryMaskSha256": digest(country), "foreignExclusionsSha256": digest(foreign),
+                                    "comparedBlocks": 1, "mismatches": 0})
+                mask_evidence = {"maskManifestPath": str(masked), "maskManifestSha256": digest(masked),
+                                 "rawRunsPath": str(raw), "rawRunsSha256": digest(raw),
+                                 "countryMaskPath": str(country), "foreignExclusionsPath": str(foreign),
+                                 "countryMaskSha256": digest(country), "foreignExclusionsSha256": digest(foreign)}
+            else:
+                report = self.write(root / "inland-source.json", {"schema": "fork.roads-runs.v1", "sourceSha256": source_hash,
+                                    "outputSha256": runs_hash, "runCount": 1, "blockedDiagnostics": 0})
+                oracle, mask_evidence = report, None
+            child = self.write(root / (name + ".json"), {"schemaVersion": 1, "component": "water", "status": "PASS",
+                               "synthetic": False, "coreBounds": core, "writerManifestSha256": writer_hash,
+                               "sourceSha256": source_hash, "featureCount": 1, "emittedFeatureIds": [feature],
+                               "runsPath": str(runs), "runsSha256": runs_hash, "sourceReportPath": str(report),
+                               "sourceReportSha256": digest(report), "reportPath": str(oracle), "reportSha256": digest(oracle),
+                               "maskEvidence": mask_evidence})
+            records.append({"id": name, "evidencePath": str(child), "evidenceSha256": digest(child),
+                            "sourceSha256": source_hash, "runsSha256": runs_hash, "status": "PASS", "featureCount": 1})
+            pinned.append({"id": name, "evidenceSha256": digest(child), "sourceSha256": source_hash,
+                           "runsSha256": runs_hash, "sourceReportSha256": digest(report)})
+            ids.append(source_hash + ":" + feature)
+        source_set = self.write(root / "source-set.json", {"schemaVersion": 1, "kind": "fork-component-source-set", "component": "water",
+                                "coreBounds": core, "writerManifestSha256": writer_hash, "contributors": pinned})
+        aggregate = self.write(root / "water.json", {"schemaVersion": 1, "kind": "fork-multi-source-component-evidence",
+                              "component": "water", "status": "PASS", "synthetic": False, "coreBounds": core,
+                              "writerManifestSha256": writer_hash, "sourceSetPath": str(source_set), "sourceSha256": digest(source_set),
+                              "featureCount": 2, "emittedFeatureCount": 2, "emittedFeatureIds": sorted(ids),
+                              "sourceCoverageComplete": False, "blockedDiagnostics": None, "unmappedSourceCount": None,
+                              "requiredContributors": ["coast-water", "inland-water"], "contributors": records})
+        entry = {"status": "included", "evidence_path": str(aggregate), "evidence_sha256": digest(aggregate)}
+        return entry, tuple(core), writer_hash, inputs
+
+    def test_multi_source_water_verifies_both_typed_children_and_mask_chain(self):
+        entry, core, writer_hash, inputs = self.multi_fixture()
+        result = _coverage("water", entry, core, writer_hash, inputs)
+        self.assertEqual(result["feature_count"], 2)
+        self.assertEqual([c["id"] for c in result["contributors"]], ["coast-water", "inland-water"])
+        self.assertEqual(result["source_sha256"], result["source_set_sha256"])
+
+    def test_multi_source_water_rejects_missing_child_and_aggregate_only_count(self):
+        entry, core, writer_hash, inputs = self.multi_fixture()
+        path = Path(entry["evidence_path"])
+        original = json.loads(path.read_text())
+        for changes in ({"contributors": original["contributors"][:1]}, {"featureCount": 1}, {"requiredContributors": ["inland-water"]},
+                        {"sourceCoverageComplete": True}, {"blockedDiagnostics": 0}):
+            self.write(path, {**original, **changes})
+            entry["evidence_sha256"] = digest(path)
+            with self.assertRaises(GrowContractError):
+                _coverage("water", entry, core, writer_hash, inputs)
+
+    def test_multi_source_water_rejects_unconsumed_runs_and_changed_oracle(self):
+        entry, core, writer_hash, inputs = self.multi_fixture()
+        with self.assertRaisesRegex(GrowContractError, "not consumed"):
+            _coverage("water", entry, core, writer_hash, inputs[1:])
+        (self.root / "coast-oracle.json").write_text('{"status":"FAIL"}')
+        with self.assertRaisesRegex(GrowContractError, "report changed"):
+            _coverage("water", entry, core, writer_hash, inputs)
 
 
 if __name__ == "__main__":

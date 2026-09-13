@@ -87,6 +87,31 @@ The normalized source retains summary, receipt and gate paths/hashes plus
 `benchmark_validator_code` records. The experimental gate does not waive the
 separate roads/water coverage requirements or assert nationwide fidelity.
 
+## Multi-source water evidence
+
+The optional `fork-multi-source-component-evidence` type combines water from
+exactly `coast-water` and `inland-water`; existing single-source rural evidence
+is unchanged. Its `sourceSetPath` points to a `fork-component-source-set`
+descriptor whose raw file hash is the aggregate `sourceSha256`. Both objects
+bind the same component, exact core and writer manifest. Their contributor
+sets must agree exactly, with no duplicate or missing IDs.
+
+Every contributor carries `evidencePath`, `evidenceSha256`, `sourceSha256`,
+`runsSha256`, `status` and `featureCount`. Its source-set record pins those
+hashes plus `sourceReportSha256`. The consumer recursively validates each
+existing child wrapper, rehashes its raw source report and run file, and
+requires the run basename, size and hash in the actual writer's input map.
+The coast child must bind a real `fork.coast-surface.v1` report, an actual
+passing water oracle, and its `fork.masked-runs.v1` country/foreign mask chain.
+The inland child must bind `fork.roads-runs.v1`. An aggregate PASS cannot
+replace either child proof. Nested aggregates and cyclic evidence are rejected.
+
+`emittedFeatureIds` must be the exact sorted union of each child's IDs prefixed
+with that child's source hash and `:`. Both aggregate counts must equal that
+union's size. Zero features requires both children's complete absence proofs.
+Normalized output retains the immutable source-set and every child's evidence,
+run and source-report path/hash for final unchanged-input verification.
+
 The CBD core `[29696,29696,30720,30720]` can be admitted alone (4096 chunks)
 when its own gates pass. Twelve 256-metre east cores may extend coverage to
 `[30720,29696,31488,30720]`, adding 3072 chunks, only after every source's roads

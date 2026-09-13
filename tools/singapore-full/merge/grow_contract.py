@@ -228,7 +228,140 @@ def _structural(gate, writer_hash, outputs, core, source=None, world=None, write
             raise GrowContractError(f"structural gate reports {name}")
 
 
-def _coverage(component, entry, core, writer_hash):
+def _coast_chain(evidence, report):
+    """Verify the typed masked-coast chain carried by an existing child wrapper."""
+    if (report.get("status") != "PASS" or report.get("synthetic") is not False
+            or report.get("component") != "water" or report.get("coreBounds") != evidence["coreBounds"]
+            or type(report.get("comparedBlocks")) is not int or report["comparedBlocks"] <= 0
+            or type(report.get("mismatches")) is not int or report["mismatches"] != 0):
+        raise GrowContractError("actual masked-coast component oracle did not pass")
+    for field in ("writerManifestSha256", "sourceSha256", "runsSha256"):
+        if _sha(report.get(field), "coast oracle " + field) != _sha(evidence.get(field), "coast child " + field):
+            raise GrowContractError("coast oracle differs from child " + field)
+    mask = evidence["maskEvidence"]
+    mask_path = Path(mask["maskManifestPath"]).resolve(strict=True)
+    if digest(mask_path) != _sha(mask["maskManifestSha256"], "coast mask manifest"):
+        raise GrowContractError("coast mask manifest changed")
+    masked = load(mask_path)
+    if (masked.get("schema") != "fork.masked-runs.v1" or masked.get("allLayersFiltered") is not True
+            or masked.get("sourcesUnchanged") is not True
+            or _sha(masked.get("outputSha256"), "coast masked output") != _sha(evidence["runsSha256"], "coast child runs")):
+        raise GrowContractError("coast mask does not bind actual filtered child runs")
+    raw = Path(mask["rawRunsPath"]).resolve(strict=True)
+    raw_hash = _sha(mask["rawRunsSha256"], "raw coast runs")
+    if digest(raw) != raw_hash or not any(_sha(item.get("sha256"), "coast mask input") == raw_hash for item in masked.get("inputs", [])):
+        raise GrowContractError("masked coast does not bind unchanged raw runs")
+    for field in ("countryMaskSha256", "foreignExclusionsSha256"):
+        if not (_sha(mask.get(field), field) == _sha(masked.get(field), field) == _sha(report.get(field), field)):
+            raise GrowContractError("coast country/foreign mask bindings disagree")
+        mask_input = Path(mask[field.replace("Sha256", "Path")]).resolve(strict=True)
+        if digest(mask_input) != _sha(mask[field], field):
+            raise GrowContractError("coast country/foreign mask file changed")
+    source_report = Path(evidence["sourceReportPath"]).resolve(strict=True)
+    if digest(source_report) != _sha(evidence["sourceReportSha256"], "coast source report"):
+        raise GrowContractError("coast source report changed")
+    source = load(source_report)
+    if (source.get("schema") != "fork.coast-surface.v1" or source.get("status") != "emitted-unclipped"
+            or _sha(source.get("maskSha256"), "coast classification mask") != _sha(evidence["sourceSha256"], "coast source")
+            or _sha(source.get("outputSha256"), "coast raw output") != raw_hash
+            or source.get("statistics", {}).get("unknownCells") != 0):
+        raise GrowContractError("coast source classification or raw output is unverified")
+
+
+def _multi_coverage(component, entry, evidence, path, evidence_sha, core, writer_hash, writer_inputs):
+    if (component != "water" or evidence.get("schemaVersion") != 1 or evidence.get("synthetic") is not False
+            or evidence.get("component") != "water" or _bounds(evidence.get("coreBounds"), "multi-source core") != core
+            or _sha(evidence.get("writerManifestSha256"), "multi-source writer") != writer_hash):
+        raise GrowContractError("multi-source water identity does not match the grow core/writer")
+    required = {"coast-water", "inland-water"}
+    if not isinstance(evidence.get("requiredContributors"), list) or len(evidence["requiredContributors"]) != 2 or set(evidence["requiredContributors"]) != required:
+        raise GrowContractError("multi-source water requires exactly coast-water and inland-water")
+    source_set_path = Path(evidence["sourceSetPath"]).resolve(strict=True)
+    source_hash = _sha(evidence["sourceSha256"], "component source set")
+    if digest(source_set_path) != source_hash:
+        raise GrowContractError("immutable component source set changed")
+    source_set = load(source_set_path)
+    if (source_set.get("schemaVersion") != 1 or source_set.get("kind") != "fork-component-source-set"
+            or source_set.get("component") != component or source_set.get("coreBounds") != list(core)
+            or _sha(source_set.get("writerManifestSha256"), "source-set writer") != writer_hash):
+        raise GrowContractError("component source-set identity mismatch")
+    def keyed(records, label):
+        if not isinstance(records, list) or len(records) != 2 or any(not isinstance(r, dict) or not isinstance(r.get("id"), str) for r in records):
+            raise GrowContractError(label + " must contain exactly two typed contributors")
+        result = {r["id"]: r for r in records}
+        if len(result) != len(records) or set(result) != required:
+            raise GrowContractError(label + " contributor set is incomplete or duplicated")
+        return result
+    declared = keyed(evidence.get("contributors"), "aggregate")
+    expected = keyed(source_set.get("contributors"), "source-set")
+    if not isinstance(writer_inputs, list) or not writer_inputs:
+        raise GrowContractError("multi-source water needs the actual writer consumed-input map")
+    children, child_proofs, files, feature_ids = [], [], set(), set()
+    for name in sorted(required):
+        record, pinned = declared[name], expected[name]
+        child_path = Path(record["evidencePath"]).resolve(strict=True)
+        if child_path in files or child_path == path or child_path == source_set_path:
+            raise GrowContractError("duplicate or cyclic component evidence")
+        files.add(child_path)
+        child_sha = _sha(record["evidenceSha256"], "child evidence")
+        if child_sha != _sha(pinned["evidenceSha256"], "source-set child") or digest(child_path) != child_sha:
+            raise GrowContractError("child evidence differs from immutable source set")
+        child = load(child_path)
+        if child.get("kind") == "fork-multi-source-component-evidence":
+            raise GrowContractError("nested aggregate is not a typed coast/inland child")
+        if child.get("status") not in ("PASS", "NO_FEATURES") or record.get("status") != child["status"] or record.get("featureCount") != child.get("featureCount"):
+            raise GrowContractError("aggregate child status/count differs from actual wrapper")
+        for field in ("sourceSha256", "runsSha256"):
+            if not (_sha(record.get(field), field) == _sha(pinned.get(field), field) == _sha(child.get(field), field)):
+                raise GrowContractError("component child hash differs from source set: " + field)
+        source_report = Path(child["sourceReportPath"]).resolve(strict=True)
+        source_report_sha = _sha(child["sourceReportSha256"], "child source report")
+        if source_report_sha != _sha(pinned["sourceReportSha256"], "source-set report") or digest(source_report) != source_report_sha:
+            raise GrowContractError("component source report changed")
+        if "sourceReportSha256" in record and _sha(record["sourceReportSha256"], "aggregate source report") != source_report_sha:
+            raise GrowContractError("aggregate source report hash contradicts child")
+        schema = load(source_report).get("schema")
+        if schema != ("fork.coast-surface.v1" if name == "coast-water" else "fork.roads-runs.v1"):
+            raise GrowContractError("contributor does not use its required actual coast/inland source")
+        runs = Path(child["runsPath"]).resolve(strict=True)
+        runs_hash, size = _sha(child["runsSha256"], "child run bytes"), runs.stat().st_size
+        if digest(runs) != runs_hash or not any(i.get("name", "").casefold() == runs.name.casefold()
+                and i.get("bytes") == size and _sha(i.get("sha256"), "writer input") == runs_hash for i in writer_inputs):
+            raise GrowContractError("component run bytes were not consumed by this writer")
+        normalized = _coverage(component, {"status": "no_features" if child["status"] == "NO_FEATURES" else "included",
+                                           "evidence_path": str(child_path), "evidence_sha256": child_sha}, core, writer_hash, writer_inputs)
+        if name == "coast-water" and not child.get("maskEvidence"):
+            raise GrowContractError("coast contributor lacks its actual mask chain")
+        ids = child.get("emittedFeatureIds")
+        if not isinstance(ids, list) or any(not isinstance(i, str) or not i for i in ids) or len(set(ids)) != len(ids) or len(ids) != normalized["feature_count"]:
+            raise GrowContractError("child feature IDs do not establish its count")
+        feature_ids.update(normalized["source_sha256"] + ":" + feature for feature in ids)
+        children.append({"id": name, **normalized, "runs_path": str(runs), "runs_sha256": runs_hash,
+                         "source_report_path": str(source_report), "source_report_sha256": source_report_sha})
+        child_proofs.append(child)
+    count = len(feature_ids)
+    status = "NO_FEATURES" if count == 0 else "PASS"
+    if (evidence.get("status") != status or entry["status"] != ("no_features" if count == 0 else "included")
+            and not (count > 0 and entry["status"] == "pass")
+            or type(evidence.get("featureCount")) is not int or evidence["featureCount"] != count
+            or type(evidence.get("emittedFeatureCount")) is not int or evidence["emittedFeatureCount"] != count
+            or evidence.get("emittedFeatureIds") != sorted(feature_ids)):
+        raise GrowContractError("aggregate feature IDs/count/status do not equal verified contributors")
+    if count == 0 and (evidence.get("sourceCoverageComplete") is not True or evidence.get("blockedDiagnostics") != 0 or evidence.get("unmappedSourceCount") != 0):
+        raise GrowContractError("aggregate absence lacks complete source coverage")
+    if evidence.get("sourceCoverageComplete") is not all(c.get("sourceCoverageComplete") is True for c in child_proofs):
+        raise GrowContractError("aggregate source completeness exceeds its child proofs")
+    for field in ("blockedDiagnostics", "unmappedSourceCount"):
+        values = [c.get(field) for c in child_proofs]
+        combined = sum(values) if all(type(v) is int and v >= 0 for v in values) else None
+        if evidence.get(field) != combined or (combined is not None and type(evidence.get(field)) is not int):
+            raise GrowContractError("aggregate diagnostics do not equal child proofs")
+    return {"status": entry["status"], "evidence_path": str(path), "evidence_sha256": evidence_sha,
+            "source_sha256": source_hash, "feature_count": count, "source_set_path": str(source_set_path),
+            "source_set_sha256": source_hash, "contributors": children}
+
+
+def _coverage(component, entry, core, writer_hash, writer_inputs=None):
     if not isinstance(entry, dict) or entry.get("status") not in ("included", "pass", "no_features"):
         raise GrowContractError(f"{component} coverage must be included/pass/no_features with evidence")
     path = Path(entry["evidence_path"]).resolve(strict=True)
@@ -236,6 +369,8 @@ def _coverage(component, entry, core, writer_hash):
     if digest(path) != evidence_sha:
         raise GrowContractError(f"{component} evidence changed")
     evidence = load(path)
+    if evidence.get("kind") == "fork-multi-source-component-evidence":
+        return _multi_coverage(component, entry, evidence, path, evidence_sha, core, writer_hash, writer_inputs)
     expected_status = "NO_FEATURES" if entry["status"] == "no_features" else "PASS"
     if evidence.get("component") != component or evidence.get("status") != expected_status or evidence.get("synthetic") is True:
         raise GrowContractError(f"{component} typed evidence does not pass")
@@ -272,6 +407,8 @@ def _coverage(component, entry, core, writer_hash):
                 raise GrowContractError(f"{component} actual raster run bytes changed")
         elif report_data.get("status") not in ("PASS", "NO_FEATURES"):
             raise GrowContractError(f"{component} wrapped actual report needs a recognized typed source schema")
+        elif evidence.get("maskEvidence") is not None:
+            _coast_chain(evidence, report_data)
     return {"status": entry["status"], "evidence_path": str(path), "evidence_sha256": evidence_sha,
             "source_sha256": evidence["sourceSha256"].lower(), "feature_count": count}
 
@@ -341,7 +478,7 @@ def validate_plan(plan):
             outputs = _outputs(writer, world)
             gate_path = Path(raw["structural_gate_path"]).resolve(strict=True)
             extra_bindings = _structural(load(gate_path), writer_hash, outputs, core, raw, world, writer_path) or {}
-            coverage = {component: _coverage(component, raw["coverage"].get(component), core, writer_hash)
+            coverage = {component: _coverage(component, raw["coverage"].get(component), core, writer_hash, writer.get("inputs"))
                         for component in ("roads", "water")}
             sources.append({"id": name, "world_path": str(world), "core_bounds": list(core),
                             "writer_manifest_path": str(writer_path), "writer_manifest_sha256": writer_hash,
