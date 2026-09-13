@@ -1,0 +1,17 @@
+﻿import fs from 'node:fs';
+import crypto from 'node:crypto';
+const palette=['air','smooth_stone','polished_andesite','white_concrete','cyan_concrete','orange_concrete','glass','dark_prismarine','yellow_concrete','sea_lantern','light_gray_concrete'].map(x=>'minecraft:'+x), cells=new Map();
+const put=(x,y,z,p)=>cells.set(`${x},${y},${z}`,palette.indexOf('minecraft:'+p));
+function box(x0,x1,y0,y1,z0,z1,p){for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)put(x,y,z,p);}
+box(0,15,0,0,0,15,'smooth_stone');
+for(let i=0;i<16;i++)for(const [x,z] of [[0,i],[15,i],[i,0],[i,15]])put(x,0,z,'polished_andesite');
+box(1,6,0,0,1,5,'white_concrete');box(10,14,0,0,1,5,'light_gray_concrete');
+box(1,6,1,4,1,1,'white_concrete');box(1,1,1,4,2,5,'white_concrete');box(6,6,1,4,2,5,'white_concrete');
+box(2,5,2,3,1,1,'glass');box(1,1,2,3,2,4,'glass');box(1,6,5,5,1,5,'white_concrete');box(1,6,4,4,5,5,'cyan_concrete');
+box(1,2,1,1,5,5,'white_concrete');box(5,6,1,1,5,5,'white_concrete');put(5,1,3,'cyan_concrete');put(3,5,3,'sea_lantern');
+box(10,14,1,4,1,1,'light_gray_concrete');box(14,14,1,4,2,5,'light_gray_concrete');box(10,14,5,5,1,5,'light_gray_concrete');box(10,14,4,4,5,5,'orange_concrete');box(10,10,1,3,2,3,'polished_andesite');put(12,5,3,'sea_lantern');
+box(7,9,1,1,10,11,'dark_prismarine');put(8,2,11,'yellow_concrete');for(let z=6;z<10;z++)put(8,0,z,'yellow_concrete');for(let x=3;x<8;x++)put(x,0,6,'cyan_concrete');for(let x=9;x<13;x++)put(x,0,6,'orange_concrete');put(3,0,5,'cyan_concrete');put(12,0,5,'orange_concrete');
+const demo=[];for(let x=1;x<=6;x++){put(x,6,1,'cyan_concrete');demo.push([x,6,1]);}for(let x=10;x<=14;x++){put(x,6,1,'orange_concrete');demo.push([x,6,1]);}
+const route=[];for(let z=12;z>=3;z--)route.push([3,1,z]);route.push([4,1,3]);
+const doc={schema:'fork-1',layoutId:'fork-court-v1',coverage:'Fictional 16 x 16 court; no accepted real-world geography or authentic floorplans.',dimension:'minecraft:overworld',origin:[0,64,0],size:[16,16,16],defaultPaletteIndex:0,placement:'Fill ALL 4096 cells with default air, then apply unique cells [x,y,z,paletteIndex]. Never write outside volume.',transformPolicy:'Immutable per acceptance; absolute = origin + relative; rotation 0.',palette,cells:[...cells].map(([k,v])=>[...k.split(',').map(Number),v]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2]-b[2]),anchors:{medic:[3,1,3],engineer:[12,1,3],courier:[3,1,12],delivery:[4,1,3]},playerArrival:[8,1,14],courierPath:route,demolitionCells:demo,outsideSentinels:[[-1,0,0],[16,0,15],[0,-1,0],[15,16,15],[0,0,-1],[15,0,16]],sentinelPolicy:'Observe actual states before placement and restore, verify unchanged afterwards. Never place sentinel blocks.',cameraAnchors:{courtWide:{relative:[8.5,10,14.5],lookAt:[8,1,5]},clinicEntrance:{relative:[3.5,2.6,7.5],lookAt:[3.5,2.6,3.5]},workshop:{relative:[11.5,2.6,7.5],lookAt:[12.5,2.6,3.5]},courier:{relative:[5.5,2.6,13.5],lookAt:[3.5,2.6,12.5]},powerFork:{relative:[8.5,7,12.5],lookAt:[8.5,0,6.5]}},publicPlaces:[{id:'court',label:'Fictional FORK court',arrival:[8,1,14],geographicCoordinates:null}],travelPolicy:{rounds:[0,6],pendingWorkAllowed:false,humanOnly:true,preserveScenario:true,loadedSafeArrivalRequired:true,returnAvailableDuringLoad:true},runtimeAcceptance:'UNRUN: actual placement, walk-in, cameras, three restores and outside sentinel checks.'};
+const path=new URL('../../data/fork-world/court-v1.json',import.meta.url);fs.writeFileSync(path,JSON.stringify(doc,null,2)+'\n');console.log(crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex'));

@@ -1,0 +1,3 @@
+﻿FORK court v1: original fictional plain-block layout authored during the 13 September 2026 build window. No real-world floorplans, generated raster assets, external textures, Arnis output or geographic dataset are included in this delivery.
+Minecraft names and vanilla block identifiers refer to Minecraft by Mojang/Microsoft. No Minecraft binaries or textures are distributed here. FORK is an unofficial project and is not approved by or associated with Mojang or Microsoft.
+Agent Arena is the reused project foundation; retain the repository's existing license and notices. Main owns complete derivative notices and release licensing.
