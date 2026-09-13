@@ -1,0 +1,37 @@
+{
+  "schema": "fork-camera-binding-1",
+  "createdUtc": "2026-09-13T05:36:50.310Z",
+  "presetPath": "media/edit/camera-paths-city-1024.json",
+  "presetSha256": "2423DD2125CF4E3B6D1852A9BFA665C281CA7596581415679073C3333A38F291",
+  "world": "FORKSingapore1024",
+  "courtOrigin": [
+    428,
+    0,
+    408
+  ],
+  "human": [
+    436,
+    1,
+    415
+  ],
+  "roleBinding": "Old court-relative anchors offset [382,0,386]; not OSM transform",
+  "crane": "Exact Main supplied endpoint positions; two keyframes avoid position spline overshoot; 5 sec intro, 8 sec alternative",
+  "flythrough": {
+    "approval": "MAIN GEOMETRY ACCEPTED 13:43 SGT: 3003 CatmullRom samples0.3AABB clear; independent swept276 intersectedblocks allair plus2535 dense samples",
+    "durationSeconds": 7,
+    "cameraAabb": 0.3,
+    "source": "Main 13:33 actual World helper corridor",
+    "maxDistanceFromHumanMetres": 116.38
+  },
+  "mapWorld": "FORK - Singapore Map",
+  "mapOnlyNames": [
+    "fork_map_overview",
+    "fork_map_reveal"
+  ],
+  "runtimeFramingPassed": false,
+  "limitations": [
+    "Role camera world-relative coordinates require actual visual check",
+    "Do not use map presets in city or vice versa",
+    "No camera preset while comparison HUD evidence is needed"
+  ]
+}

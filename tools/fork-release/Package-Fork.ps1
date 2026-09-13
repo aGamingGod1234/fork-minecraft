@@ -22,7 +22,7 @@ foreach($p in @($ModJar,$FabricApiJar,$CarpetJar)){
  $mods+=$name
 }
 Copy-Item -LiteralPath $CourtJson -Destination (Join-Path $out 'data\court-v1.json')
-Copy-Item -LiteralPath (Join-Path $repo 'media\edit\camera-paths-city-v2.json') -Destination (Join-Path $out 'data\camera-paths.json')
+Copy-Item -LiteralPath (Join-Path $repo 'media\edit\camera-paths-city-1024.json') -Destination (Join-Path $out 'data\camera-paths.json')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Install-Fork.ps1'),(Join-Path $PSScriptRoot 'Install-Graphics.ps1'),(Join-Path $PSScriptRoot 'graphics-manifest.json'),(Join-Path $PSScriptRoot 'README-INSTALL.md') -Destination $out
 foreach($name in @('LICENSE','NOTICE-FONTS.md','MAP-SOURCES.md')){Copy-Item -LiteralPath (Join-Path $repo $name) -Destination (Join-Path $out 'notices')}
 Copy-Item -LiteralPath (Join-Path $repo 'docs\fork-world\CREDITS.txt') -Destination (Join-Path $out 'notices\WORLD-CREDITS.txt')

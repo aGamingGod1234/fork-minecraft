@@ -1,0 +1,478 @@
+{
+  "schema": "fork-film-2",
+  "status": "INTERNAL PRODUCT REVISION 13:33 - awaiting actual expanded city / full Live / human voice",
+  "mediaLeaseDeadlineUtc": "2026-09-13T06:20:00Z",
+  "output": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "frames": 2700
+  },
+  "acceptance": {
+    "acceptedByMain": false,
+    "releaseCommit": null,
+    "packageSha256": null,
+    "worldSha256": null,
+    "mode": null,
+    "rewindMethod": null,
+    "cameraBindingSha256": null,
+    "actualCoverage": null,
+    "newDevelopmentCredit": null,
+    "developmentEvidence": null,
+    "fixtureApprovedByLucas": false
+  },
+  "repository": "https://github.com/aGamingGod1234/fork-minecraft",
+  "music": {
+    "decision": "captured-game-ambient-only",
+    "reason": "No external music needed; no generated music or voice."
+  },
+  "credits": [
+    "FORK requires Minecraft Java Edition. Unofficial project; not approved by Mojang or Microsoft.",
+    "District map data: OpenStreetMap contributors. https://www.openstreetmap.org/copyright",
+    "Locator: Made with Natural Earth, Admin0 v5.1.1,1:10m,public domain. https://www.naturalearthdata.com/",
+    "New development with Astra: power rules, rewind, comparison and film tooling. Owner evidence and final release acceptance required.",
+    "Reused Agent Arena: bodies, lifecycle, console, camera paths and approved provider transport. Preserve upstream licence and notices.",
+    "Audio: captured game ambience and participating human narrator. No external music. Narrator identity pending confirmation."
+  ],
+  "shots": [
+    {
+      "id": 1,
+      "startFrame": 0,
+      "frames": 60,
+      "title": "Your own fork of Singapore",
+      "requiredPicture": "Actual expanded-city streets and buildings; software meaning opening, no required literal road-fork motif.",
+      "soundDirection": "One clean impact. Start on picture; no opening logo delay.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 2,
+      "startFrame": 60,
+      "frames": 60,
+      "title": "Welcome to FORK",
+      "requiredPicture": "Separate title card, one quick type reveal.",
+      "soundDirection": "Title lands on the beat.",
+      "evidence": "Actual FFmpeg card preview v2 rendered and visually reviewed 13:41 SGT. UTF8 without BOM, legible and unclipped.",
+      "reviewed": true,
+      "segments": [
+        {
+          "kind": "card",
+          "textFile": "media/edit/cards/title-product.txt",
+          "frames": 60,
+          "reviewed": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "startFrame": 120,
+      "frames": 90,
+      "title": "Your own Singapore",
+      "requiredPicture": "Fast actual expanded-city crane, tilting toward skyline. Use approved fork_intro camera take.",
+      "soundDirection": "Two concise camera views if the existing path is unreliable.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 4,
+      "startFrame": 210,
+      "frames": 90,
+      "title": "Find our neighbourhood",
+      "requiredPicture": "Separate actual flat Minecraft Singapore map take, labelled Map orientation / cartographic miniature. Natural Earth credit.",
+      "soundDirection": "Keep source credit readable. The map is an overview, not generated coverage.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 5,
+      "startFrame": 300,
+      "frames": 90,
+      "title": "Meet the medic",
+      "requiredPicture": "Enter the real clinic and end on the medic.",
+      "soundDirection": "Doorstep and room sound from the game.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 6,
+      "startFrame": 390,
+      "frames": 90,
+      "title": "Meet the engineer",
+      "requiredPicture": "Cut to the engineer and workshop repair indicator.",
+      "soundDirection": "Match the camera direction; no new character animation.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 7,
+      "startFrame": 480,
+      "frames": 90,
+      "title": "Meet the courier",
+      "requiredPicture": "Courier and spare battery; one short role label.",
+      "soundDirection": "Small percussive accent.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 8,
+      "startFrame": 570,
+      "frames": 120,
+      "title": "The dilemma",
+      "requiredPicture": "Show the initial checkpoint, two total charges, and the clinic/workshop power choice.",
+      "soundDirection": "Duck the track for the choice. Keep all relevant values legible.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 9,
+      "startFrame": 690,
+      "frames": 120,
+      "title": "Choose clinic",
+      "requiredPicture": "Real clinic allocation input and acknowledgement. Retain the actual runtime-mode label.",
+      "soundDirection": "Use the actual click and response.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 10,
+      "startFrame": 810,
+      "frames": 120,
+      "title": "Branch A moves",
+      "requiredPicture": "Condense the committed rounds in order. Show round numbers and a waits-trimmed label.",
+      "soundDirection": "Cut on round commits; never animate an invented result.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 11,
+      "startFrame": 930,
+      "frames": 120,
+      "title": "Branch A result",
+      "requiredPicture": "Hold the real round-six result: clinic service and repair progress.",
+      "soundDirection": "Four seconds without a transition over the values.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 12,
+      "startFrame": 1050,
+      "frames": 90,
+      "title": "Rewind",
+      "requiredPicture": "Actual rewind control, then its forward-playing restore footage.",
+      "soundDirection": "Brief reverse sound and music stop. The effect punctuates the real action.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 13,
+      "startFrame": 1140,
+      "frames": 120,
+      "title": "Same starting point",
+      "requiredPicture": "Hold the verified initial round, both charges and restored court. Label a checkpoint reload if that is the accepted method.",
+      "soundDirection": "Music returns. Trim a long wait with a clear elapsed-time cue.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 14,
+      "startFrame": 1260,
+      "frames": 120,
+      "title": "Choose workshop",
+      "requiredPicture": "Real workshop allocation and the beginning of branch B.",
+      "soundDirection": "Return to the same camera angle as the first choice.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 15,
+      "startFrame": 1380,
+      "frames": 120,
+      "title": "Workshop branch actions",
+      "requiredPicture": "Real committed courier delivery and repair progress, in their actual round order.",
+      "soundDirection": "If live actions differ, show the accepted run and use the alternative narration.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 16,
+      "startFrame": 1500,
+      "frames": 90,
+      "title": "The tradeoff",
+      "requiredPicture": "Hold the real clinic outage if it occurs. Otherwise show the actual round-three status.",
+      "soundDirection": "Brief musical dip; the consequence gets a clear beat.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 17,
+      "startFrame": 1590,
+      "frames": 90,
+      "title": "Actual repairs and power",
+      "requiredPicture": "Show the actual grid activation and powered buildings, if the accepted run achieves it.",
+      "soundDirection": "One satisfying rise. A different live outcome gets its real status instead.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 18,
+      "startFrame": 1680,
+      "frames": 120,
+      "title": "Branch B result",
+      "requiredPicture": "Hold the real round-six result.",
+      "soundDirection": "Four seconds to read the outcome.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 19,
+      "startFrame": 1800,
+      "frames": 300,
+      "title": "Two futures",
+      "requiredPicture": "Use the real equal-round comparison for all ten seconds. Keep the final six seconds visually still and the final two seconds without narration.",
+      "soundDirection": "Music lowers. Let the viewer read the tradeoff.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 20,
+      "startFrame": 2100,
+      "frames": 120,
+      "title": "Inspect a decision",
+      "requiredPicture": "Actual inspect decision evidence, followed by city movement if space permits.",
+      "soundDirection": "A precise crop is allowed; preserve the meaning and mode label.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 21,
+      "startFrame": 2220,
+      "frames": 180,
+      "title": "Play",
+      "requiredPicture": "Three actual two-second inserts. Include between-building flythrough from verified expanded-world corridor, then exploration/role action. No boundary void or generated substitute.",
+      "soundDirection": "A separately captured paused facade effect plus restore may replace this whole block only if already accepted. Never add a feature for this shot.",
+      "evidence": null,
+      "reviewed": false,
+      "segments": []
+    },
+    {
+      "id": 22,
+      "startFrame": 2400,
+      "frames": 180,
+      "title": "How Astra helped",
+      "requiredPicture": "Two separate three-second cards: actual new Astra-authored work with a readable evidence excerpt, then the reused Agent Arena foundation. Remove private information.",
+      "soundDirection": "Credit the actual development model and contributions. Keep the distinction readable.",
+      "evidence": "Newdevelopmentcard rendered and visually reviewed12:58. Actual ForkContract excerpt and Main Astra authors ledger. Separate unchanged AgentArena foundationcard previously reviewed.",
+      "reviewed": true,
+      "segments": [
+        {
+          "kind": "card",
+          "textFile": "media/edit/cards/new-development.txt",
+          "frames": 90,
+          "reviewed": true
+        },
+        {
+          "kind": "card",
+          "textFile": "media/edit/cards/foundation.txt",
+          "frames": 90,
+          "reviewed": true
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "startFrame": 2580,
+      "frames": 120,
+      "title": "Your own fork of Singapore",
+      "requiredPicture": "FORK, the real GitHub route, Minecraft Java requirement, and compact unofficial notice. Put full notices in the repository and video description.",
+      "soundDirection": "Resolve the music and hold the final card. The judge must be able to access the linked repository.",
+      "evidence": "Actual FFmpeg card preview v2 rendered and visually reviewed 13:41 SGT. UTF8 without BOM, legible and unclipped.",
+      "reviewed": true,
+      "segments": [
+        {
+          "kind": "card",
+          "textFile": "media/edit/cards/end-product.txt",
+          "frames": 120,
+          "reviewed": true
+        }
+      ]
+    }
+  ],
+  "voice": [
+    {
+      "id": 1,
+      "at": 0,
+      "windowEnd": 4,
+      "text": "Welcome to FORK, your own fork of Singapore.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 2,
+      "at": 4,
+      "windowEnd": 10,
+      "text": "Where Singapore's streets and buildings take shape in Minecraft.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 3,
+      "at": 10,
+      "windowEnd": 16,
+      "text": "Where you can explore a neighbourhood at your own pace.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 4,
+      "at": 16,
+      "windowEnd": 23,
+      "text": "Where a medic, an engineer and a courier each have a part to play.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 5,
+      "at": 23,
+      "windowEnd": 30,
+      "text": "And where a real-world tradeoff becomes a scenario you can step into.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 6,
+      "at": 30,
+      "windowEnd": 38,
+      "text": "Keep the clinic running. Restore the workshop. Decide where limited power should go.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 7,
+      "at": 38,
+      "windowEnd": 42,
+      "text": "Where your choices change what happens next.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 8,
+      "at": 42,
+      "windowEnd": 51,
+      "text": "Watch repairs come together, batteries run down, and your neighbourhood develop through six rounds.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 9,
+      "at": 51,
+      "windowEnd": 57,
+      "text": "And where what if is something you can try.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 10,
+      "at": 59,
+      "windowEnd": 68,
+      "text": "Rewind to the same starting point. Make another choice. Compare the futures you created.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 11,
+      "at": 71,
+      "windowEnd": 79,
+      "text": "A place to explore. To experiment. To make your own.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    },
+    {
+      "id": 12,
+      "at": 85,
+      "windowEnd": 90,
+      "text": "FORK. Your own fork of Singapore. Have fun.",
+      "source": null,
+      "sha256": null,
+      "in": null,
+      "out": null,
+      "humanConfirmed": false,
+      "transcriptConfirmed": false
+    }
+  ],
+  "checks": {
+    "sameModeThroughout": false,
+    "actualOutcomesMatchNarration": false,
+    "threeRestoresEvidence": null,
+    "locatorAttributionAccepted": true,
+    "sourcePrivacyReviewed": false,
+    "comparisonEqualSixRounds": false,
+    "comparisonFinalSixStill": false
+  },
+  "playback": {
+    "localFullViewing": null,
+    "hostedFullViewing": null
+  }
+}
