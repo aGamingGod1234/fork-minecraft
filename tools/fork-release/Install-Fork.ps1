@@ -1,46 +1,62 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][string]$Instance,
-    [string]$WorldName='FORK-INITIAL'
+ [Parameter(Mandatory=$true)][string]$Instance,
+ [string]$WorldName='FORK-MarketStreet',
+ [string]$NodePath,
+ [switch]$WithGraphics
 )
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($PSScriptRoot)
-$target=[IO.Path]::GetFullPath($Instance)
-if(!(Test-Path -LiteralPath $target -PathType Container)){throw 'Choose an existing dedicated Fabric Minecraft 26.1.2 instance.'}
-if(Test-Path -LiteralPath (Join-Path $target 'session.lock')){throw 'Stop Minecraft before installing.'}
+$target=[IO.Path]::GetFullPath($Instance).TrimEnd('\')
+if(!(Test-Path -LiteralPath $target -PathType Container)){throw 'Choose an existing dedicated Fabric 26.1.2 instance.'}
+if(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue|Where-Object{$_.Name -match '^javaw?\.exe$' -and $_.CommandLine -and $_.CommandLine.Contains($target)}){throw 'Close Minecraft before installing.'}
+if($WorldName -match '[\\/:*?"<>|]' -or $WorldName -in @('.','..','')){throw 'Choose a simple new world folder name.'}
 $manifest=Get-Content -LiteralPath (Join-Path $root 'package-manifest.json') -Raw|ConvertFrom-Json
 foreach($file in $manifest.files){
  $source=Join-Path $root $file.path
  if((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ine $file.sha256){throw ('Package hash mismatch: '+$file.path)}
 }
-$mods=Join-Path $target 'mods'
-New-Item -ItemType Directory -Path $mods -Force|Out-Null
-$existing=Get-ChildItem -LiteralPath $mods -Filter '*.jar' -File
+$graphics=Get-Content -LiteralPath (Join-Path $root 'graphics-manifest.json') -Raw|ConvertFrom-Json
 $allowed=@($manifest.mods)
-foreach($file in $existing){
- if($file.Name -notin $allowed){throw ('Dedicated FORK instance contains an unrelated mod: '+$file.Name)}
+$mods=Join-Path $target 'mods'
+foreach($file in Get-ChildItem -LiteralPath $mods -Filter '*.jar' -File -ErrorAction SilentlyContinue){
+ if($file.Name -in $allowed){
+  if((Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath (Join-Path (Join-Path $root 'mods') $file.Name)).Hash){throw ('Existing mod differs; use a fresh instance: '+$file.Name)}
+ }else{
+  $extra=@($graphics.files|Where-Object{$_.filename -eq $file.Name -and $_.kind -eq 'mod'})
+  if($extra.Count -ne 1 -or (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA512).Hash -ine $extra[0].sha512){throw ('Unverified extra mod; use a dedicated instance: '+$file.Name)}
+ }
 }
-foreach($name in $allowed){
- $source=Join-Path (Join-Path $root 'mods') $name
- $destination=Join-Path $mods $name
- if(Test-Path -LiteralPath $destination){
-  if((Get-FileHash -LiteralPath $destination).Hash -ne (Get-FileHash -LiteralPath $source).Hash){throw ('Existing mod differs; use a fresh dedicated instance: '+$name)}
- }else{Copy-Item -LiteralPath $source -Destination $destination}
+$world=Join-Path (Join-Path $target 'saves') $WorldName
+if(Test-Path -LiteralPath $world){throw 'Destination world exists; choose a new WorldName.'}
+$copies=@()
+foreach($name in $allowed){$copies+=@{source=(Join-Path (Join-Path $root 'mods') $name);destination=(Join-Path $mods $name)}}
+$copies+=@{source=(Join-Path $root 'data\court-v1.json');destination=(Join-Path $target 'config\fork-court.json')}
+$camera=Join-Path $root 'data\camera-paths.json'
+if(Test-Path -LiteralPath $camera){$copies+=@{source=$camera;destination=(Join-Path $target 'config\arenaagents\camera-paths.json')}}
+foreach($copy in $copies){
+ if((Test-Path -LiteralPath $copy.destination) -and (Get-FileHash -LiteralPath $copy.destination).Hash -ne (Get-FileHash -LiteralPath $copy.source).Hash){throw ('Existing file differs; use a fresh instance: '+$copy.destination)}
 }
-$config=Join-Path $target 'config'
-New-Item -ItemType Directory -Path $config -Force|Out-Null
-$court=Join-Path $config 'fork-court.json'
-$sourceCourt=Join-Path $root 'data\court-v1.json'
-if(Test-Path -LiteralPath $court){
- if((Get-FileHash -LiteralPath $court).Hash -ne (Get-FileHash -LiteralPath $sourceCourt).Hash){throw 'Existing court differs; choose a fresh dedicated instance.'}
-}else{Copy-Item -LiteralPath $sourceCourt -Destination $court}
+if(!$NodePath){$found=Get-Command node.exe -ErrorAction SilentlyContinue;if($found){$NodePath=$found.Source}}
+$nodeCopy=$null
+if($NodePath){
+ $NodePath=[IO.Path]::GetFullPath($NodePath)
+ $version=& $NodePath --version
+ if($LASTEXITCODE -ne 0 -or $version -notmatch '^v(\d+)\.' -or [int]$Matches[1] -lt 22){throw 'Node 22 or newer is required.'}
+ $license=Join-Path (Split-Path -Parent $NodePath) 'LICENSE'
+ if(Test-Path -LiteralPath $license){$nodeCopy=@{executable=$NodePath;license=$license;target=(Join-Path $target 'arena-agents-runtime\runtime\toolchains\node')}}
+}
+foreach($copy in $copies){New-Item -ItemType Directory -Force -Path (Split-Path -Parent $copy.destination)|Out-Null;if(!(Test-Path -LiteralPath $copy.destination)){Copy-Item -LiteralPath $copy.source -Destination $copy.destination}}
 $pristine=Join-Path $root 'world\INITIAL'
-if(Test-Path -LiteralPath $pristine){
- if($WorldName -match '[\\/:*?"<>|]' -or $WorldName -in @('.','..')){throw 'Choose a simple world folder name.'}
- $saves=Join-Path $target 'saves'
- New-Item -ItemType Directory -Path $saves -Force|Out-Null
- $destination=Join-Path $saves $WorldName
- if(Test-Path -LiteralPath $destination){throw 'Destination world already exists; never overwrite a world.'}
- Copy-Item -LiteralPath $pristine -Destination $destination -Recurse
-}
-Write-Output 'Installed verified FORK files. Requires Minecraft26.1.2, Fabric0.19.3, Java25. See README-INSTALL.md for provider/runtime and launch instructions.'
+if(Test-Path -LiteralPath $pristine){New-Item -ItemType Directory -Force -Path (Split-Path -Parent $world)|Out-Null;Copy-Item -LiteralPath $pristine -Destination $world -Recurse}
+if($nodeCopy){
+ New-Item -ItemType Directory -Force -Path $nodeCopy.target|Out-Null
+ foreach($pair in @(@{source=$nodeCopy.executable;name='node.exe'},@{source=$nodeCopy.license;name='LICENSE'})){
+  $dst=Join-Path $nodeCopy.target $pair.name
+  if(Test-Path -LiteralPath $dst){if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath $pair.source).Hash){throw 'Existing Node runtime differs; keep it and use the documented JVM option.'}}
+  else{Copy-Item -LiteralPath $pair.source -Destination $dst}
+ }
+}elseif($NodePath){Write-Output ('Set this launcher JVM argument: -Darenaagents.nodePath="'+$NodePath+'"')}
+else{Write-Output 'Node not found. Fixture play is available; Live needs Node22+ and your own Codex sign-in. See README-INSTALL.md.'}
+if($WithGraphics){& (Join-Path $root 'Install-Graphics.ps1') -Instance $target}
+Write-Output ('Installed verified FORK. Open world FORK - Market Street (folder '+$WorldName+'), then /fork start live or explicitly /fork start fixture. Press G for controls.')
