@@ -22,6 +22,8 @@ import java.util.*;
 /** One court, immutable placement, three reused Arena bodies and one server authority. */
 public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoint.Volume<BlockState> {
     public final ForkServerAdapter adapter;
+    // Recorded evidence is presented separately from the authoritative engine.
+
     private final MinecraftServer server;
     private final ServerLevel level;
     private final BlockPos origin;
@@ -51,6 +53,8 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
 
     public ForkSession(MinecraftServer server, ForkEngine.Mode mode) throws Exception {
         this.server=server; level=server.overworld();
+        ForkProjectionRestore.recover(server);
+        if(Files.exists(server.getWorldPath(LevelResource.ROOT).resolve("fork/presentation-restore.json"))) throw new IllegalStateException("Owning human must reconnect to finish recorded-presentation recovery");
         var manager=CodexAgentManager.get(server);
         if(!manager.records().isEmpty()) throw new IllegalStateException("FORK requires a clean profile with no existing Arena actors");
         String override=System.getProperty("fork.courtFile");
@@ -94,6 +98,8 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         projectBlocks(adapter.engine().state());
         if(outsideBefore.entrySet().stream().anyMatch(e->!e.getValue().equals(read(e.getKey().x(),e.getKey().y(),e.getKey().z())))) throw new IllegalStateException("Outside sentinel changed during court placement");
         checkpoint=new ForkCheckpoint<>(this,sentinelCells);
+        roundIndicatorsReady=true;
+        projectBlocks(adapter.engine().state());
         for(var role:ForkEngine.Role.values()) {
             var c=anchor(role,false);
             // Reuse Arena's narrowly scoped offline body lifecycle without registering autonomous goals.
@@ -126,6 +132,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         catch(Exception e) { visualIssue="Visual projection failed: "+e.getMessage(); }
     }
     private void projectBlocks(ForkEngine.State s) {
+        if(roundIndicatorsReady) for(int i=0;i<6;i++) write(5+i,0,8,(i<s.round()?Blocks.SEA_LANTERN:Blocks.GRAY_CONCRETE).defaultBlockState());
         boolean grid=s.gridActiveRound()>0 && s.round()>=s.gridActiveRound();
         boolean clinic=s.round()==0 || s.service().endsWith("1");
         write(3,5,3,(clinic?Blocks.SEA_LANTERN:Blocks.LIGHT_GRAY_CONCRETE).defaultBlockState());
@@ -147,6 +154,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         });
     }
     public String advance(boolean retry) {
+        requireNoPresentation();
         if(bodyFailure) throw new IllegalStateException("Body recovery required: /fork recover; no round committed");
         if(!ready()) throw new IllegalStateException("Waiting for all three Arena bodies; no round committed");
         var e=adapter.engine();
@@ -160,7 +168,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         }
         lastAttempt=e.begin(retry); wasPending=true;
         JsonObject payload=new JsonObject(); payload.add("ticket",ForkEntrypoint.JSON.toJsonTree(lastAttempt));
-        payload.add("state",ForkEntrypoint.JSON.toJsonTree(e.state())); payload.addProperty("budgetMs",20_000);
+        payload.add("state",ForkEntrypoint.JSON.toJsonTree(e.state())); payload.addProperty("budgetMs",ForkContract.PROVIDER_BUDGET_MS);
         if(!CodexAgentServerRuntime.sendFork(server,"fork_request",payload)) { e.cancel(); throw new IllegalStateException("Approved coordinator offline; committed nothing"); }
         return summary();
     }
@@ -173,6 +181,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
     }
     public JsonObject accept(JsonObject payload) {
         try {
+            requireNoPresentation();
             if(payload.has("error")) {
                 var t=ForkWire.ticket(payload.getAsJsonObject("ticket"));
                 if(t.equals(adapter.engine().pending())) { adapter.engine().cancel(); providerIssue=payload.get("error").getAsString(); }
@@ -226,14 +235,15 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         return "Paused. "+cells.size()+" facade cells removed. /fork rewind required before advance.";
     }
     public void tick() {
+        tickPresentation();
         tickTravel();
         var e=adapter.engine(); boolean pending=e.pending()!=null;
         if(!ready()&&!bodyFailure&&System.nanoTime()>=bodyDeadline) {
             bodyFailure=true;cancel();e.pause();providerIssue="Missing role body. /fork recover; no round committed";broadcast(providerIssue);
         }
-        if(wasPending && !pending && lastAttempt!=null && lastAttempt.baseRevision()==e.state().revision()) { cancel(); providerIssue="Attempt ended without commit; one explicit retry or rewind"; broadcast(summary()); }
+        if(wasPending && !pending && lastAttempt!=null && lastAttempt.baseRevision()==e.state().revision()) { cancel(); if(providerIssue.isBlank()) providerIssue="Attempt ended without commit; one explicit retry or rewind"; broadcast(summary()); }
         wasPending=pending;
-        settleActors(e.state());
+        if(presenting()) settlePresentationActors(presentationPlaying?System.currentTimeMillis()-presentationStart:0); else settleActors(e.state());
         level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_CLOCK).getOrThrow(net.minecraft.world.clock.WorldClocks.OVERWORLD),6000);
         var weather=level.getWeatherData(); weather.setClearWeatherTime(6000); weather.setRaining(false); weather.setThundering(false);
         boolean show=++broadcasts%40==0;
@@ -241,8 +251,8 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             if(explorers.contains(p.getUUID())) p.setGameMode(GameType.CREATIVE);
             else { p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); }
             p.setInvulnerable(true);
-            if(show) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(ForkPresentation.compact(e.state(),e.paused(),pending))));
-            if(broadcasts%20==0) sync(p);
+            if(show&&!p.getUUID().equals(presentationOwner)) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(ForkPresentation.compact(e.state(),e.paused(),pending))));
+            if(broadcasts%20==0||p.getUUID().equals(presentationOwner)) sync(p);
         }
     }
     private boolean human(net.minecraft.server.level.ServerPlayer p) {
@@ -253,6 +263,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             && v.y>=origin.getY() && v.y<origin.getY()+16 && v.z>=origin.getZ() && v.z<origin.getZ()+16;
     }
     public void requireCourt(net.minecraft.server.level.ServerPlayer p) {
+        requireNoPresentation();
         if(!human(p)||!atCourt(p)||!visitors.isEmpty()||!explorers.isEmpty()||!travel.isEmpty()) throw new IllegalStateException("Return to court before changing this branch");
     }
     private boolean travelWindow() {
@@ -283,11 +294,13 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         return new Vec3(origin.getX()+8.5,origin.getY()+1,origin.getZ()+7.5);
     }
     public String visit(net.minecraft.server.level.ServerPlayer p,String id) {
+        requireNoPresentation();
         if(!human(p)||!atCourt(p)||!travelWindow()||!travel.isEmpty()) throw new IllegalStateException("Visit requires court, round 0/6, three bodies and no pending work");
         var place=acceptedPlaces().stream().filter(x->x.get("id").getAsString().equals(id)).findFirst().orElseThrow(()->new IllegalArgumentException("Place is not accepted by World/Main"));
         beginTravel(p,destination(place),false,false); return "Checking accepted arrival (10s maximum). Cancel or Return stays available.";
     }
     public String explore(net.minecraft.server.level.ServerPlayer p) {
+        requireNoPresentation();
         if(!human(p)||!atCourt(p)||!travelWindow()||!travel.isEmpty()) throw new IllegalStateException("Explore requires court, round 0/6, three bodies and no pending work");
         var places=acceptedPlaces();
         var place=places.stream().filter(x->x.get("id").getAsString().equals("market-street-view")).findFirst()
@@ -301,6 +314,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             p.getInventory().add(new net.minecraft.world.item.ItemStack(block,64));
     }
     public boolean mayExploreEdit(net.minecraft.world.entity.player.Player p,BlockPos pos) {
+        if(p.getUUID().equals(presentationOwner)) return false;
         if(!explorers.contains(p.getUUID())||p.level()!=level||travel.containsKey(p.getUUID())) return false;
         // Reserve a collar around the immutable court and every accepted sentinel.
         if(pos.getX()>=origin.getX()-2&&pos.getX()<=origin.getX()+17
@@ -310,6 +324,11 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             &&Math.abs((long)s.getY()-pos.getY())<=2&&Math.abs((long)s.getZ()-pos.getZ())<=2);
     }
     public boolean mayExplorePlace(net.minecraft.world.entity.player.Player p,net.minecraft.world.InteractionHand hand,net.minecraft.world.phys.BlockHitResult hit) {
+        if(p.getUUID().equals(presentationOwner)) return p.level()==level
+            &&hit.getBlockPos().equals(PRESENTATION_BUILD_CELL.below())&&hit.getDirection()==net.minecraft.core.Direction.UP
+            &&level.getBlockState(PRESENTATION_BUILD_CELL).isAir()
+            &&presentationPlaying&&System.currentTimeMillis()-presentationStart>=13_600&&System.currentTimeMillis()-presentationStart<=14_400
+            &&p.getItemInHand(hand).is(Blocks.SMOOTH_STONE.asItem());
         if(!mayExploreEdit(p,hit.getBlockPos())||!mayExploreEdit(p,hit.getBlockPos().relative(hit.getDirection()))) return false;
         var item=p.getItemInHand(hand).getItem();
         if(!(item instanceof net.minecraft.world.item.BlockItem blockItem)) return false;
@@ -319,11 +338,13 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
             Blocks.SMOOTH_QUARTZ,Blocks.ORANGE_CONCRETE,Blocks.YELLOW_CONCRETE,Blocks.BLACK_CONCRETE).contains(blockItem.getBlock());
     }
     public void stop() {
+        finishPresentation("Server stopping");
         cancel();
         for(var id:explorers) { var p=server.getPlayerList().getPlayer(id); if(p!=null) { p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); } }
         explorers.clear();
     }
     public String returnToCourt(net.minecraft.server.level.ServerPlayer p) {
+        requireNoPresentation();
         if(!human(p)) throw new IllegalStateException("Human travel only");
         finishTravel(p.getUUID(),"Previous travel cancelled");
         if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel pending round before return");
@@ -389,8 +410,8 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var places=acceptedPlaces().stream().map(a->new ForkView.Place(a.get("id").getAsString(),a.get("name").getAsString())).toList();
         var view=new ForkView(e.state(),archive==null?null:archive.state(),receipts.isEmpty()?List.of():receipts.getLast().effects(),
             receipts.stream().map(r->r.state().allocation().name()).toList(),archive==null?List.of():archive.receipts().stream().map(r->r.state().allocation().name()).toList(),e.pending()!=null,e.paused(),
-            GoalControl.mayControl(p.createCommandSourceStack()),atCourt(p),travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
-            visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places,ready());
+            GoalControl.mayControl(p.createCommandSourceStack())&&!presenting(),atCourt(p),!presenting()&&travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
+            visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places,ready(),presentationView());
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,new ForkStatusPayload(ForkEntrypoint.JSON.toJson(view)));
     }
     private void broadcast(String text) { server.getPlayerList().broadcastSystemMessage(Component.literal(text),false); }
@@ -410,6 +431,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         return "A: "+describe(a.state())+"\nB: "+describe(e.state())+"\nA allocation: "+a.state().allocationHistory()+"\nB allocation: "+e.state().allocationHistory();
     }
     public String recoverBodies() {
+        requireNoPresentation();
         if(adapter.engine().pending()!=null) throw new IllegalStateException("Cancel pending work first");
         for(var role:ForkEngine.Role.values()) {
             var id=actors.get(role);var profile=profiles.get(id);var c=anchor(role,false);
@@ -417,5 +439,173 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         }
         bodyDeadline=System.nanoTime()+15_000_000_000L;bodyFailure=false;
         return "Recovery requested (15s). Once all three bodies appear, /fork rewind must verify INITIAL before advance.";
+    }
+
+    private static final BlockPos PRESENTATION_BUILD_CELL=new BlockPos(446,1,425);
+    private boolean roundIndicatorsReady;
+    private ForkRecordedBundle recordedBundle;
+    private Path recordedJournal;
+    private ForkProjectionRestore presentationRestore;
+    private UUID presentationOwner;
+    private ForkEngine.State presentationState, presentationAuthority;
+    private List<ForkRecordedTimeline.Cue> presentationCues=List.of();
+    private long presentationStart, presentationPrimed;
+    private int presentationIndex;
+    private boolean presentationPlaying, presentationWasExplorer;
+    private String presentationError="";
+    private final Map<ForkEngine.Role,ActorPose> presentationActors=new EnumMap<>(ForkEngine.Role.class);
+    private record ActorPose(Vec3 position,float yaw,float pitch) {}
+    JsonArray recordedActorPoses() {
+        var values=new JsonArray();
+        for(var entry:actors.entrySet()) {
+            var actor=body(entry.getValue()).orElseThrow();var pose=new JsonObject();
+            pose.addProperty("uuid",actor.getUUID().toString());pose.addProperty("role",entry.getKey().name());
+            pose.addProperty("x",actor.getX());pose.addProperty("y",actor.getY());pose.addProperty("z",actor.getZ());
+            pose.addProperty("yaw",actor.getYRot());pose.addProperty("pitch",actor.getXRot());values.add(pose);
+        }
+        return values;
+    }
+    BlockState buildState(BlockPos pos) { return level.getBlockState(pos); }
+    public void recoverPresentationOwner(net.minecraft.server.level.ServerPlayer p) throws Exception {
+        Path path=storage.resolve("presentation-restore.json");
+        if(presenting()||!Files.exists(path)) return;
+        var document=JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+        if(!p.getUUID().toString().equals(document.getAsJsonObject("owner").get("uuid").getAsString())) return;
+        ForkProjectionRestore.recover(server);
+        if(p.gameMode.getGameModeForPlayer()==GameType.CREATIVE) explorers.add(p.getUUID());
+    }
+    public boolean presenting() { return presentationRestore!=null; }
+    public void requireNoPresentation() {
+        if(presenting()) throw new IllegalStateException("Recorded presentation owns the court; stop presentation first");
+    }
+    public String preparePresentation(net.minecraft.server.level.ServerPlayer p) throws Exception {
+        if(presenting()) {
+            if(!p.getUUID().equals(presentationOwner)) throw new IllegalStateException("Another human owns presentation");
+            sync(p); return "Recorded presentation already primed";
+        }
+        requireCourt(p);
+        var engine=adapter.engine();
+        if(engine.state().mode()!=ForkEngine.Mode.LIVE||engine.pending()!=null||engine.paused()||!ready())
+            throw new IllegalStateException("Preparation requires idle LIVE session and all three bodies");
+        Path journal=Path.of(System.getProperty("fork.presentationJournal",storage.toString())).toRealPath();
+        var bundle=ForkRecordedBundle.load(journal,ForkEntrypoint.JSON);
+        if(!level.hasChunkAt(PRESENTATION_BUILD_CELL)||!level.getBlockState(PRESENTATION_BUILD_CELL).isAir()
+                ||!level.getBlockState(PRESENTATION_BUILD_CELL.below()).is(Blocks.STONE_BRICKS)
+                ||PRESENTATION_BUILD_CELL.getX()>=origin.getX()-2&&PRESENTATION_BUILD_CELL.getX()<=origin.getX()+17
+                  &&PRESENTATION_BUILD_CELL.getZ()>=origin.getZ()-2&&PRESENTATION_BUILD_CELL.getZ()<=origin.getZ()+17)
+            throw new IllegalStateException("Actual build lease requires the accepted empty cell446,1,425 and stone-brick support");
+        var operator=new Vec3(446.5,1,427.5);
+        if(p.level()!=level||!level.noCollision(p,p.getBoundingBox().move(operator.subtract(p.position()))))
+            throw new IllegalStateException("Actual build operator arrival obstructed");
+        var sentinels=protectedSentinels.stream().map(pos->new ForkCheckpoint.Cell(pos.getX()-origin.getX(),pos.getY()-origin.getY(),pos.getZ()-origin.getZ())).toList();
+        presentationRestore=ForkProjectionRestore.save(this,origin,sentinels,storage,p,PRESENTATION_BUILD_CELL);
+        presentationOwner=p.getUUID();presentationAuthority=engine.state();presentationWasExplorer=explorers.contains(p.getUUID());
+        recordedBundle=bundle;recordedJournal=journal;presentationCues=ForkRecordedTimeline.cues(bundle);
+        presentationStart=0;presentationPrimed=System.currentTimeMillis();presentationIndex=0;presentationPlaying=false;presentationError="";
+        for(var entry:actors.entrySet()) {
+            var actor=body(entry.getValue()).orElseThrow();
+            presentationActors.put(entry.getKey(),new ActorPose(actor.position(),actor.getYRot(),actor.getXRot()));
+        }
+        try {
+            if(!checkpoint.restore(this)) throw new IllegalStateException("INITIAL court/sentinel verification failed before prime");
+            presentationState=bundle.initial();projectBlocks(presentationState);settlePresentationActors(0);
+            explorers.add(p.getUUID());p.setGameMode(GameType.CREATIVE);
+            p.getInventory().clearContent();p.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(Blocks.SMOOTH_STONE,64));
+            p.getInventory().setSelectedSlot(0);p.containerMenu.broadcastChanges();
+            p.teleportTo(level,operator.x,operator.y,operator.z,Set.of(),180,0,true);p.setDeltaMovement(Vec3.ZERO);
+            sync(p);
+            System.out.println("FORK RECORDED presentation primed bundle="+bundle.id()+" sourceDigest="+bundle.sourceDigest()+" clinic="+bundle.clinic().getLast().state().branch()+" workshop="+bundle.workshop().getLast().state().branch());
+            return "Recorded LIVE evidence primed; authoritative world preserved";
+        } catch(Exception failure) { finishPresentation("Prime failed: "+failure.getMessage());throw failure; }
+    }
+    public String startPresentation(net.minecraft.server.level.ServerPlayer p,String bundleId) throws Exception {
+        requirePresentationOwner(p);
+        if(presentationPlaying) throw new IllegalStateException("Presentation already started");
+        if(!recordedBundle.id().equals(bundleId)) throw new IllegalStateException("Stale presentation bundle");
+        recordedBundle.verifyUnchanged(recordedJournal,ForkEntrypoint.JSON);
+        if(!ready()||!adapter.engine().state().equals(presentationAuthority)||adapter.engine().pending()!=null)
+            throw new IllegalStateException("Presentation authority or actors changed after prime");
+        presentationStart=System.currentTimeMillis()+3000;presentationPlaying=true;
+        sync(p);return "Recorded presentation armed";
+    }
+    private void requirePresentationOwner(net.minecraft.server.level.ServerPlayer p) {
+        if(!presenting()||!p.getUUID().equals(presentationOwner)) throw new IllegalStateException("Presentation belongs to its owning human");
+    }
+    public String stopPresentation(net.minecraft.server.level.ServerPlayer p) {
+        requirePresentationOwner(p);finishPresentation("");if(presenting()) throw new IllegalStateException(presentationError);return "Authoritative world restored";
+    }
+    public void presentationFailed(net.minecraft.server.level.ServerPlayer p,String error) {
+        if(presenting()&&p.getUUID().equals(presentationOwner)) finishPresentation(error);
+        else if(!presenting()) presentationError=error;
+        sync(p);
+    }
+    private void finishPresentation(String error) {
+        if(!presenting()) return;
+        UUID owner=presentationOwner;var authority=adapter.engine().state();
+        presentationPlaying=false;presentationError=error;
+        try {
+            presentationRestore.restore(this,server);
+            if(presentationWasExplorer) explorers.add(owner);else explorers.remove(owner);
+            if(!authority.equals(presentationAuthority)) projectBlocks(authority);
+            for(var entry:actors.entrySet()) body(entry.getValue()).ifPresent(actor->{
+                if(authority.equals(presentationAuthority)) {
+                    var pose=presentationActors.get(entry.getKey());
+                    if(pose!=null) actor.teleportTo(level,pose.position().x,pose.position().y,pose.position().z,Set.of(),pose.yaw(),pose.pitch(),true);
+                }
+                actor.setDeltaMovement(Vec3.ZERO);
+            });
+            if(!authority.equals(presentationAuthority)) settleActors(authority);
+            presentationRestore=null;presentationOwner=null;presentationState=null;presentationActors.clear();
+            var player=server.getPlayerList().getPlayer(owner);if(player!=null) sync(player);
+            System.out.println("FORK RECORDED presentation restored authoritative world"+(error.isBlank()?"":": "+error));
+        } catch(Exception failure) {
+            presentationError="Restoration failed; durable journal retained: "+failure.getMessage();
+            visualIssue=presentationError;System.err.println("FORK "+presentationError);
+        }
+    }
+    private void tickPresentation() {
+        if(!presenting()||!presentationError.isBlank()) return;
+        if(server.getPlayerList().getPlayer(presentationOwner)==null) { finishPresentation("Owner disconnected");return; }
+        if(!ready()) { finishPresentation("Recorded actor missing");return; }
+        if(!adapter.engine().state().equals(presentationAuthority)||adapter.engine().pending()!=null||adapter.engine().paused()) {
+            finishPresentation("Authoritative branch changed during presentation");return;
+        }
+        long now=System.currentTimeMillis();
+        if(!presentationPlaying) { if(now-presentationPrimed>120_000) finishPresentation("Prime expired");return; }
+        long elapsed=now-presentationStart;
+        if(elapsed>=ForkRecordedTimeline.RESTORE_AFTER_MS) { finishPresentation("");return; }
+        int index=ForkRecordedTimeline.indexAt(presentationCues,elapsed);
+        if(index!=presentationIndex) {
+            var cue=presentationCues.get(index);
+            if(elapsed-cue.offsetMs()>ForkRecordedTimeline.MAX_LAG_MS) { finishPresentation("World cue late: "+cue.name());return; }
+            try {
+                presentationState=cue.state();projectBlocks(presentationState);presentationIndex=index;settlePresentationActors(elapsed);
+                var owner=server.getPlayerList().getPlayer(presentationOwner);if(owner!=null) sync(owner);
+            } catch(Exception failure) { finishPresentation("World cue failed: "+failure.getMessage()); }
+        }
+    }
+    private void settlePresentationActors(long elapsed) {
+        if(presentationState==null) return;
+        for(var entry:actors.entrySet()) body(entry.getValue()).ifPresent(player->{
+            var role=entry.getKey();var cell=anchor(role,presentationState.courierWaypoint().equals("clinic"));
+            Vec3 target=new Vec3(origin.getX()+cell.x()+0.5,origin.getY()+cell.y(),origin.getZ()+cell.z()+0.5);
+            float yaw=180;
+            Vec3 camera=null;
+            if(role==ForkEngine.Role.MEDIC&&elapsed>=18_350&&elapsed<19_850) camera=new Vec3(431.55,2.6,414.575);
+            if(role==ForkEngine.Role.ENGINEER&&elapsed>=19_850&&elapsed<21_350) camera=new Vec3(441,2.6,414.525);
+            if(role==ForkEngine.Role.COURIER&&elapsed>=21_350&&elapsed<25_700) camera=new Vec3(428.6,2.5,420);
+            if(camera!=null) yaw=(float)Math.toDegrees(Math.atan2(-(camera.x-target.x),camera.z-target.z));
+            OfflineAgentPlayers.stop(player);player.setDeltaMovement(Vec3.ZERO);
+            if(player.position().distanceToSqr(target)>0.0001||Math.abs(player.getYRot()-yaw)>0.1)
+                player.teleportTo(level,target.x,target.y,target.z,Set.of(),yaw,0,true);
+        });
+    }
+    private ForkView.Presentation presentationView() {
+        var cue=presentationCues.isEmpty()?null:presentationCues.get(presentationIndex);
+        return new ForkView.Presentation(recordedBundle==null?"":recordedBundle.id(),presenting()&&ready()&&presentationError.isBlank(),
+                presenting()&&presentationPlaying,presentationOwner==null?"":presentationOwner.toString(),presentationStart,
+                ForkRecordedTimeline.DURATION_MS,ForkRecordedTimeline.RESTORE_AFTER_MS,cue==null?"":cue.name(),cue==null?0:cue.offsetMs(),
+                presentationState==null?0:presentationState.round(),recordedBundle==null?"":recordedBundle.sourceDigest(),presentationError,
+                presenting()&&level.getBlockState(PRESENTATION_BUILD_CELL).is(Blocks.SMOOTH_STONE));
     }
 }

@@ -48,7 +48,7 @@ public final class ForkEntrypoint implements ModInitializer {
                     .executes(c -> run(c.getSource(), () -> { var s=requireCourt(c.getSource()); s.adapter.engine().power(power); return s.summary(); }))));
             root.then(Commands.literal("advance").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).advance(false))));
             root.then(Commands.literal("retry").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).advance(true))));
-            root.then(Commands.literal("cancel").executes(c -> run(c.getSource(), () -> { var s=require(c.getSource()); s.cancel(); return s.summary(); })));
+            root.then(Commands.literal("cancel").executes(c -> run(c.getSource(), () -> { var s=require(c.getSource()); s.requireNoPresentation(); s.cancel(); return s.summary(); })));
             root.then(Commands.literal("recover").executes(c -> run(c.getSource(), () -> require(c.getSource()).recoverBodies())));
             root.then(Commands.literal("rewind").executes(c -> run(c.getSource(), () -> require(c.getSource()).rewind(c.getSource().getPlayerOrException()))));
             root.then(Commands.literal("locator").executes(c -> run(c.getSource(), () -> require(c.getSource()).locator())));
@@ -58,7 +58,22 @@ public final class ForkEntrypoint implements ModInitializer {
             root.then(Commands.literal("inspect").executes(c -> run(c.getSource(), () -> require(c.getSource()).inspect())));
             root.then(Commands.literal("compare").executes(c -> run(c.getSource(), () -> require(c.getSource()).compare())));
             root.then(Commands.literal("demolish").executes(c -> run(c.getSource(), () -> requireCourt(c.getSource()).demolish())));
+            root.then(Commands.literal("presentation")
+                .then(Commands.literal("prepare").executes(c->runQuiet(c.getSource(),()->require(c.getSource()).preparePresentation(c.getSource().getPlayerOrException()))))
+                .then(Commands.literal("start").then(Commands.argument("bundle",com.mojang.brigadier.arguments.StringArgumentType.word())
+                    .executes(c->runQuiet(c.getSource(),()->require(c.getSource()).startPresentation(c.getSource().getPlayerOrException(),com.mojang.brigadier.arguments.StringArgumentType.getString(c,"bundle"))))))
+                .then(Commands.literal("stop").executes(c->runQuiet(c.getSource(),()->require(c.getSource()).stopPresentation(c.getSource().getPlayerOrException())))));
             dispatcher.register(root);
+        });
+        ServerLifecycleEvents.SERVER_STARTED.register(server->{
+            try { ForkProjectionRestore.recover(server); }
+            catch(Exception e) { System.err.println("FORK recorded presentation recovery required: "+e.getMessage()); }
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler,sender,server)->{
+            server.execute(()->{
+                try { var s=session(server); if(s==null) ForkProjectionRestore.recover(server); else s.recoverPresentationOwner(handler.getPlayer()); }
+                catch(Exception e) { System.err.println("FORK recorded owner recovery required: "+e.getMessage()); }
+            });
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> { var s=session(server); if(s!=null) s.tick(); });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> { var s=session(server); if(s!=null) s.stop(); });
@@ -80,6 +95,13 @@ public final class ForkEntrypoint implements ModInitializer {
         source.sendSuccess(() -> Component.literal("FORK | start fixture/live (first run) | new fixture/live (explicit restart) | power clinic/workshop | advance | retry | cancel | rewind | recover | inspect | compare | demolish | explore (fly/build city) | return"), false); return 1;
     }
     private interface Operation { String run() throws Exception; }
+    private static int runQuiet(CommandSourceStack source,Operation action) {
+        try { action.run(); return 1; }
+        catch(Exception e) {
+            var s=session(source.getServer());if(s!=null&&source.getPlayer()!=null) s.presentationFailed(source.getPlayer(),e.getMessage());
+            source.sendFailure(Component.literal("FORK presentation: "+e.getMessage())); return 0;
+        }
+    }
     private static int run(CommandSourceStack source, Operation action) {
         try { String text=action.run(); source.sendSuccess(() -> Component.literal(text), true); return 1; }
         catch(Exception e) { source.sendFailure(Component.literal("FORK: " + e.getMessage())); return 0; }
