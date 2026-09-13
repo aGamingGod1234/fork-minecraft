@@ -210,10 +210,11 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         if(wasPending && !pending && lastAttempt!=null && lastAttempt.baseRevision()==e.state().revision()) { cancel(); providerIssue="Attempt ended without commit; one explicit retry or rewind"; broadcast(summary()); }
         wasPending=pending;
         settleActors(e.state());
-        level.setDayTime(6000); level.setWeatherParameters(6000,0,false,false);
+        level.clockManager().setTotalTicks(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.WORLD_CLOCK).getOrThrow(net.minecraft.world.clock.WorldClocks.OVERWORLD),6000);
+        var weather=level.getWeatherData(); weather.setClearWeatherTime(6000); weather.setRaining(false); weather.setThundering(false);
         for(var p:server.getPlayerList().getPlayers()) {
             p.setGameMode(GameType.ADVENTURE); p.getInventory().clearContent(); p.setInvulnerable(true);
-            if(++broadcasts%40==0) p.displayClientMessage(Component.literal(summary()),true);
+            if(++broadcasts%40==0) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket(Component.literal(summary())));
         }
     }
     private void broadcast(String text) { server.getPlayerList().broadcastSystemMessage(Component.literal(text),false); }
