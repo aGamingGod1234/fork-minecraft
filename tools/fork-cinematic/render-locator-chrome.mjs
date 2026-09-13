@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {runProcess} from './process-runner.mjs';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
+if(process.env.COMPUTERNAME?.toUpperCase()!=='LAPTOP')throw Error('Laptop media only');
+const chrome='C:/Program Files/Google/Chrome/Application/chrome.exe';
+const output=path.join(root,'media/source/locator-cbd-1080p.png');
+if(fs.existsSync(output))throw Error('Preserve prior locator output; choose a new named revision');
+fs.mkdirSync(path.dirname(output),{recursive:true});
+const args=['--headless=new','--no-first-run','--disable-background-networking','--disable-extensions','--hide-scrollbars','--window-size=1920,1080','--force-device-scale-factor=1','--virtual-time-budget=1000',`--user-data-dir=${path.join(root,'.work/fork/cinematic/chrome-locator-isolated')}`,`--screenshot=${output}`,pathToFileURL(path.join(root,'media/edit/locator-cbd.html')).href];
+const start=Date.now(),result=runProcess(chrome,args,{timeout:30000});
+const evidence={utc:new Date().toISOString(),kind:'Actual attributed SVG rendered by existing Chrome headless, explicitly authorized',command:{executable:chrome,args},exit:result.status,error:result.error?.message,seconds:(Date.now()-start)/1000,output:'media/source/locator-cbd-1080p.png',sha256:fs.existsSync(output)?crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'):null,stderr:result.stderr,visuallyReviewed:false,syntheticGameplay:false};
+fs.writeFileSync(path.join(root,'.work/fork/cinematic/locator-chrome-render.json'),JSON.stringify(evidence,null,2));
+if(result.status!==0||!fs.existsSync(output))throw Error('Chrome locator render failed; inspect private evidence, do not weaken sandbox');
+console.log(JSON.stringify(evidence,null,2));

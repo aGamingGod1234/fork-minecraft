@@ -11,8 +11,9 @@ const hash=async p=>{const h=crypto.createHash('sha256');for await(const c of fs
 const escape=p=>p.replaceAll('\\','/').replaceAll(':','\\:');
 async function main(){
   check(process.env.COMPUTERNAME?.toUpperCase()==='LAPTOP','Laptop media only');
-  const deadline=Date.parse('2026-09-13T03:35:00Z');
-  check(Date.now()<deadline,'11:35 real-input gate has closed; report unrun and await Main media assignment');
+  const deadline=Date.parse(process.argv[3]||'2026-09-13T03:35:00Z');
+  check(Number.isFinite(deadline)&&deadline<=Date.parse('2026-09-13T05:10:00Z'),'Supply the explicit current media-slice deadline, no later than worker stop');
+  check(Date.now()<deadline,'Media-slice deadline has closed; original11:35 gate remains unrun if missed');
   const relative=process.argv[2];
   check(relative && !path.isAbsolute(relative),'Pass an ingested media/source filename');
   const source=path.resolve(root,relative), rel=path.relative(root,source).replaceAll('\\','/');
@@ -28,7 +29,7 @@ async function main(){
   const evidence={schema:'fork-real-input-diagnostic-1',kind:'INTERNAL REAL INPUT DIAGNOSTIC - FIXTURE NOT APPROVED FOR SUBMISSION',utc:new Date().toISOString(),device:'Laptop',source:rel,sourceSha256:inputHash,inputProbe,sourceTrimsSeconds:[[0,7.5],[7.5,15]],outputDirectory:path.relative(root,out).replaceAll('\\','/'),humanVoiceConfirmed:false,gameViewConfirmed:false,humanPlaybackConfirmed:false,finalFilm:false,commands:[],jobs:[]};
   const save=()=>fs.writeFileSync(path.join(out,'diagnostic-manifest.json'),JSON.stringify(evidence,null,2));
   const run=(name,args)=>{
-    check(Date.now()<deadline,'11:35 gate reached; stop this diagnostic slice');
+    check(Date.now()<deadline,'Assigned media-slice deadline reached; stop this diagnostic slice');
     const command={name,executable:t.ffmpeg,args:['-hide_banner','-nostdin','-n',...args],startedUtc:new Date().toISOString()};
     evidence.commands.push(command); evidence.jobs=[{pid:process.pid,step:name,startedUtc:command.startedUtc}];save();
     const started=Date.now(),r=runProcess(t.ffmpeg,command.args,{timeout:Math.max(1,Math.min(120000,deadline-Date.now()))});

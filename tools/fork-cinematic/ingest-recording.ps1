@@ -1,11 +1,12 @@
-param([Parameter(Mandatory=$true)][string]$RecordingName)
+param([Parameter(Mandatory=$true)][string]$RecordingName,[ValidateSet('Prepared','Videos')][string]$RecordingRoot='Prepared')
 $ErrorActionPreference = 'Stop'
 if ($env:COMPUTERNAME -ine 'LAPTOP') { throw 'Laptop media lease only' }
 if ([IO.Path]::GetFileName($RecordingName) -ne $RecordingName -or [IO.Path]::GetExtension($RecordingName) -notin @('.mkv','.mp4','.mov')) { throw 'Supply one recording filename only' }
 $workspace = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$recordFolder = Join-Path $env:LOCALAPPDATA 'FORK-Tools\preflight-20260913\obs'
+$recordFolder = if($RecordingRoot -eq 'Videos'){Join-Path $env:USERPROFILE 'Videos'}else{Join-Path $env:LOCALAPPDATA 'FORK-Tools\preflight-20260913\obs'}
 $original = Join-Path $recordFolder $RecordingName
 $before = Get-Item -LiteralPath $original
+if($before.LastWriteTimeUtc -lt [DateTime]'2026-09-13T02:30:00Z'){throw 'Not a current hackathon recording; do not ingest unrelated old media'}
 Start-Sleep -Seconds 3
 $after = Get-Item -LiteralPath $original
 if ($before.Length -ne $after.Length -or $before.LastWriteTimeUtc -ne $after.LastWriteTimeUtc -or $after.Length -eq 0) { throw 'Recording is still changing; leave it intact and wait for Stop Recording' }
