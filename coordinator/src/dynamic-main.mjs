@@ -2720,7 +2720,8 @@ async function runCli(reporter = new RuntimeErrorReporter()) {
 		scenarioId: runtime.scenarioId,
 		privatePath: runtime.providerTurnsPath,
 	});
-	const voiceSupervisor = createVoiceSupervisor(config, process.env);
+	// FORK uses human narration. Never construct speech providers, workers or listeners here.
+	const voiceSupervisor = createForkVoiceRuntime();
 	const coordinator = createDynamicCoordinator(config, {
 		traceWriter, protocolAudit, providerTurnRecorder, runtimeGeneration: runtime.runtimeGeneration,
 		runtimeHooks: { onRemoved: (agentId) => voiceSupervisor.removeAgent(agentId) },
@@ -2744,7 +2745,19 @@ async function runCli(reporter = new RuntimeErrorReporter()) {
 	process.once('SIGTERM', shutdown);
 }
 
-export async function startCoordinatorControl(coordinator, voiceSupervisor) {
+/** Disabled lifecycle handle keeps optional cleanup/status callers safe without opening an endpoint. */
+export function createForkVoiceRuntime() {
+	return Object.freeze({
+		enabled: false,
+		endpoint: null,
+		start() {},
+		async close() {},
+		async removeAgent() { return false; },
+		statusSnapshots() { return []; },
+	});
+}
+
+export async function startCoordinatorControl(coordinator, voiceSupervisor = createForkVoiceRuntime()) {
 	if (coordinator === null || typeof coordinator?.start !== 'function') {
 		throw new TypeError('coordinator.start is required');
 	}
@@ -2756,6 +2769,7 @@ export async function startCoordinatorControl(coordinator, voiceSupervisor) {
 		coordinator.once('shutdown', () => { void Promise.resolve(voiceSupervisor.close()).catch(() => {}); });
 	}
 	await coordinator.start();
+	if (voiceSupervisor.enabled === false) return;
 	try { Promise.resolve(voiceSupervisor.start()).catch(() => {}); }
 	catch { /* optional voice startup cannot reject coordinator control */ }
 }
