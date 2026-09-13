@@ -260,6 +260,25 @@ def validate_job_lease(lease_path, world, project_root=PROJECT_ROOT):
     return {"id": lease.get("id"), "sha256": digest(lease_path), "heavyJobSlot": lease["heavyJobSlot"], "expiresUtc": lease["expiresUtc"]}
 
 
+def disable_structures(config):
+    """Handle both embedded legacy and external 26.1 world-generation records."""
+    for key in ("generate_features", "generate_structures"):
+        if key in config.value:
+            config.value[key] = Tag(1, 0)
+    dimensions = config.value.get("dimensions")
+    if dimensions is None or dimensions.type_id != 10:
+        raise ValueError("World generation template has no dimensions")
+    for dimension in dimensions.value.values():
+        if dimension.type_id != 10:
+            continue
+        generator = dimension.value.get("generator")
+        if generator is None or generator.type_id != 10:
+            continue
+        settings = generator.value.get("settings")
+        if settings is not None and settings.type_id == 10 and "structure_overrides" in settings.value:
+            settings.value["structure_overrides"] = tag_list([], 8)
+
+
 def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None):
     validate_bounds(bounds)
     world, allowed_root = Path(world).resolve(), Path(allowed_root).resolve()
@@ -280,6 +299,16 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     data_version = data.value["DataVersion"].value
     if data_version < 2844:
         raise ValueError("level template must use modern 1.18+ chunk height and palette format")
+    settings_path = Path(level_template).resolve().parent / "data" / "minecraft" / "world_gen_settings.dat"
+    external_settings = None
+    if settings_path.is_file():
+        external_settings = read_level_dat(settings_path)
+        config = external_settings.root.value.get("data")
+        if config is None or config.type_id != 10:
+            raise ValueError("External world generation settings require a data compound")
+        disable_structures(config)
+    elif "WorldGenSettings" not in data.value:
+        raise ValueError("Template requires missing external data/minecraft/world_gen_settings.dat")
     columns = defaultdict(list)
     sources = []
     source_classes = set()
@@ -307,6 +336,7 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
               "entities": "none", "mapData": "none", "sourceClasses": sorted(source_classes), "inputs": sources,
               "inputRuns": input_count, "chunkCount": count, "dataVersion": data_version,
               "minecraftTarget": "26.1.2", "runtimeLoadAccepted": False, "jobLease": lease_receipt,
+              "templateDependencies": ([{"path": "data/minecraft/world_gen_settings.dat", "sha256": digest(settings_path)}] if external_settings else []),
               "levelTemplateSha256": digest(level_template), "crossLayerOverwrittenBlocks": defaultdict(int), "outputs": []}
     # Resolve all conflicts before creating an output. Generation remains a bounded in-memory strip operation.
     chunks = {}
@@ -332,18 +362,9 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     data.value.pop("DragonFight", None)
     worldgen = data.value.get("WorldGenSettings")
     if worldgen is not None and worldgen.type_id == 10:
-        worldgen.value["generate_features"] = Tag(1, 0)
-        dimensions = worldgen.value.get("dimensions")
-        if dimensions is not None and dimensions.type_id == 10:
-            for dimension in dimensions.value.values():
-                if dimension.type_id != 10:
-                    continue
-                generator = dimension.value.get("generator")
-                if generator is None or generator.type_id != 10:
-                    continue
-                settings = generator.value.get("settings")
-                if settings is not None and settings.type_id == 10 and "structure_overrides" in settings.value:
-                    settings.value["structure_overrides"] = tag_list([], 8)
+        disable_structures(worldgen)
+    data.value["DataPacks"] = compound({"Enabled": tag_list([Tag(8, "vanilla")], 8), "Disabled": tag_list([], 8)})
+    report["dataPacks"] = ["vanilla"]
     if "MapFeatures" in data.value:
         data.value["MapFeatures"] = Tag(1, 0)
     report["surroundingVanillaStructureGeneration"] = "disabled"
@@ -366,10 +387,18 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     data.value["SpawnX"] = Tag(3, spawn_x)
     data.value["SpawnY"] = Tag(3, spawn_y)
     data.value["SpawnZ"] = Tag(3, spawn_z)
+    if "spawn" in data.value or external_settings is not None:
+        data.value["spawn"] = compound({"pos": Tag(11, [spawn_x, spawn_y, spawn_z]), "pitch": Tag(5, 0.0),
+                                        "yaw": Tag(5, 0.0), "dimension": Tag(8, "minecraft:overworld")})
     report["spawn"] = [spawn_x, spawn_y, spawn_z]
     level_path = world / "level.dat"
     write_level_dat(level_path, template)
     report["outputs"].append({"path": "level.dat", "bytes": level_path.stat().st_size, "sha256": digest(level_path)})
+    if external_settings is not None:
+        output_settings = world / "data" / "minecraft" / "world_gen_settings.dat"
+        output_settings.parent.mkdir(parents=True, exist_ok=True)
+        write_level_dat(output_settings, external_settings)
+        report["outputs"].append({"path": output_settings.relative_to(world).as_posix(), "bytes": output_settings.stat().st_size, "sha256": digest(output_settings)})
     report["crossLayerOverwrittenBlocks"] = dict(sorted(report["crossLayerOverwrittenBlocks"].items()))
     report["status"] = "WRITTEN_UNACCEPTED"
     return report

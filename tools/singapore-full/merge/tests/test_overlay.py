@@ -132,6 +132,34 @@ class OverlayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "not currently valid"):
             validate_job_lease(lease_path, root / "world", self.base)
 
+    def test_modern_external_worldgen_and_spawn_are_preserved_and_sanitized(self):
+        template = read_level_dat(self.template)
+        data = template.root.value["Data"].value
+        old_config = data.pop("WorldGenSettings")
+        old_config.value.pop("generate_features")
+        old_config.value["generate_structures"] = Tag(1, 1)
+        data["DataVersion"] = Tag(3, 4790)
+        data["spawn"] = compound({"pos": Tag(11, [436, 1, 415])})
+        write_level_dat(self.template, template)
+        settings_path = self.base / "data" / "minecraft" / "world_gen_settings.dat"
+        settings_path.parent.mkdir(parents=True)
+        write_level_dat(settings_path, NbtFile("", compound({"data": old_config, "DataVersion": Tag(3, 4790)})))
+        report, _, world = self.render([])
+        actual = read_level_dat(world / "level.dat").root.value["Data"].value
+        self.assertEqual(actual["spawn"].value["pos"].value, report["spawn"])
+        self.assertEqual([item.value for item in actual["DataPacks"].value["Enabled"].value.items], ["vanilla"])
+        generated = read_level_dat(world / "data" / "minecraft" / "world_gen_settings.dat").root.value["data"].value
+        self.assertEqual(generated["generate_structures"].value, 0)
+        self.assertEqual(report["templateDependencies"][0]["path"], "data/minecraft/world_gen_settings.dat")
+
+    def test_missing_modern_worldgen_dependency_fails_before_write(self):
+        template = read_level_dat(self.template)
+        template.root.value["Data"].value.pop("WorldGenSettings")
+        write_level_dat(self.template, template)
+        with self.assertRaisesRegex(ValueError, "missing external"):
+            self.render([])
+        self.assertFalse((self.base / "world").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
