@@ -58,7 +58,7 @@ public final class ForkCaptureGate {
         if(phase.equals("prepare")){
             if(serial<=version||p==null||!p.ready()||!p.owner().equals(owner)||!p.event().equals("initial"))return null;
             if(p.durationMs()!=90000||p.restoreAfterMs()!=93000||p.sourceDigest().isBlank())return fail("The prepared LIVE recording has an incompatible timeline.");
-            bundle=p.bundleId();digest=p.sourceDigest();phase="warmup";deadline=now+45000;
+            bundle=p.bundleId();digest=p.sourceDigest();phase="warmup";deadline=now+90000;
             return new Action("prime","");
         }
         if(phase.equals("running")&&epochNow>=startEpochMs+93000&&p!=null&&!p.active()&&p.error().isBlank())return null;

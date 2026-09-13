@@ -296,6 +296,11 @@ public final class CameraDirectorClient {
     }
     public static dev.fork.gameplay.ForkCaptureTimeline captureTimeline() { if(captureTimeline==null)throw new IllegalStateException("Install the exact narration camera timeline before recording."); validateTimedTake(captureTimeline.paths(),captureTimeline.durations()); return captureTimeline; }
     public static PresentationClock primeTimedTake(List<String> names,List<Integer> durations) { return playTimedTakeAt(names,durations,Long.MAX_VALUE); }
+    /** Park at an authored pose only while the take clock is unarmed. */
+    public static void previewTimedTake(PresentationClock clock,double ticks) {
+        if(!ownsTimedTake(clock)||ticks>=playback.reel().durationTicks())throw new IllegalStateException("Invalid camera warmup owner or pose");
+        clock.previewAt(ticks);presentationFrames=0;apply(Minecraft.getInstance(),playback.reel().sample(ticks));
+    }
     public static boolean firstFrameReady(PresentationClock clock) { return ownsTimedTake(clock)&&presentationFrames>=3&&Minecraft.getInstance().levelRenderer.hasRenderedAllSections(); }
     public static void armTimedTake(PresentationClock clock,long startNanos) { if(!ownsTimedTake(clock))throw new IllegalStateException("Camera ownership lost before arming");clock.armAt(startNanos); }
     public static void setTakeFrameListener(PresentationClock clock,java.util.function.DoubleConsumer listener) { if(!ownsTimedTake(clock))throw new IllegalStateException("Camera ownership lost");takeFrameListener=listener; }
@@ -415,7 +420,7 @@ public final class CameraDirectorClient {
 			}
 			elapsed %= duration;
 		}
-		apply(client, playback.reel().sample(elapsed)); presentationFrames++;
+		apply(client, playback.reel().sample(playback.clock().sampleTicks(elapsed))); presentationFrames++;
         if(takeFrameListener!=null)takeFrameListener.accept(elapsed);
 	}
 
@@ -424,10 +429,13 @@ public final class CameraDirectorClient {
 		private long previousNanos;
         private long notBeforeNanos;
         private boolean armed;
+        private double previewTicks;
 		private long elapsedNanos;
 		private boolean previouslyPaused;
 		public PresentationClock(long now, boolean paused) { previousNanos = now; notBeforeNanos = now; armed=now!=Long.MAX_VALUE; previouslyPaused = paused; }
 		public void armAt(long startNanos) { if(armed)throw new IllegalStateException("Clock already armed"); previousNanos=startNanos;notBeforeNanos=startNanos;previouslyPaused=false;armed=true; }
+        public void previewAt(double ticks) { if(armed||!Double.isFinite(ticks)||ticks<0)throw new IllegalStateException("Only an unarmed clock can preview an authored pose");previewTicks=ticks; }
+        public double sampleTicks(double elapsed) { return armed?elapsed:previewTicks; }
         public double elapsedTicks() { return elapsedNanos / 50_000_000.0D; }
         public double advance(long now, boolean paused) {
 			if(!armed)return 0;

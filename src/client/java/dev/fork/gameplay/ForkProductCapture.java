@@ -17,8 +17,8 @@ public final class ForkProductCapture {
     private static Runnable restorePerformance;
     private static CameraDirectorClient.PresentationClock clock;
     private static Object level,player;
-    private static boolean returnRequested,projectionRequested,buildRequested;
-    private static long lastFrameNanos,frameCount,worstFrameGapNanos,lastCueOffset=-1;
+    private static boolean returnRequested,projectionRequested,buildRequested,wideWarmed,wideChunksReady;
+    private static long firstFrameNanos,lastFrameNanos,frameCount,worstFrameGapNanos,lastCueOffset=-1;
     public static boolean active(){return gate!=null&&gate.active();}
     public static String status(){return gate==null?"idle":gate.phase();}
     public static void start(){
@@ -27,14 +27,14 @@ public final class ForkProductCapture {
         if(c.level==null||c.player==null||c.getConnection()==null)throw new IllegalStateException("Join the Singapore world first.");
         timeline=CameraDirectorClient.captureTimeline();
         level=c.level;player=c.player;clock=null;returnRequested=false;projectionRequested=false;buildRequested=false;
-        lastFrameNanos=0;frameCount=0;worstFrameGapNanos=0;lastCueOffset=-1;gate=new ForkCaptureGate();
+        firstFrameNanos=0;lastFrameNanos=0;frameCount=0;wideWarmed=false;wideChunksReady=false;worstFrameGapNanos=0;lastCueOffset=-1;gate=new ForkCaptureGate();
         int render=c.options.renderDistance().get(),simulation=c.options.simulationDistance().get(),fps=c.options.framerateLimit().get(),fov=c.options.fov().get();
         boolean vsync=c.options.enableVsync().get(),bob=c.options.bobView().get();
         var inactivity=c.options.inactivityFpsLimit().get();
         restorePerformance=()->{c.options.renderDistance().set(render);c.options.simulationDistance().set(simulation);c.options.framerateLimit().set(fps);c.options.enableVsync().set(vsync);c.options.bobView().set(bob);c.options.fov().set(fov);c.options.inactivityFpsLimit().set(inactivity);};
         focus=new ForkCaptureGate.FocusLease(c.options.pauseOnLostFocus,value->c.options.pauseOnLostFocus=value);
         try {
-            c.options.renderDistance().set(16);c.options.simulationDistance().set(5);c.options.framerateLimit().set(60);c.options.enableVsync().set(false);c.options.bobView().set(false);c.options.fov().set(70);c.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
+            c.options.renderDistance().set(32);c.options.simulationDistance().set(5);c.options.framerateLimit().set(60);c.options.enableVsync().set(false);c.options.bobView().set(false);c.options.fov().set(70);c.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
             c.setScreen(null);
             ForkFilmClient.notice("Checking three LIVE agents and complete recorded A/B evidence. Camera warmup precedes the 3-second countdown.");
             handle(gate.start(ForkClient.view(),ForkFilmClient.viewVersion(),millis(),c.player.getUUID().toString()));
@@ -51,6 +51,18 @@ public final class ForkProductCapture {
         var names=new HashSet<String>();for(var p:c.level.players())names.add(p.getName().getString());
         return names.containsAll(Set.of("FORK_MEDIC","FORK_ENGINEER","FORK_COURIER"));
     }
+    private static boolean warmupReady(){
+        var c=Minecraft.getInstance();
+        if(clock==null||!gate.phase().equals("warmup")||c.isPaused())return false;
+        if(!wideChunksReady){
+            // Count the reveal's rendered frames only after these CBD chunks arrive.
+            for(int[] chunk:new int[][]{{27,30},{30,25},{28,29},{31,32},{21,28}})if(!c.level.hasChunk(chunk[0],chunk[1]))return false;
+            wideChunksReady=true;CameraDirectorClient.previewTimedTake(clock,91);return false;
+        }
+        if(!CameraDirectorClient.firstFrameReady(clock))return false;
+        if(!wideWarmed){wideWarmed=true;CameraDirectorClient.previewTimedTake(clock,0);return false;}
+        return true;
+    }
     public static void tick(){
         if(!active())return;
         var c=Minecraft.getInstance();
@@ -58,7 +70,7 @@ public final class ForkProductCapture {
         if(c.level!=level||c.player!=player||c.getConnection()==null){abort("World or player changed. Capture stopped.");return;}
         try{
             if(clock!=null&&clock.elapsedTicks()>=timeline.playbackTicks()){finish();return;}
-            handle(gate.update(ForkClient.view(),projection(),ForkFilmClient.viewVersion(),millis(),System.currentTimeMillis(),bodiesVisible(),clock!=null&&CameraDirectorClient.firstFrameReady(clock),c.isPaused()));
+            handle(gate.update(ForkClient.view(),projection(),ForkFilmClient.viewVersion(),millis(),System.currentTimeMillis(),bodiesVisible(),warmupReady(),c.isPaused()));
             if(!active()||clock==null)return;
             // Only Camera.update advances presentation time. Tick code reads the rendered time.
             double ticks=clock.elapsedTicks();
@@ -87,7 +99,7 @@ public final class ForkProductCapture {
         }
         long now=System.nanoTime();
         if(lastFrameNanos!=0){long gap=now-lastFrameNanos;worstFrameGapNanos=Math.max(worstFrameGapNanos,gap);if(gap>500_000_000L){abort("Rendering stalled for more than half a second. This take is incomplete.");return;}}
-        lastFrameNanos=now;frameCount++;
+        if(firstFrameNanos==0)firstFrameNanos=now;lastFrameNanos=now;frameCount++;
         if(!buildRequested&&ticks>=273){
             if(c.gameMode==null||!c.level.getBlockState(new BlockPos(446,1,425)).isAir()){abort("The building target is unavailable.");return;}
             buildRequested=true;
@@ -103,14 +115,15 @@ public final class ForkProductCapture {
                 c.getConnection().sendCommand(action.value());
             }
             case "prime" -> {
-                ForkFilmClient.notice("Prepared real LIVE states. Framebuffer "+c.getWindow().getWidth()+"x"+c.getWindow().getHeight()+"; 60 FPS cap. Warming the first shot.");
+                ForkFilmClient.notice("Prepared real LIVE states. Framebuffer "+c.getWindow().getWidth()+"x"+c.getWindow().getHeight()+"; 60 FPS cap, 32-chunk view. Warming the wide reveal and road opening.");
                 c.setScreen(null);clock=CameraDirectorClient.primeTimedTake(timeline.paths(),timeline.durations());
+                CameraDirectorClient.previewTimedTake(clock,91);
                 CameraDirectorClient.setTakeFrameListener(clock,ForkProductCapture::frame);
             }
             case "begin" -> {
                 long startNanos=System.nanoTime()+Math.multiplyExact(Long.parseLong(action.value())-System.currentTimeMillis(),1_000_000L);
                 CameraDirectorClient.armTimedTake(clock,startNanos);
-                System.getLogger("FORK_CAPTURE").log(System.Logger.Level.INFO,"RAW_TAKE_ARMED startEpochMs="+action.value()+" duration=90 leadOut=3 fps=60");
+                System.out.println("FORK_CAPTURE RAW_TAKE_ARMED startEpochMs="+action.value()+" duration=90 leadOut=3 fps=60 renderDistance="+c.options.renderDistance().get()+" framebuffer="+c.getWindow().getWidth()+"x"+c.getWindow().getHeight());
             }
             case "fail" -> abort(action.value());
             default -> throw new IllegalArgumentException("Unknown capture action");
@@ -119,7 +132,8 @@ public final class ForkProductCapture {
     private static void abort(String message){stop();ForkFilmClient.notice(message);}
     private static void finish(){
         if(lastFrameNanos==0||System.nanoTime()-lastFrameNanos>500_000_000L){abort("Rendering stalled across the take ending. This take is incomplete.");return;}
-        System.getLogger("FORK_CAPTURE").log(System.Logger.Level.INFO,"RAW_TAKE_COMPLETE renderFrames="+frameCount+" worstGapMs="+worstFrameGapNanos/1_000_000.0);
+        double sampledSeconds=(lastFrameNanos-firstFrameNanos)/1_000_000_000.0;
+        System.out.println("FORK_CAPTURE RAW_TAKE_COMPLETE renderFrames="+frameCount+" sampledSeconds="+sampledSeconds+" callbacksPerSecond="+(sampledSeconds>0?(frameCount-1)/sampledSeconds:0)+" worstGapMs="+worstFrameGapNanos/1_000_000.0);
         if(gate!=null)gate.complete();stop();
         ForkFilmClient.notice("90-second raw take and 3-second clean lead-out complete. Stop OBS; keep the narration's 90 seconds in order.");
     }

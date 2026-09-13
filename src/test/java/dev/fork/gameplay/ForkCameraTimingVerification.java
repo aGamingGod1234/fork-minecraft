@@ -14,7 +14,12 @@ public final class ForkCameraTimingVerification {
         var parked=new PresentationClock(Long.MAX_VALUE,false);
         equal(parked.advance(1_000_000_000L,false),0);
         equal(parked.elapsedTicks(),0);
+        parked.previewAt(91);equal(parked.sampleTicks(0),91);
+        equal(parked.advance(2_000_000_000L,false),0);equal(parked.elapsedTicks(),0);
+        parked.previewAt(0);equal(parked.sampleTicks(0),0);
         parked.armAt(4_000_000_000L);
+        boolean rejectedPreview=false;try{parked.previewAt(91);}catch(IllegalStateException expected){rejectedPreview=true;}
+        if(!rejectedPreview)throw new AssertionError("An armed take cannot jump to a warmup pose");
         equal(parked.advance(3_999_000_000L,false),0);
         equal(parked.advance(4_000_000_000L,false),0);
         equal(parked.advance(4_016_666_667L,false),0.33333334);
