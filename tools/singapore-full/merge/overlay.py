@@ -13,8 +13,10 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import uuid
 
-from anvil import Tag, ListPayload, NbtFile, read_level_dat, write_level_dat, write_region, read_region
+from anvil import Tag, ListPayload, NbtFile, read_level_dat, write_level_dat, write_region_stream
+from run_spool import RunSpool
 
 MIN_Y, MAX_Y = -64, 320
 LAYERS = {"terrain": 10, "landcover": 20, "water": 30, "road": 40, "building": 50, "bridge": 60}
@@ -248,8 +250,9 @@ def validate_job_lease(lease_path, world, project_root=PROJECT_ROOT):
         raise ValueError("job lease output root must contain the new world and stay within private full-Singapore project")
     parts = root.relative_to(project_root).parts
     queue_shape = len(parts) == 6 and parts[:2] == ("queue", "jobs") and parts[3] == "attempts" and parts[5] == "output"
+    queue_runtime_shape = len(parts) == 5 and parts[:2] == ("queue", "jobs") and re.fullmatch(r"attempt-\d+", parts[3]) is not None and parts[4] == "output"
     run_shape = len(parts) == 5 and parts[0] == "runs" and parts[2] == "attempts" and parts[4] == "output"
-    if not (queue_shape or run_shape):
+    if not (queue_shape or queue_runtime_shape or run_shape):
         raise ValueError("lease output root must identify one immutable queue/run attempt")
     if lease.get("machine") != "Desktop" or lease.get("approvedBy") != "/root/singapore_full_coordinator" or lease.get("heavyJobSlot") not in ("A", "B") or lease.get("cpuThreads") != 1:
         raise ValueError("job lease does not carry the approved Desktop single-process coordinator contract")
@@ -277,6 +280,83 @@ def disable_structures(config):
         settings = generator.value.get("settings")
         if settings is not None and settings.type_id == 10 and "structure_overrides" in settings.value:
             settings.value["structure_overrides"] = tag_list([], 8)
+
+
+def spool_inputs(spool, runs_paths, bounds):
+    sources, source_classes, input_count = [], set(), 0
+    for source in sorted(map(Path, runs_paths), key=lambda item: str(item.resolve())):
+        source = source.resolve()
+        before = source.stat()
+        sources.append({"name": source.name, "sha256": digest(source), "bytes": before.st_size})
+        with source.open(encoding="utf-8-sig") as stream:
+            for number, line in enumerate(stream, 1):
+                if not line.strip():
+                    continue
+                try:
+                    run = parse_run(json.loads(line), bounds)
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise ValueError(f"{source.name}:{number}: {exc}") from exc
+                payload = {"x": run.x, "z": run.z, "yMin": run.low, "yMax": run.high,
+                           "block": run.state[0], "properties": dict(run.state[1]), "layer": run.layer,
+                           "featureId": run.feature, "geometryKind": run.geometry, "sourceClass": run.source}
+                spool.add(run.x // 16, run.z // 16, payload)
+                source_classes.add(run.source)
+                input_count += 1
+        after = source.stat()
+        if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
+            raise ValueError(f"Input source changed while spooling: {source.name}")
+    spool.finish()
+    return sources, source_classes, input_count
+
+
+def write_streamed_regions(spool, stage_world, bounds, data_version, report):
+    region_directory = stage_world / report["regionDirectory"]
+    region_directory.mkdir(parents=True)
+    cx0, cz0, cx1, cz1 = bounds[0] // 16, bounds[1] // 16, bounds[2] // 16, bounds[3] // 16
+    center_x, center_z = (bounds[0] + bounds[2]) // 2, (bounds[1] + bounds[3]) // 2
+    best_spawn, max_buffered_runs, verified_chunks = None, 0, 0
+    for rx in range(cx0 // 32, (cx1 - 1) // 32 + 1):
+        for rz in range(cz0 // 32, (cz1 - 1) // 32 + 1):
+            def chunks_for_region():
+                nonlocal best_spawn, max_buffered_runs
+                for cz in range(max(cz0, rz * 32), min(cz1, (rz + 1) * 32)):
+                    for cx in range(max(cx0, rx * 32), min(cx1, (rx + 1) * 32)):
+                        columns, buffered = defaultdict(list), 0
+                        for payload in spool.iter_chunk(cx, cz):
+                            buffered += 1
+                            if buffered > 131072:
+                                raise ValueError(f"Chunk {cx},{cz} exceeds 131072 buffered runs; input must be simplified before assembly")
+                            run = parse_run(payload, bounds)
+                            columns[(run.x, run.z)].append(run)
+                        max_buffered_runs = max(max_buffered_runs, buffered)
+                        chunk = make_chunk(cx, cz, columns, data_version, report)
+                        del columns
+                        surface = chunk.root.value["Heightmaps"].value["WORLD_SURFACE"].value
+                        for z in range(16):
+                            for x in range(16):
+                                index = z * 16 + x
+                                height = ((surface[index // 7] & ((1 << 64) - 1)) >> ((index % 7) * 9)) & 511
+                                feet = height + MIN_Y
+                                if 1 <= feet < MAX_Y - 2:
+                                    gx, gz = cx * 16 + x, cz * 16 + z
+                                    candidate = (feet != 1, (gx - center_x) ** 2 + (gz - center_z) ** 2, gx, feet, gz)
+                                    if best_spawn is None or candidate < best_spawn:
+                                        best_spawn = candidate
+                        yield (cx, cz), chunk
+            path = region_directory / f"r.{rx}.{rz}.mca"
+            # The streaming writer itself reopens and verifies every chunk's typed NBT hash.
+            written = write_region_stream(path, chunks_for_region())
+            planned = (min(cx1, (rx + 1) * 32) - max(cx0, rx * 32)) * (min(cz1, (rz + 1) * 32) - max(cz0, rz * 32))
+            if written["chunks"] != planned:
+                raise RuntimeError("Reopened region is missing generated chunks")
+            verified_chunks += written["chunks"]
+            report["outputs"].append({"path": path.relative_to(stage_world).as_posix(), "bytes": path.stat().st_size, "sha256": digest(path)})
+    if best_spawn is None:
+        raise ValueError("no spawn column with two clear blocks below world ceiling")
+    report["streaming"] = {"spool": "sqlite-disk", "maxBufferedRunsPerChunk": max_buffered_runs,
+                           "maxAllowedRunsPerChunk": 131072, "verifiedChunks": verified_chunks,
+                           "maxRetainedChunkTrees": 2, "spawnSelection": "incremental-minimum"}
+    return best_spawn
 
 
 def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None):
@@ -309,24 +389,12 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         disable_structures(config)
     elif "WorldGenSettings" not in data.value:
         raise ValueError("Template requires missing external data/minecraft/world_gen_settings.dat")
-    columns = defaultdict(list)
-    sources = []
-    source_classes = set()
-    input_count = 0
-    for source in sorted(map(Path, runs_paths), key=lambda item: str(item.resolve())):
-        source = source.resolve()
-        sources.append({"name": source.name, "sha256": digest(source), "bytes": source.stat().st_size})
-        with source.open(encoding="utf-8-sig") as stream:
-            for number, line in enumerate(stream, 1):
-                if not line.strip():
-                    continue
-                try:
-                    run = parse_run(json.loads(line), bounds)
-                except (ValueError, KeyError, TypeError) as exc:
-                    raise ValueError(f"{source.name}:{number}: {exc}") from exc
-                columns[(run.x, run.z)].append(run)
-                source_classes.add(run.source)
-                input_count += 1
+    scratch = world.parent / ("." + world.name + ".staging-" + uuid.uuid4().hex)
+    scratch.mkdir(parents=True, exist_ok=False)
+    stage_world = scratch / "world"
+    spool_path = scratch / "runs.sqlite"
+    with RunSpool(spool_path) as spool:
+        sources, source_classes, input_count = spool_inputs(spool, runs_paths, bounds)
     report = {"schemaVersion": 1, "kind": "global-block-run-world", "status": "WRITING", "assemblyAccepted": False,
               "coordinateFrame": {"crs": "EPSG:3414", "x": "easting", "z": "60000-northing", "blocksPerMeter": 1},
               "bounds": list(bounds), "verticalRange": [MIN_Y, MAX_Y], "terrain": "flat-provisional",
@@ -339,26 +407,9 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
               "templateDependencies": ([{"path": "data/minecraft/world_gen_settings.dat", "sha256": digest(settings_path)}] if external_settings else []),
               "regionDirectory": "dimensions/minecraft/overworld/region" if external_settings else "region",
               "levelTemplateSha256": digest(level_template), "crossLayerOverwrittenBlocks": defaultdict(int), "outputs": []}
-    # Resolve all conflicts before creating an output. Generation remains a bounded in-memory strip operation.
-    chunks = {}
-    for cz in range(bounds[1] // 16, bounds[3] // 16):
-        for cx in range(bounds[0] // 16, bounds[2] // 16):
-            chunks[(cx, cz)] = make_chunk(cx, cz, columns, data_version, report)
-    if job_lease:
-        validate_job_lease(job_lease, world)
-    world.mkdir(parents=True, exist_ok=False)
-    region_directory = world / report["regionDirectory"]
-    region_directory.mkdir(parents=True)
-    grouped = defaultdict(dict)
-    for (cx, cz), chunk in chunks.items():
-        grouped[(cx // 32, cz // 32)][(cx, cz)] = chunk
-    for (rx, rz), region_chunks in sorted(grouped.items()):
-        path = region_directory / f"r.{rx}.{rz}.mca"
-        write_region(path, region_chunks)
-        reopened = read_region(path)
-        if set(reopened) != set(region_chunks):
-            raise RuntimeError("reopened region coordinates do not match requested global chunks")
-        report["outputs"].append({"path": path.relative_to(world).as_posix(), "bytes": path.stat().st_size, "sha256": digest(path)})
+    # One source chunk and one output chunk at a time; final world remains absent on failure.
+    with RunSpool(spool_path, create=False) as spool:
+        best_spawn = write_streamed_regions(spool, stage_world, bounds, data_version, report)
     # Keep only world configuration; never carry source player/server state or per-tile map IDs.
     data.value.pop("Player", None)
     data.value.pop("DragonFight", None)
@@ -371,21 +422,7 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         data.value["MapFeatures"] = Tag(1, 0)
     report["surroundingVanillaStructureGeneration"] = "disabled"
     data.value["LevelName"] = Tag(8, "FORK - Singapore Assembly Preview")
-    center_x, center_z = (bounds[0] + bounds[2]) // 2, (bounds[1] + bounds[3]) // 2
-    candidates = []
-    for (cx, cz), chunk in chunks.items():
-        surface = chunk.root.value["Heightmaps"].value["WORLD_SURFACE"].value
-        for z in range(16):
-            for x in range(16):
-                index = z * 16 + x
-                height = ((surface[index // 7] & ((1 << 64) - 1)) >> ((index % 7) * 9)) & 511
-                feet = height + MIN_Y
-                if 1 <= feet < MAX_Y - 2:
-                    gx, gz = cx * 16 + x, cz * 16 + z
-                    candidates.append((feet != 1, (gx - center_x) ** 2 + (gz - center_z) ** 2, gx, feet, gz))
-    if not candidates:
-        raise ValueError("no spawn column with two clear blocks below world ceiling")
-    _, _, spawn_x, spawn_y, spawn_z = min(candidates)
+    _, _, spawn_x, spawn_y, spawn_z = best_spawn
     data.value["SpawnX"] = Tag(3, spawn_x)
     data.value["SpawnY"] = Tag(3, spawn_y)
     data.value["SpawnZ"] = Tag(3, spawn_z)
@@ -393,14 +430,25 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         data.value["spawn"] = compound({"pos": Tag(11, [spawn_x, spawn_y, spawn_z]), "pitch": Tag(5, 0.0),
                                         "yaw": Tag(5, 0.0), "dimension": Tag(8, "minecraft:overworld")})
     report["spawn"] = [spawn_x, spawn_y, spawn_z]
-    level_path = world / "level.dat"
+    level_path = stage_world / "level.dat"
     write_level_dat(level_path, template)
     report["outputs"].append({"path": "level.dat", "bytes": level_path.stat().st_size, "sha256": digest(level_path)})
     if external_settings is not None:
-        output_settings = world / "data" / "minecraft" / "world_gen_settings.dat"
+        output_settings = stage_world / "data" / "minecraft" / "world_gen_settings.dat"
         output_settings.parent.mkdir(parents=True, exist_ok=True)
         write_level_dat(output_settings, external_settings)
-        report["outputs"].append({"path": output_settings.relative_to(world).as_posix(), "bytes": output_settings.stat().st_size, "sha256": digest(output_settings)})
+        report["outputs"].append({"path": output_settings.relative_to(stage_world).as_posix(), "bytes": output_settings.stat().st_size, "sha256": digest(output_settings)})
+    if job_lease:
+        validate_job_lease(job_lease, world)
+    if world.exists():
+        raise FileExistsError("Final world appeared during generation; refusing replacement")
+    stage_world.rename(world)
+    # Delete only this attempt's named spool files; no recursive filesystem cleanup.
+    for name in ("runs.sqlite", "runs.sqlite-journal", "runs.sqlite-wal", "runs.sqlite-shm"):
+        temporary = scratch / name
+        if temporary.exists():
+            temporary.unlink()
+    scratch.rmdir()
     report["crossLayerOverwrittenBlocks"] = dict(sorted(report["crossLayerOverwrittenBlocks"].items()))
     report["status"] = "WRITTEN_UNACCEPTED"
     return report

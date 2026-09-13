@@ -66,6 +66,10 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(settings["dimensions"].value["minecraft:overworld"].value["generator"].value["settings"].value["structure_overrides"].value.items, [])
         self.assertFalse(receipt["assemblyAccepted"])
         self.assertEqual(receipt["groundProfileId"], "flat-provisional-y0-v1")
+        self.assertEqual(receipt["streaming"]["verifiedChunks"], 4)
+        self.assertEqual(receipt["streaming"]["maxBufferedRunsPerChunk"], 1)
+        self.assertEqual(receipt["streaming"]["spawnSelection"], "incremental-minimum")
+        self.assertFalse(any(path.name.startswith(".world.staging-") for path in self.base.iterdir()))
         sx, sy, sz = receipt["spawn"]
         self.assertEqual(block_at(chunks, sx, sy, sz), "minecraft:air")
         self.assertEqual(block_at(chunks, sx, sy + 1, sz), "minecraft:air")
@@ -125,6 +129,12 @@ class OverlayTests(unittest.TestCase):
                  "expiresUtc": (now + timedelta(minutes=1)).isoformat()}
         lease_path.write_text(json.dumps(lease))
         self.assertEqual(validate_job_lease(lease_path, root / "tile" / "world", self.base)["id"], "test")
+        queue_root = self.base / "queue" / "jobs" / "fixture" / "attempt-1" / "output"
+        lease["outputRoot"] = str(queue_root)
+        lease_path.write_text(json.dumps(lease))
+        self.assertEqual(validate_job_lease(lease_path, queue_root / "world", self.base)["id"], "test")
+        lease["outputRoot"] = str(root)
+        lease_path.write_text(json.dumps(lease))
         with self.assertRaisesRegex(ValueError, "contain"):
             validate_job_lease(lease_path, self.base / "other", self.base)
         lease["expiresUtc"] = (now - timedelta(seconds=1)).isoformat()
