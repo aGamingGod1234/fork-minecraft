@@ -1,3 +1,64 @@
-﻿FORK court v1: original fictional plain-block layout authored during the 13 September 2026 build window. No real-world floorplans, generated raster assets, external textures, Arnis output or geographic dataset are included in this delivery.
-Minecraft names and vanilla block identifiers refer to Minecraft by Mojang/Microsoft. No Minecraft binaries or textures are distributed here. FORK is an unofficial project and is not approved by or associated with Mojang or Microsoft.
-Agent Arena is the reused project foundation; retain the repository's existing license and notices. Main owns complete derivative notices and release licensing.
+FORK / Market Street district visual edition, 13 September 2026
+
+Map data © OpenStreetMap contributors, available under the Open Database
+License (ODbL) 1.0: https://opendatacommons.org/licenses/odbl/1-0/
+Attribution and information: https://www.openstreetmap.org/copyright
+
+This package covers a compact approximately 256 x 256 metre Singapore CBD
+extract near Market, Cecil and Cross Streets, at one Minecraft block per metre.
+It is not all Singapore. Buildings crossing the boundary are partial. The base
+is flat because land-cover acquisition failed. Missing/conflicting OSM heights
+and generator roof offsets remain; the scene is not a surveyed digital twin.
+
+DATA AND MODIFICATION SOURCE OFFER
+The accompanying world-sources directory contains the exact public OSM API
+extract, acquisition record, filtered renderer input and exclusion record.
+The original OSM data and derived geographic database are supplied under ODbL
+1.0. The visual patch manifest lists every changed coordinate and before/after
+material. The patch program and court JSON describe the added visual work.
+Preserve this source directory and notice when redistributing the world.
+Main must bundle the patch program and manifest alongside the final download.
+
+Acquisition: public OpenStreetMap API, 13 September 2026, 03:22 UTC.
+Raw extract SHA256:
+195bf195c5ab851779e673b8831f356fb11580043ca7e77ac06de7be23333e05
+Renderer input SHA256:
+e89ce3c667afff96921f243530918123dcf146bbe962568d842ae1e92992317c
+Bounds: south1.281850162 west103.848849873 north1.284149838 east103.851150127.
+
+Arnis 3.2.0, © its contributors, Apache License 2.0.
+https://github.com/louis-e/arnis
+Retain the accompanying arnis-3.2.0-Apache-2.0.txt license.
+No Arnis executable is included in the stopped world.
+
+ARCHITECTURAL REFERENCES
+CapitaGreen: CapitaLand, 138 Market Street property page.
+https://www.capitaland.com/sg/en/lease/commercial-space-listing/capitagreen.html
+Reference features: glass facade, vertical planting, crimson roof crown.
+Only the in-bounds facade receives approximate material accents. The cropped
+crown is not reconstructed. No CapitaLand photograph is redistributed.
+
+CapitaSpring: CapitaLand, 9 February 2022 completion release and Design Fact Sheet.
+https://www.capitaland.com/en/about-capitaland/newsroom/news-releases/international/2022/feb/CapitaSpring-biophilic-skyscraper-completion.html
+https://www.capitaland.com/content/dam/capitaland-newsroom/International/2022/february/capitaspring-marks-completion/CapitaSpring_Design_Fact_Sheet.pdf
+Architects: Bjarke Ingels Group with Carlo Ratti Associati; project architect RSP.
+Reference features: pale aluminium fins, Green Oasis around100m spanning35m,
+and rooftop planting. Fin spacing, colour and planting arrangement here are
+block-scale artistic approximations, not a photographic reconstruction.
+Reference photographs and publications remain copyright their respective
+owners. They are linked for attribution and are not bundled or used as textures.
+
+The clinic/workshop and the small access paving are original designed gameplay
+elements. They are not claimed to be real businesses or mapped footway geometry.
+The static city patch keeps every original occupied block position and column
+height. It excludes the scored16cube and its outside sentinel positions.
+
+If the separate island locator is included: Made with Natural Earth.
+Natural Earth Admin0 Countries1:10m v5.1.1, public domain.
+https://www.naturalearthdata.com/about/terms-of-use/
+The generalized locator is an overview, not a claim of playable island coverage.
+
+Minecraft names and vanilla block identifiers refer to Minecraft by
+Mojang/Microsoft. FORK is unofficial and not approved by or associated with
+Mojang/Microsoft. No Minecraft textures or binaries are supplied in this world.
+Retain Agent Arena and other foundation notices in the complete application.

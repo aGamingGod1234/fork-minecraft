@@ -71,7 +71,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         adapter=new ForkServerAdapter(new ForkEngine(mode,System::nanoTime,epoch),this);
         // Validate the complete JSON before the first placement, then write only the bounded volume.
         var palette=new ArrayList<BlockState>();
-        Set<String> allowed=Set.of("air","smooth_stone","polished_andesite","white_concrete","cyan_concrete","orange_concrete","glass","dark_prismarine","yellow_concrete","sea_lantern","light_gray_concrete");
+        Set<String> allowed=Set.of("air","smooth_stone","polished_andesite","white_concrete","cyan_concrete","orange_concrete","glass","dark_prismarine","yellow_concrete","sea_lantern","light_gray_concrete","stone_bricks","smooth_quartz","gray_concrete","brown_terracotta");
         for(var entry:layout.getAsJsonArray("palette")) {
             Identifier id=Identifier.parse(entry.getAsString());
             if(!id.getNamespace().equals("minecraft") || !allowed.contains(id.getPath())) throw new IllegalArgumentException("Unapproved court palette");
