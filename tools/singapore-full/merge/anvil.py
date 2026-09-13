@@ -217,8 +217,22 @@ def _inflate(data, wbits):
         raise NbtError("Invalid compressed payload") from exc
 
 
+
+def _fs_path(path):
+    """Native absolute path with Windows long-path support; leave other OSes alone."""
+    value = os.fspath(path)
+    if os.name != "nt":
+        return value
+    value = os.path.abspath(value)
+    if value.startswith("\\\\?\\"):
+        return value
+    if value.startswith("\\\\"):
+        return "\\\\?\\UNC\\" + value[2:]
+    return "\\\\?\\" + value
+
+
 def read_level_dat(path) -> NbtFile:
-    with open(path, "rb") as handle:
+    with open(_fs_path(path), "rb") as handle:
         data = handle.read(MAX_NBT_BYTES + 1)
     if len(data) > MAX_NBT_BYTES:
         raise NbtError("Compressed level.dat exceeds limit")
@@ -227,14 +241,14 @@ def read_level_dat(path) -> NbtFile:
 
 def _atomic_write(path, data):
     path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    os.makedirs(_fs_path(path.parent), exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".nb-", suffix=".tmp", dir=_fs_path(path.parent))
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        os.replace(temporary, _fs_path(path))
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)
@@ -342,7 +356,7 @@ def iter_region(path):
     Payload errors are detected as that individual chunk is reached. Consumers
     must not mutate the source and must exhaust or close the iterator.
     """
-    with open(path, "rb") as handle:
+    with open(_fs_path(path), "rb") as handle:
         yield from _iter_region_handle(handle, path)
 
 
@@ -362,12 +376,12 @@ def write_region_stream(path, chunks):
     """
     path = Path(path)
     rx, rz = _region_coords(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    os.makedirs(_fs_path(path.parent), exist_ok=True)
     spool_path = output_path = None
     metadata = {}
     total = 0
     try:
-        spool_fd, spool_path = tempfile.mkstemp(prefix=path.name + ".spool.", suffix=".tmp", dir=path.parent)
+        spool_fd, spool_path = tempfile.mkstemp(prefix=".sp-", suffix=".tmp", dir=_fs_path(path.parent))
         with os.fdopen(spool_fd, "w+b") as spool:
             for coords, document in chunks:
                 if (not isinstance(coords, (tuple, list)) or len(coords) != 2
@@ -406,7 +420,7 @@ def write_region_stream(path, chunks):
                     raise NbtError("Region sector offset exceeds format limit")
                 locations[index * 4:index * 4 + 4] = ((offset << 8) | count).to_bytes(4, "big")
                 offset += count
-            output_fd, output_path = tempfile.mkstemp(prefix=path.name + ".output.", suffix=".tmp", dir=path.parent)
+            output_fd, output_path = tempfile.mkstemp(prefix=".out-", suffix=".tmp", dir=_fs_path(path.parent))
             digest = hashlib.sha256()
             with os.fdopen(output_fd, "wb") as output:
                 def emit(data):
@@ -438,7 +452,7 @@ def write_region_stream(path, chunks):
                 del document
         if checked != len(metadata):
             raise NbtError("Reopened output is missing chunks")
-        os.replace(output_path, path)
+        os.replace(output_path, _fs_path(path))
         output_path = None
         return {"bytes": offset * SECTOR, "sha256": digest.hexdigest(), "chunks": len(metadata)}
     finally:

@@ -363,5 +363,50 @@ class StreamingTests(unittest.TestCase):
             self.assertEqual(list(a.iter_region(path)), [])
 
 
+
+class LongPathTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Windows extended-length path fixture")
+    def test_windows_region_and_level_dat_over_300_characters(self):
+        import os
+        import shutil
+        directory = tempfile.mkdtemp(prefix="fork-anvil-long-")
+        try:
+            parent = Path(directory).joinpath(*(["segment_" + "x" * 40] * 7))
+            path = parent / "r.0.0.mca"
+            self.assertGreater(len(str(path)), 300)
+            entries = {(0, 0): chunk(0, 0), (1, 0): chunk(1, 0)}
+            expected = StreamingTests.frozen_writer_bytes(entries)
+            a.write_region_stream(path, reversed(list(entries.items())))
+            with open(a._fs_path(path), "rb") as handle:
+                self.assertEqual(handle.read(), expected)
+            self.assertEqual(dict(a.iter_region(path)), entries)
+            self.assertEqual(a.read_region(path), entries)
+            a.write_region(path, entries)
+            with open(a._fs_path(path), "rb") as handle:
+                self.assertEqual(handle.read(), expected)
+            level = parent / "level.dat"
+            doc = a.NbtFile("", compound({"Data": compound({"DataVersion": a.Tag(a.INT, 4790)})}))
+            a.write_level_dat(level, doc)
+            self.assertEqual(a.read_level_dat(level), doc)
+            self.assertEqual(sorted(os.listdir(a._fs_path(parent))), ["level.dat", "r.0.0.mca"])
+        finally:
+            self.assertTrue(Path(directory).name.startswith("fork-anvil-long-"))
+            shutil.rmtree(a._fs_path(directory))
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows path transformation")
+    def test_unc_and_already_extended_paths(self):
+        source = "\\\\server\\share\\folder"
+        expected = "\\\\?\\UNC\\server\\share\\folder"
+        self.assertEqual(a._fs_path(source), expected)
+        self.assertEqual(a._fs_path(expected), expected)
+        drive = "\\\\?\\C:\\already\\extended"
+        self.assertEqual(a._fs_path(drive), drive)
+
+    def test_non_windows_path_is_unchanged(self):
+        from unittest.mock import patch
+        with patch.object(a.os, "name", "posix"):
+            self.assertEqual(a._fs_path("relative/path"), "relative/path")
+
+
 if __name__ == "__main__":
     unittest.main()
