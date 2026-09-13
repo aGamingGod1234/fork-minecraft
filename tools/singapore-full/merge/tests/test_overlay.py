@@ -7,7 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anvil import Tag, NbtFile, read_region, write_level_dat, read_level_dat
-from overlay import write_overlay, compound, parse_run, pack_indices, MIN_Y, validate_job_lease
+from overlay import write_overlay, compound, tag_list, parse_run, pack_indices, MIN_Y, validate_job_lease
 
 
 def block_at(chunks, x, y, z):
@@ -33,7 +33,9 @@ class OverlayTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.base = Path(self.temp.name)
         self.template = self.base / "template.dat"
-        write_level_dat(self.template, NbtFile("", compound({"Data": compound({"DataVersion": Tag(3, 3955), "Player": compound({"secret": Tag(8, "fixture")})})})))
+        settings = compound({"structure_overrides": tag_list([Tag(8, "minecraft:villages")], 8)})
+        worldgen = compound({"generate_features": Tag(1, 1), "dimensions": compound({"minecraft:overworld": compound({"generator": compound({"settings": settings})})})})
+        write_level_dat(self.template, NbtFile("", compound({"Data": compound({"DataVersion": Tag(3, 3955), "WorldGenSettings": worldgen, "Player": compound({"secret": Tag(8, "fixture")})})})))
 
     def render(self, rows, name="world", bounds=(-16, -16, 16, 16)):
         source = self.base / (name + ".jsonl")
@@ -59,6 +61,9 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(block_at(chunks, 0, 0, 0), "minecraft:grass_block")
         self.assertEqual(block_at(chunks, 0, -4, 0), "minecraft:bedrock")
         self.assertNotIn("Player", read_level_dat(world / "level.dat").root.value["Data"].value)
+        settings = read_level_dat(world / "level.dat").root.value["Data"].value["WorldGenSettings"].value
+        self.assertEqual(settings["generate_features"].value, 0)
+        self.assertEqual(settings["dimensions"].value["minecraft:overworld"].value["generator"].value["settings"].value["structure_overrides"].value.items, [])
         self.assertFalse(receipt["assemblyAccepted"])
         self.assertEqual(receipt["groundProfileId"], "flat-provisional-y0-v1")
         sx, sy, sz = receipt["spawn"]

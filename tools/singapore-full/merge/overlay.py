@@ -330,6 +330,23 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     # Keep only world configuration; never carry source player/server state or per-tile map IDs.
     data.value.pop("Player", None)
     data.value.pop("DragonFight", None)
+    worldgen = data.value.get("WorldGenSettings")
+    if worldgen is not None and worldgen.type_id == 10:
+        worldgen.value["generate_features"] = Tag(1, 0)
+        dimensions = worldgen.value.get("dimensions")
+        if dimensions is not None and dimensions.type_id == 10:
+            for dimension in dimensions.value.values():
+                if dimension.type_id != 10:
+                    continue
+                generator = dimension.value.get("generator")
+                if generator is None or generator.type_id != 10:
+                    continue
+                settings = generator.value.get("settings")
+                if settings is not None and settings.type_id == 10 and "structure_overrides" in settings.value:
+                    settings.value["structure_overrides"] = tag_list([], 8)
+    if "MapFeatures" in data.value:
+        data.value["MapFeatures"] = Tag(1, 0)
+    report["surroundingVanillaStructureGeneration"] = "disabled"
     data.value["LevelName"] = Tag(8, "FORK - Singapore Assembly Preview")
     center_x, center_z = (bounds[0] + bounds[2]) // 2, (bounds[1] + bounds[3]) // 2
     candidates = []
