@@ -275,8 +275,11 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
                 "road_raster_blocked": {"unsupported_highway_corridor",
                     "unsupported_highway_construction", "unsupported_highway_raceway"},
                 "area_highway_not_rasterized": {"unsupported_pedestrian_area"}}
-            _require(omission["reason"] in allowed_reasons[original["code"]],
-                     "Unknown omission reason cannot be waived")
+            if omission["reason"] == "unsupported_highway_proposed":
+                _validate_proposed_road(omission, bindings)
+            else:
+                _require(omission["reason"] in allowed_reasons[original["code"]],
+                         "Unknown omission reason cannot be waived")
             _require(omission.get("layerDomain") == "road"
                      and omission.get("previewExclusionEligible") is True,
                      "Road omission not eligible for qualified preview")
@@ -513,3 +516,40 @@ def _validate_empty_inland_scan(evidence, report, core):
              and scan.get("sourceComplete") is False and scan.get("fullWorldAccepted") is False,
              "Scan cannot turn zero emission into source-water absence")
     return scan
+
+
+PROPOSED_POLICY_SHA256 = "786fbec4dad726a47b00640e81da499ef383e3fc8b7440a9975526de9ad14710"
+
+
+def _validate_proposed_road(omission, bindings):
+    """Only the approved v2 policy can omit a planned road as planned."""
+    binding = bindings.get("nationalPolicy", {})
+    _require(binding.get("sha256") == PROPOSED_POLICY_SHA256,
+             "Proposed-road exclusion requires the exact approved national policy v2")
+    policy = _bound_json(binding.get("path"), binding.get("sha256"),
+                         "approved proposed-road policy")
+    _require(policy.get("status") == "APPROVED_FOR_QUALIFIED_PREVIEW_JOBS"
+             and policy.get("acceptedByCoordinator") is True and policy.get("revision") == 2,
+             "Proposed-road policy is not approved v2")
+    required = {"valid_complete_projected_geometry", "exact_source_id_and_hash",
+                "exact_unsupported_highway_error_matches_source_tag",
+                "highway_proposed_is_not_claimed_as_existing_road"}
+    records = [row for row in policy.get("automaticKnownCapabilityExclusions", [])
+               if isinstance(row, dict) and row.get("reason") == "unsupported_highway_proposed"]
+    _require(len(records) == 1 and records[0].get("emitGeometry") is False
+             and set(records[0].get("requires", [])) == required,
+             "Policy does not authorize the narrow proposed-road subtype")
+    diagnostic = omission.get("originalDiagnostic", {})
+    _require(omission.get("tags", {}).get("highway") == "proposed"
+             and diagnostic.get("code") == "road_raster_blocked"
+             and diagnostic.get("detail") == "unsupported highway type: 'proposed'"
+             and omission.get("sourceStatus") == "proposed_not_existing"
+             and omission.get("existingRoad") is False and omission.get("emitGeometry") is False,
+             "Proposed roads must retain their planned status and emit no existing street")
+    box = omission.get("geometryBoundsXZ")
+    _require(omission.get("sourceReferencesComplete") is True
+             and omission.get("geometryValidity", {}).get("valid") is True
+             and isinstance(box, list) and len(box) == 4
+             and all(type(value) in (int, float) and math.isfinite(value) for value in box)
+             and box[0] <= box[2] and box[1] <= box[3],
+             "Proposed-road exclusion requires complete valid finite geometry")
