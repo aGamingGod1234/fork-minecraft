@@ -8,7 +8,9 @@ import re
 
 FRAME = {"crs": "EPSG:3414", "x": "easting", "z": "60000-northing", "blocksPerMeter": 1}
 SHA = re.compile(r"^[0-9a-fA-F]{64}$")
-REGION = re.compile(r"^region/r\.-?\d+\.-?\d+\.mca$")
+REGION_DIRECTORY = "dimensions/minecraft/overworld/region"
+WORLD_SETTINGS = "data/minecraft/world_gen_settings.dat"
+REGION = re.compile(r"^dimensions/minecraft/overworld/region/r\.-?\d+\.-?\d+\.mca$")
 
 
 class GrowContractError(ValueError):
@@ -75,7 +77,7 @@ def _outputs(writer, world):
             raise GrowContractError("duplicate writer output")
         names.add(name)
         # Source worlds are clean block worlds; player/entity/map state is not inherited.
-        if name != "level.dat" and not REGION.fullmatch(name):
+        if name not in ("level.dat", WORLD_SETTINGS) and not REGION.fullmatch(name):
             raise GrowContractError(f"unsupported source-world artifact: {name}")
         path = _safe_file(world, name)
         sha = _sha(item["sha256"], name)
@@ -84,8 +86,8 @@ def _outputs(writer, world):
             raise GrowContractError(f"writer output changed: {name}")
         verified.append({"path": name, "bytes": size, "sha256": sha})
     actual = {p.relative_to(world).as_posix() for p in world.rglob("*") if p.is_file()}
-    if actual != names or "level.dat" not in names or not any(REGION.fullmatch(n) for n in names):
-        raise GrowContractError("world has missing/unlisted files or lacks modern region/ and level.dat")
+    if actual != names or not {"level.dat", WORLD_SETTINGS} <= names or not any(REGION.fullmatch(n) for n in names):
+        raise GrowContractError("world has missing/unlisted files or lacks MC26 regions, level.dat and external world settings")
     return sorted(verified, key=lambda item: item["path"])
 
 
@@ -108,8 +110,22 @@ def _structural(gate, writer_hash, outputs, core):
         bounds = _bounds(gate.get("bounds"), "structural gate bounds")
         if not _contains(bounds, core) or type(gate.get("chunkCount")) is not int or gate["chunkCount"] < _chunk_count(core):
             raise GrowContractError("existing structural gate does not cover the owned core")
-        if gate.get("fileHashErrors") != []:
-            raise GrowContractError("existing structural gate has absent or failed output hash checks")
+        if "fileHashErrors" in gate:
+            if gate["fileHashErrors"] != []:
+                raise GrowContractError("existing structural gate has failed output hash checks")
+        else:
+            # The accepted MC26 repair rebinds the earlier full block proof by
+            # region identity and separately rechecks external settings/spawn.
+            if gate.get("regionDirectory") != REGION_DIRECTORY or gate.get("errors") != []:
+                raise GrowContractError("rebound structural gate lacks modern layout/error proof")
+            if type(gate.get("comparedCells")) is not int or gate["comparedCells"] <= 0:
+                raise GrowContractError("rebound structural gate lacks full block comparison proof")
+            _sha(gate.get("priorGeometryOracleSha256"), "prior full block proof")
+            _sha(gate.get("metadataProofSha256"), "MC26 metadata proof")
+            identity = sorted((o["newPath"], _sha(o["sha256"], "rebound region")) for o in gate.get("regionIdentity", []))
+            expected = sorted((o["path"], o["sha256"]) for o in outputs if REGION.fullmatch(o["path"]))
+            if identity != expected:
+                raise GrowContractError("rebound region identities differ from immutable source outputs")
         # This actual existing gate binds the writer manifest, which binds every
         # output rehashed above. It needs no duplicate oracle/schema rewrite.
     else:
@@ -117,7 +133,7 @@ def _structural(gate, writer_hash, outputs, core):
     for name in ("errors", "blockErrors", "coordinateErrors"):
         if name in gate and gate[name] != []:
             raise GrowContractError(f"structural gate reports {name}")
-    for name in ("mismatches", "blockMismatches", "occupancyMismatches"):
+    for name in ("mismatches", "blockMismatches", "occupancyMismatches", "mismatchedCells", "seamMismatchedCells", "heightmapMismatches"):
         if name in gate and (type(gate[name]) is not int or gate[name] != 0):
             raise GrowContractError(f"structural gate reports {name}")
 
@@ -217,8 +233,8 @@ def validate_plan(plan):
             ids.add(name)
             core = _bounds(raw["core_bounds"], name + " core")
             world = Path(raw["world_path"]).resolve(strict=True)
-            if not world.is_dir() or not (world / "region").is_dir():
-                raise GrowContractError("source needs a modern root region/ directory")
+            if not world.is_dir() or not (world / REGION_DIRECTORY).is_dir():
+                raise GrowContractError("source needs MC26 dimensions/minecraft/overworld/region directory")
             writer_path = Path(raw["writer_manifest_path"]).resolve(strict=True)
             writer_hash, writer = digest(writer_path), load(writer_path)
             if writer.get("coordinateFrame") != FRAME:
@@ -227,8 +243,10 @@ def validate_plan(plan):
             if not _contains(bounds, core):
                 raise GrowContractError("owned core extends outside writer bounds")
             version = writer["dataVersion"]
-            if type(version) is not int or version < 2844:
-                raise GrowContractError("modern DataVersion >=2844 required")
+            if type(version) is not int or version != 4790:
+                raise GrowContractError("MC26.1.2 DataVersion 4790 required")
+            if writer.get("minecraftTarget") != "26.1.2" or writer.get("regionDirectory") != REGION_DIRECTORY:
+                raise GrowContractError("writer must bind MC26.1.2 and its actual dimension directory layout")
             versions.add(version)
             outputs = _outputs(writer, world)
             gate_path = Path(raw["structural_gate_path"]).resolve(strict=True)
@@ -238,7 +256,7 @@ def validate_plan(plan):
             sources.append({"id": name, "world_path": str(world), "core_bounds": list(core),
                             "writer_manifest_path": str(writer_path), "writer_manifest_sha256": writer_hash,
                             "structural_gate_path": str(gate_path), "structural_gate_sha256": digest(gate_path),
-                            "outputs": outputs, "coverage": coverage})
+                            "outputs": outputs, "region_directory": REGION_DIRECTORY, "coverage": coverage})
         if len(versions) != 1:
             raise GrowContractError("all source DataVersions must match")
         sources.sort(key=lambda source: source["id"])

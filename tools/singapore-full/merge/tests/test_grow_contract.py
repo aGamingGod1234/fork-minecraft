@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from grow_contract import FRAME, GrowContractError, digest, iter_owned_chunks, validate_plan
+from grow_contract import FRAME, REGION_DIRECTORY, WORLD_SETTINGS, GrowContractError, digest, iter_owned_chunks, validate_plan
 
 
 class GrowContractTests(unittest.TestCase):
@@ -19,17 +19,19 @@ class GrowContractTests(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
         return path
 
-    def source(self, name, bounds, version=5000, existing=False):
+    def source(self, name, bounds, version=4790, existing=False):
         root = self.root / name
         world = root / "world"
-        (world / "region").mkdir(parents=True)
+        (world / REGION_DIRECTORY).mkdir(parents=True)
+        (world / WORLD_SETTINGS).parent.mkdir(parents=True)
         # Hash fixtures only. This test does not claim these bytes are playable NBT.
         (world / "level.dat").write_bytes(b"fixture level")
-        (world / "region/r.0.0.mca").write_bytes(b"fixture region")
+        (world / REGION_DIRECTORY / "r.0.0.mca").write_bytes(b"fixture region")
+        (world / WORLD_SETTINGS).write_bytes(b"fixture external settings")
         outputs = [{"path": p.relative_to(world).as_posix(), "bytes": p.stat().st_size, "sha256": digest(p)}
-                   for p in (world / "level.dat", world / "region/r.0.0.mca")]
+                   for p in (world / "level.dat", world / REGION_DIRECTORY / "r.0.0.mca", world / WORLD_SETTINGS)]
         writer = self.write(root / "writer.json", {"coordinateFrame": FRAME, "bounds": bounds,
-                            "dataVersion": version, "outputs": outputs})
+                            "dataVersion": version, "minecraftTarget": "26.1.2", "regionDirectory": REGION_DIRECTORY, "outputs": outputs})
         if existing:
             gate = {"kind": "independent-joined-strip-structural-gate", "status": "PASS",
                     "chunkCount": ((bounds[2] - bounds[0]) // 16) * ((bounds[3] - bounds[1]) // 16),
@@ -88,7 +90,7 @@ class GrowContractTests(unittest.TestCase):
     def test_mixed_version_and_non_aligned_core_rejected(self):
         a = self.source("a", [0, 0, 16, 16])
         b = self.source("b", [16, 0, 32, 16], version=4999)
-        with self.assertRaisesRegex(GrowContractError, "DataVersions"):
+        with self.assertRaisesRegex(GrowContractError, "DataVersion"):
             validate_plan({"schemaVersion": 1, "sources": [a, b]})
         a["core_bounds"] = [1, 0, 16, 16]
         with self.assertRaisesRegex(GrowContractError, "16-aligned"):
@@ -136,6 +138,23 @@ class GrowContractTests(unittest.TestCase):
         self.assertEqual(validate_plan({"schemaVersion": 1, "sources": [a]})["expected_chunks"], 1)
         runs.write_bytes(b"changed")
         with self.assertRaisesRegex(GrowContractError, "run bytes"):
+            validate_plan({"schemaVersion": 1, "sources": [a]})
+
+    def test_mc26_rebound_actual_gate_shape_and_missing_external_settings(self):
+        a = self.source("a", [0, 0, 16, 16], existing=True)
+        path = Path(a["structural_gate_path"])
+        gate = json.loads(path.read_text())
+        gate.pop("fileHashErrors")
+        world = Path(a["world_path"])
+        gate.update(regionDirectory=REGION_DIRECTORY, errors=[], comparedCells=98304,
+                    priorGeometryOracleSha256="b" * 64, metadataProofSha256="c" * 64,
+                    mismatchedCells=0, seamMismatchedCells=0, heightmapMismatches=0,
+                    regionIdentity=[{"newPath": REGION_DIRECTORY + "/r.0.0.mca",
+                                     "sha256": digest(world / REGION_DIRECTORY / "r.0.0.mca")}])
+        self.write(path, gate)
+        self.assertEqual(validate_plan({"schemaVersion": 1, "sources": [a]})["data_version"], 4790)
+        (world / WORLD_SETTINGS).unlink()
+        with self.assertRaises(GrowContractError):
             validate_plan({"schemaVersion": 1, "sources": [a]})
 
 

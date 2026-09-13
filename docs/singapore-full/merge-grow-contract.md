@@ -12,9 +12,12 @@ Cores must be disjoint and connected through shared edges of positive length.
 Corner contact is insufficient. Detached worlds are rejected in this version.
 
 Every writer uses `coordinateFrame` equal to `{crs:"EPSG:3414",x:"easting",
-z:"60000-northing",blocksPerMeter:1}` and the same modern integer `dataVersion`
-(at least 2844). Sources contain only root `level.dat` and modern root
-`region/r.X.Z.mca` outputs. Every listed output's size and SHA-256 is rechecked;
+z:"60000-northing",blocksPerMeter:1}`, `dataVersion:4790`,
+`minecraftTarget:"26.1.2"` and
+`regionDirectory:"dimensions/minecraft/overworld/region"`. Sources contain
+root `level.dat`, `data/minecraft/world_gen_settings.dat`, and MC26
+`dimensions/minecraft/overworld/region/r.X.Z.mca` outputs. Root `region/`
+is the wrong layout for this target and is rejected. Every output's size and SHA-256 is rechecked;
 missing, changed, duplicate, unsafe or unlisted artifacts fail.
 
 Structural acceptance supports the existing actual
@@ -22,6 +25,11 @@ Structural acceptance supports the existing actual
 `writerManifestSha256`, `bounds` covering the core, enough `chunkCount`, and
 empty `fileHashErrors`. A `synthetic:true` gate is rejected. Its writer binding
 binds every rehashed output, without requiring a duplicate oracle.
+The actual accepted 16:42 MC26 repair receipt instead supplies `regionIdentity`,
+`priorGeometryOracleSha256`, `metadataProofSha256`, `comparedCells`, modern
+`regionDirectory` and empty `errors`. This rebound proof is accepted when every
+region identity matches the source bytes and all block/seam/heightmap mismatch
+counts are zero. It does not need a fabricated `fileHashErrors` field.
 
 A generic adapter may instead supply `schemaVersion:1`,
 `kind:"actual-world-structural-validation"`, `status:"PASS"`, `synthetic:false`,
