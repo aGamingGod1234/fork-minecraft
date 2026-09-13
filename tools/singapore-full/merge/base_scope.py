@@ -56,8 +56,13 @@ class BaseScope:
     """Prepared geometries evaluated in vectorized bounded arrays, never per-block Point calls."""
 
     def __init__(self, descriptor_path):
-        import numpy as np
-        import shapely
+        try:
+            import numpy as np
+            import shapely
+        except ImportError as exc:
+            raise RuntimeError("--base-scope requires the configured geospatial Python runtime with NumPy and Shapely 2; use the job-pinned environment") from exc
+        if not hasattr(shapely, "prepare") or not hasattr(shapely, "points"):
+            raise RuntimeError("--base-scope requires Shapely 2 vectorized geometry support; use the job-pinned geospatial runtime")
         self._np, self._shapely = np, shapely
         path = Path(descriptor_path).resolve()
         payload = path.read_bytes()

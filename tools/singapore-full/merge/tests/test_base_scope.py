@@ -5,11 +5,13 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from collections import defaultdict
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from base_scope import BaseScope, FRAME, PROFILE
-from overlay import make_chunk, parse_run, write_overlay
+from overlay import make_chunk, parse_run, write_overlay, compound
+from anvil import read_region, read_level_dat, write_level_dat, NbtFile
 import test_overlay as legacy
 from test_overlay import block_at
 
@@ -176,6 +178,96 @@ class BaseScopeTests(unittest.TestCase):
         source.write_text("\n".join(json.dumps(row) for row in rows))
         with self.assertRaisesRegex(ValueError,"no spawn column"):
             write_overlay([source],self.base/"world",(0,0,16,16),fixture.template,allowed_root=self.base,base_scope=self.scope())
+
+    def test_component_sea_unknown_and_unknown_platform_preserve_blocks(self):
+        fixture = legacy.OverlayTests("test_global_negative_boundaries_palette_and_clean_level")
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        self.docs["country"]["features"] = [polygon(0,0,16,16)]
+        self.docs["foreignExclusions"]["features"] = []
+        for kind in ("sea", "unknown", "unknown-platform"):
+            self.docs["coast"]["features"] = [polygon(0,0,16,16,"sea")] if kind == "sea" else []
+            rows = ([legacy.OverlayTests.row(x,z,0,1,"minecraft:water","water") for z in range(16) for x in range(16)]
+                    if kind == "sea" else [legacy.OverlayTests.row(0,0,0,1,"minecraft:stone","terrain")]
+                    if kind == "unknown-platform" else [])
+            source=self.base/(kind+".jsonl")
+            source.write_text("\n".join(json.dumps(row) for row in rows))
+            target=self.base/kind
+            with self.assertRaisesRegex(ValueError,"no spawn column"):
+                write_overlay([source],self.base/(kind+"-standalone"),(0,0,16,16),fixture.template,
+                              allowed_root=self.base,base_scope=self.scope())
+            self.assertFalse((self.base/(kind+"-standalone")).exists())
+            receipt=write_overlay([source],target,(0,0,16,16),fixture.template,allowed_root=self.base,
+                                  base_scope=self.scope(),output_role="ASSEMBLY_COMPONENT")
+            self.assertEqual(receipt["worldRole"],"assembly-component")
+            self.assertEqual(receipt["role"],"assembly-component")
+            self.assertEqual(receipt["standaloneStatus"],"NOT_STANDALONE")
+            for flag in ("safeSpawn","standaloneAccepted","componentSpawnAccepted","sourceWorldPlayable","runtimeAccepted","fullWorldAccepted"):
+                self.assertIs(receipt[flag],False)
+            self.assertIs(receipt["finalAssembledSafeSpawnRequired"],True)
+            self.assertIs(receipt["spawnIsProvisional"],True)
+            self.assertEqual(receipt["spawn"],[8,1,8])
+            self.assertEqual(receipt["streaming"]["spawnSelection"],"in-core-provisional-unaccepted")
+            chunks=read_region(target/"region/r.0.0.mca")
+            for z in range(16):
+                for x in range(16):
+                    self.assertEqual(block_at(chunks,x,1,z),"minecraft:air")
+                    self.assertEqual(block_at(chunks,x,-1,z),"minecraft:dirt" if kind=="sea" else "minecraft:air")
+                    expected = "minecraft:water" if kind=="sea" else "minecraft:stone" if kind=="unknown-platform" and (x,z)==(0,0) else "minecraft:air"
+                    self.assertEqual(block_at(chunks,x,0,z),expected)
+
+    def test_component_known_land_keeps_candidate_without_standalone_acceptance(self):
+        fixture=legacy.OverlayTests("test_global_negative_boundaries_palette_and_clean_level")
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        source=self.base/"empty.jsonl"; source.write_text("")
+        scope=self.scope()
+        receipt=write_overlay([source],self.base/"land",(-16,-16,16,16),fixture.template,
+                              allowed_root=self.base,base_scope=scope,output_role="ASSEMBLY_COMPONENT")
+        x,y,z=receipt["spawn"]
+        self.assertEqual(scope.classify((x,z,x+1,z+1)),("land",))
+        self.assertFalse(receipt["spawnIsProvisional"])
+        self.assertFalse(receipt["safeSpawn"])
+        self.assertFalse(receipt["standaloneAccepted"])
+        self.assertFalse(receipt["componentSpawnAccepted"])
+
+    def test_component_role_rejects_missing_scope_and_unknown_values_before_write(self):
+        for role, error in (("ASSEMBLY_COMPONENT","requires an explicit"),("assembly-component","output_role"),("UNKNOWN","output_role")):
+            with self.assertRaisesRegex(ValueError,error):
+                write_overlay([],self.base/"world",(0,0,16,16),self.base/"no-template",allowed_root=self.base,output_role=role)
+            self.assertFalse((self.base/"world").exists())
+
+    def test_component_external_settings_spawn_fields_match_placeholder(self):
+        fixture=legacy.OverlayTests("test_global_negative_boundaries_palette_and_clean_level")
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        template=read_level_dat(fixture.template)
+        config=template.root.value["Data"].value.pop("WorldGenSettings")
+        level=self.base/"external-template/level.dat"
+        level.parent.mkdir()
+        write_level_dat(level,template)
+        settings=level.parent/"data/minecraft/world_gen_settings.dat"
+        settings.parent.mkdir(parents=True)
+        write_level_dat(settings,NbtFile("",compound({"data":config})))
+        self.docs["coast"]["features"]=[]
+        source=self.base/"empty.jsonl"; source.write_text("")
+        target=self.base/"component-external"
+        receipt=write_overlay([source],target,(0,0,16,16),level,allowed_root=self.base,
+                              base_scope=self.scope(),output_role="ASSEMBLY_COMPONENT")
+        data=read_level_dat(target/"level.dat").root.value["Data"].value
+        self.assertEqual([data[k].value for k in ("SpawnX","SpawnY","SpawnZ")],receipt["spawn"])
+        self.assertEqual(data["spawn"].value["pos"].value,receipt["spawn"])
+        self.assertTrue(receipt["spawnIsProvisional"])
+
+    def test_missing_geospatial_dependency_has_actionable_opt_in_error(self):
+        original_import=__import__
+        def missing_numpy(name,*args,**kwargs):
+            if name=="numpy":
+                raise ImportError("fixture missing NumPy")
+            return original_import(name,*args,**kwargs)
+        with mock.patch("builtins.__import__",side_effect=missing_numpy):
+            with self.assertRaisesRegex(RuntimeError,"job-pinned environment"):
+                BaseScope(self.base/"unused.json")
 
     @unittest.skipUnless(os.environ.get("BASE_SCOPE_ACTUAL_FULL"),"optional bounded actual-mask fixture")
     def test_actual_verified_country_edge_and_middle_rocks(self):

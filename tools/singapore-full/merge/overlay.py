@@ -324,7 +324,7 @@ def spool_inputs(spool, runs_paths, bounds):
     return sources, source_classes, input_count
 
 
-def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, base_scope=None):
+def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, base_scope=None, output_role="STANDALONE"):
     region_directory = stage_world / report["regionDirectory"]
     region_directory.mkdir(parents=True)
     cx0, cz0, cx1, cz1 = bounds[0] // 16, bounds[1] // 16, bounds[2] // 16, bounds[3] // 16
@@ -369,7 +369,7 @@ def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, 
                 raise RuntimeError("Reopened region is missing generated chunks")
             verified_chunks += written["chunks"]
             report["outputs"].append({"path": path.relative_to(stage_world).as_posix(), "bytes": path.stat().st_size, "sha256": digest(path)})
-    if best_spawn is None:
+    if best_spawn is None and output_role != "ASSEMBLY_COMPONENT":
         raise ValueError("no spawn column with two clear blocks below world ceiling")
     report["streaming"] = {"spool": "sqlite-disk", "maxBufferedRunsPerChunk": max_buffered_runs,
                            "maxAllowedRunsPerChunk": 131072, "verifiedChunks": verified_chunks,
@@ -377,8 +377,12 @@ def write_streamed_regions(spool, stage_world, bounds, data_version, report, *, 
     return best_spawn
 
 
-def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None, base_scope=None):
+def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, allowed_root=ALLOWED_ROOT, job_lease=None, base_scope=None, output_role="STANDALONE"):
     validate_bounds(bounds)
+    if output_role not in ("STANDALONE", "ASSEMBLY_COMPONENT"):
+        raise ValueError("output_role must be STANDALONE or ASSEMBLY_COMPONENT")
+    if output_role == "ASSEMBLY_COMPONENT" and base_scope is None:
+        raise ValueError("ASSEMBLY_COMPONENT requires an explicit --base-scope descriptor")
     if base_scope is not None:
         from base_scope import BaseScope
         if not isinstance(base_scope, BaseScope):
@@ -433,9 +437,15 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         report["baseScope"] = base_scope.receipt()
         report["groundProfileId"] = report["baseScope"]["profileId"]
         report["terrain"] = "country-coast-scoped-flat-provisional"
+        report["worldRole"] = "assembly-component" if output_role == "ASSEMBLY_COMPONENT" else "standalone"
+    if output_role == "ASSEMBLY_COMPONENT":
+        report.update(role="assembly-component", standaloneStatus="NOT_STANDALONE",
+                      componentSpawnAccepted=False, finalAssembledSafeSpawnRequired=True,
+                      sourceWorldPlayable=False, safeSpawn=False, standaloneAccepted=False,
+                      runtimeAccepted=False, fullWorldAccepted=False)
     # One source chunk and one output chunk at a time; final world remains absent on failure.
     with RunSpool(spool_path, create=False) as spool:
-        best_spawn = write_streamed_regions(spool, stage_world, bounds, data_version, report, base_scope=base_scope)
+        best_spawn = write_streamed_regions(spool, stage_world, bounds, data_version, report, base_scope=base_scope, output_role=output_role)
     # Keep only world configuration; never carry source player/server state or per-tile map IDs.
     data.value.pop("Player", None)
     data.value.pop("DragonFight", None)
@@ -448,6 +458,12 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
         data.value["MapFeatures"] = Tag(1, 0)
     report["surroundingVanillaStructureGeneration"] = "disabled"
     data.value["LevelName"] = Tag(8, "FORK - Singapore Assembly Preview")
+    if output_role == "ASSEMBLY_COMPONENT":
+        report["spawnIsProvisional"] = best_spawn is None
+    if best_spawn is None:
+        # Component configuration is never a final spawn source. This coordinate adds no blocks.
+        best_spawn = (True, 0, (bounds[0] + bounds[2]) // 2, 1, (bounds[1] + bounds[3]) // 2)
+        report["streaming"]["spawnSelection"] = "in-core-provisional-unaccepted"
     _, _, spawn_x, spawn_y, spawn_z = best_spawn
     data.value["SpawnX"] = Tag(3, spawn_x)
     data.value["SpawnY"] = Tag(3, spawn_y)
@@ -490,6 +506,8 @@ def main():
     parser.add_argument("--max-chunks", type=int, default=512)
     parser.add_argument("--job-lease", help="Coordinator-approved immutable Desktop queue/run attempt lease")
     parser.add_argument("--base-scope", help="Optional pinned country/foreign/coast descriptor for provisional default terrain")
+    parser.add_argument("--output-role", choices=("STANDALONE", "ASSEMBLY_COMPONENT"), default="STANDALONE",
+                        help="Scoped assembly components are NOT_STANDALONE and require final assembled safe spawn")
     args = parser.parse_args()
     manifest = Path(args.manifest).resolve()
     world = Path(args.world).resolve()
@@ -497,7 +515,7 @@ def main():
         parser.error("manifest must be a new path outside the output world")
     if PROJECT_ROOT.resolve() not in manifest.parents:
         parser.error("manifest must remain within the private full-Singapore project")
-    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease, base_scope=args.base_scope)
+    report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease, base_scope=args.base_scope, output_role=args.output_role)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     with manifest.open("x", encoding="utf-8") as stream:
         json.dump(report, stream, indent=2, sort_keys=True)

@@ -20,7 +20,17 @@ The sea soil is a provisional construction substrate. It is not measured depth, 
 
 Existing explicit terrain replacement and feature-layer precedence are preserved within the national domain. Bridges over mapped sea remain supported. Occupied feature runs outside country or on a foreign exclusion fail before final publication; AIR carve runs remain permitted there. Unknown columns receive no automatic ground, while explicit mapped feature evidence inside the country is retained and remains unaccepted. All four heightmaps remain zero in fully empty columns.
 
-Scoped spawn selection requires a known land column with a solid highest block, space above it and below the world ceiling. All-sea or all-unknown jobs without a known-land spawn fail instead of inventing a spawn. A separate queue integration decision is required for generating sea-only worlds.
+Scoped spawn selection requires a known land column with a solid highest block, space above it and below the world ceiling. The default STANDALONE mode rejects all-sea or all-unknown jobs without a known-land spawn.
+
+## Assembly components
+
+Explicit `--output-role ASSEMBLY_COMPONENT` requires `--base-scope` and maps to `worldRole: "assembly-component"` in the manifest. The Python API uses `write_overlay(..., base_scope=descriptor, output_role="ASSEMBLY_COMPONENT")`. The default is `STANDALONE`; unknown values and component mode without an explicit scope are rejected before output creation.
+
+Components may contain only mapped sea or unknown columns. Missing safe land does not prevent structural output. A component with no eligible spawn records the deterministic in-core coordinate `[centerX, 1, centerZ]` and `spawnIsProvisional: true`. It sets both legacy and modern level.dat spawn fields consistently but adds no terrain or platform. A known-land candidate is retained when available and `spawnIsProvisional` is false; component acceptance flags still remain false.
+
+Every component manifest carries `role: "assembly-component"`, `standaloneStatus: "NOT_STANDALONE"`, `safeSpawn: false`, `standaloneAccepted: false`, `componentSpawnAccepted: false`, `sourceWorldPlayable: false`, `runtimeAccepted: false`, `fullWorldAccepted: false`, and `finalAssembledSafeSpawnRequired: true`. These are writer acceptance flags; an independent structural oracle may separately measure a safe component candidate. Component configuration is never a final spawn source. The final assembled snapshot must obtain and recheck a proven safe spawn from an eligible separate source.
+
+The immutable job must pin `worldRole: "assembly-component"`, the descriptor and scoped profile, and pass the explicit writer flag. Neither an unsafe spawn nor a generic PASS implies component authorization. The existing grow contract recognizes pinned East/Ring component gate loaders; future country components require their own explicitly supported and pinned loader. This change does not alter existing admission or accepted worlds.
 
 ## Descriptor
 
@@ -52,7 +62,7 @@ Paths may be absolute or relative to the descriptor. This example names the veri
 }
 ```
 
-Country pin was verified against `data/coverage-derived-260912/country-mask-world.geojson`; foreign pin against the existing benchmark frozen mask descriptor; coast pin against `data/coast-mask/national-v2/coast-mask-xz.geojson`. Production must use immutable verified copies and bind the descriptor, new code module, writer, configuration, and actual Python/native runtime through the existing versioned job contract. The tested Desktop data runtime supplies Shapely 2.1.2 and NumPy 2.4.6. The scope receipt records the imported versions; version strings alone are not a substitute for the pipeline runtime file hashes.
+Country pin was verified against `data/coverage-derived-260912/country-mask-world.geojson`; foreign pin against the existing benchmark frozen mask descriptor; coast pin against `data/coast-mask/national-v2/coast-mask-xz.geojson`. Production must use immutable verified copies and bind the descriptor, new code module, writer, configuration, and actual Python/native runtime through the existing versioned job contract. The tested Desktop data runtime supplies Shapely 2.1.2 and NumPy 2.4.6. An unavailable NumPy/Shapely dependency now raises an explicit message to use the job-pinned geospatial environment; legacy mode does not import them. No packages are installed automatically. The scope receipt records the imported versions; version strings alone are not a substitute for the pipeline runtime file hashes.
 
 ## Output and acceptance
 
@@ -62,7 +72,7 @@ The existing `validate-world-fast.mjs` oracle assumes global grass/soil. It cann
 
 ## Focused verification
 
-Twelve new deterministic tests cover land, sea, foreign precedence, unknown and conflicting coast evidence, pinned hashes, invalid geometry, coordinate declarations, negative coordinates, adjacent chunk seams, empty heightmaps, mapped water and bridges, occupied runs outside scope, streamed manifests and safe spawn failure. An optional bounded real-source fixture verifies the frozen national country edge and Middle Rocks with the exact three pins above. The twelve existing writer tests remain applicable to legacy mode.
+Seventeen new deterministic tests cover land, sea, foreign precedence, unknown and conflicting coast evidence, pinned hashes, invalid geometry, coordinate declarations, negative coordinates, adjacent chunk seams, empty heightmaps, mapped water and bridges, occupied runs outside scope, streamed manifests, safe spawn failure, sea/unknown components, component role rejection, modern and legacy placeholder spawn fields, and the optional dependency error. An optional bounded real-source fixture verifies the frozen national country edge and Middle Rocks with the exact three pins above. The twelve existing writer tests remain applicable to legacy mode.
 
 Run with the existing geospatial runtime:
 
