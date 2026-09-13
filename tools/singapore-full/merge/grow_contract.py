@@ -427,6 +427,13 @@ def _multi_coverage(component, entry, evidence, path, evidence_sha, core, writer
 
 def _coverage(component, entry, core, writer_hash, writer_inputs=None):
     if isinstance(entry, dict) and entry.get("status") == "rendered_subset_preview":
+        evidence = load(Path(entry["evidence_path"]).resolve(strict=True))
+        if evidence.get("kind") == "fork-multi-source-component-preview":
+            if component != "water":
+                raise GrowContractError("multi-source component preview applies only to water")
+            from grow_preview import validate_multi_water_preview
+            return validate_multi_water_preview(entry, list(core), writer_hash, writer_inputs,
+                                                coast_validator=_coverage)
         from grow_preview import validate_preview
         return validate_preview(component, entry, list(core), writer_hash, writer_inputs)
     if not isinstance(entry, dict) or entry.get("status") not in ("included", "pass", "no_features"):

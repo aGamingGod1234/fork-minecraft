@@ -380,6 +380,26 @@ class GrowContractTests(unittest.TestCase):
         self.assertEqual(result["expected_chunks"], 4096)
         self.assertNotIn("role", result["sources"][0])
 
+    def test_multi_water_preview_dispatch_preserves_qualified_status(self):
+        path = self.write(self.root / "multi-preview.json", {"kind": "fork-multi-source-component-preview"})
+        entry = {"status": "rendered_subset_preview", "evidence_path": str(path), "evidence_sha256": digest(path)}
+        expected = {"status": "rendered_subset_preview", "contributors": [{"id": "inland-water", "omissions": 16}]}
+        with patch("grow_preview.validate_multi_water_preview", create=True, return_value=expected) as validate:
+            self.assertEqual(expected, _coverage("water", entry, (0, 0, 16, 16), "a" * 64, []))
+            validate.assert_called_once_with(entry, [0, 0, 16, 16], "a" * 64, [], coast_validator=_coverage)
+        with self.assertRaisesRegex(GrowContractError, "only to water"):
+            _coverage("roads", entry, (0, 0, 16, 16), "a" * 64, [])
+        for status in ("included", "pass", "no_features"):
+            with self.subTest(status=status), self.assertRaises(GrowContractError):
+                _coverage("water", {**entry, "status": status}, (0, 0, 16, 16), "a" * 64, [])
+
+    def test_single_component_preview_dispatch_stays_unchanged(self):
+        path = self.write(self.root / "single-preview.json", {"kind": "fork-rendered-subset-preview"})
+        entry = {"status": "rendered_subset_preview", "evidence_path": str(path), "evidence_sha256": digest(path)}
+        with patch("grow_preview.validate_preview", return_value={"status": "rendered_subset_preview"}) as validate:
+            self.assertEqual("rendered_subset_preview", _coverage("roads", entry, (0, 0, 16, 16), "a" * 64, [])["status"])
+            validate.assert_called_once_with("roads", entry, [0, 0, 16, 16], "a" * 64, [])
+
 
 if __name__ == "__main__":
     unittest.main()
