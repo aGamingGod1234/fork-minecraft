@@ -487,7 +487,9 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var engine=adapter.engine();
         if(engine.state().mode()!=ForkEngine.Mode.LIVE||engine.pending()!=null||engine.paused()||!ready())
             throw new IllegalStateException("Preparation requires idle LIVE session and all three bodies");
-        Path journal=Path.of(System.getProperty("fork.presentationJournal",storage.toString())).toRealPath();
+        Path packagedJournal=net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("fork/presentation-journal");
+        Path defaultJournal=Files.isDirectory(packagedJournal)?packagedJournal:storage;
+        Path journal=Path.of(System.getProperty("fork.presentationJournal",defaultJournal.toString())).toRealPath();
         var bundle=ForkRecordedBundle.load(journal,ForkEntrypoint.JSON);
         if(!level.hasChunkAt(PRESENTATION_BUILD_CELL)||!level.getBlockState(PRESENTATION_BUILD_CELL).isAir()
                 ||!level.getBlockState(PRESENTATION_BUILD_CELL.below()).is(Blocks.STONE_BRICKS)
