@@ -426,6 +426,7 @@ def _multi_coverage(component, entry, evidence, path, evidence_sha, core, writer
 
 
 def _coverage(component, entry, core, writer_hash, writer_inputs=None):
+    core = _bounds(core, component + " coverage core")
     if isinstance(entry, dict) and entry.get("status") == "rendered_subset_preview":
         evidence = load(Path(entry["evidence_path"]).resolve(strict=True))
         if evidence.get("kind") == "fork-multi-source-component-preview":

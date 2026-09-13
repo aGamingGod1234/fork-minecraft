@@ -171,12 +171,17 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
             for component in ("roads", "water"):
                 record = source["coverage"][component]
                 if record.get("status") == "rendered_subset_preview":
-                    from grow_preview import validate_preview
-                    subset = validate_preview(component, record, bounds,
+                    from grow_contract import _coverage
+                    subset = _coverage(component, record, bounds,
                         source["writer_manifest_sha256"], writer.get("inputs"))
+                    _need(subset.get("status") == "rendered_subset_preview", "Qualified coverage cannot become complete")
                     coverage[component] = {"status": "RENDERED_SUBSET", "featureCount": subset["feature_count"],
-                        "evidence_sha256": subset["evidence_sha256"], "classification_sha256": subset["classification_sha256"],
+                        "evidence_sha256": subset["evidence_sha256"],
                         "sourceComplete": False, "routeComplete": False, "fullFidelity": False}
+                    for field in ("classification_sha256", "source_set_sha256", "source_sha256", "contributors",
+                                  "omissions", "quarantinedSourceFeatures"):
+                        if field in subset:
+                            coverage[component][field] = copy.deepcopy(subset[field])
                     continue
                 proof = _evidence(record["evidence_path"], record["evidence_sha256"])
                 _need(record["status"] in ("included", "pass", "no_features"), "Coverage metadata not accepted")

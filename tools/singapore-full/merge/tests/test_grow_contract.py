@@ -400,6 +400,12 @@ class GrowContractTests(unittest.TestCase):
             self.assertEqual("rendered_subset_preview", _coverage("roads", entry, (0, 0, 16, 16), "a" * 64, [])["status"])
             validate.assert_called_once_with("roads", entry, [0, 0, 16, 16], "a" * 64, [])
 
+    def test_strict_coverage_callback_accepts_list_core(self):
+        source = self.source("coast-callback", [0, 0, 16, 16])
+        writer = digest(source["writer_manifest_path"])
+        self.assertEqual(_coverage("water", source["coverage"]["water"], [0, 0, 16, 16], writer),
+                         _coverage("water", source["coverage"]["water"], (0, 0, 16, 16), writer))
+
 
 if __name__ == "__main__":
     unittest.main()

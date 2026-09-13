@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -175,6 +176,40 @@ class GrownWorldReceiptTests(unittest.TestCase):
         result = self.check()
         self.assertFalse(result["assemblyAccepted"])
         self.assertIn("Final configs", result["issues"][0])
+
+    def test_multi_water_preview_receipt_retains_qualified_contributors(self):
+        record = self.sources[0]["coverage"]["water"]
+        record["status"] = "rendered_subset_preview"
+        subset = {"status": "rendered_subset_preview", "feature_count": 2,
+                  "evidence_sha256": record["evidence_sha256"], "source_set_sha256": "b" * 64,
+                  "contributors": [{"id": "coast-water", "status": "included"},
+                                   {"id": "inland-water", "status": "rendered_subset_preview"}],
+                  "omissions": [{"featureId": "water/2", "reason": "missing source geometry"}]}
+        with patch("grow_contract._coverage", return_value=subset) as validate:
+            result = self.check()
+        self.assertTrue(result["assemblyAccepted"], result["issues"])
+        validate.assert_called_once_with("water", record, [0, 0, 16, 16], self.sources[0]["writer_manifest_sha256"], None)
+        coverage = result["sources"][0]["coverage"]["water"]
+        self.assertEqual("RENDERED_SUBSET", coverage["status"])
+        self.assertEqual(subset["contributors"], coverage["contributors"])
+        self.assertEqual(subset["omissions"], coverage["omissions"])
+        self.assertEqual("b" * 64, coverage["source_set_sha256"])
+        self.assertFalse(coverage["fullFidelity"])
+        self.assertFalse(result["runtimeLoadAccepted"])
+
+    def test_preview_receipt_revalidates_and_preserves_single_classification(self):
+        record = self.sources[0]["coverage"]["roads"]
+        record["status"] = "rendered_subset_preview"
+        subset = {"status": "rendered_subset_preview", "feature_count": 1,
+                  "evidence_sha256": record["evidence_sha256"], "classification_sha256": "c" * 64}
+        with patch("grow_contract._coverage", return_value=subset):
+            result = self.check()
+        self.assertTrue(result["assemblyAccepted"], result["issues"])
+        self.assertEqual("c" * 64, result["sources"][0]["coverage"]["roads"]["classification_sha256"])
+        with patch("grow_contract._coverage", side_effect=ValueError("changed child evidence")):
+            result = self.check()
+        self.assertFalse(result["assemblyAccepted"])
+        self.assertIn("changed child evidence", result["issues"][0])
 
 
 if __name__ == "__main__":
