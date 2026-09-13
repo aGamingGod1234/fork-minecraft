@@ -56,7 +56,7 @@ public final class CameraDirectorClient {
 	private static Boolean previousHideGui;
 	private static ChatVisiblity previousChatVisibility;
 	private static boolean registered;
-	private static long playbackClock;
+
 	public static List<String> presetNames() { return List.copyOf(PATHS.keySet()); }
 	/** Render guards use playback state, never the user's identity or saved preferences. */
 	public static boolean cleanPlaybackActive() { return playback != null; }
@@ -131,7 +131,7 @@ public final class CameraDirectorClient {
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
 		captureAndHidePresentation(client);
-		playback = new Playback(path, client.level, client.player, playbackClock, loop);
+		playback = new Playback(path, client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
 		apply(client, path.sample(0.0D));
 	}
 
@@ -260,7 +260,7 @@ public final class CameraDirectorClient {
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
 		captureAndHidePresentation(client);
-		playback = new Playback(path, client.level, client.player, playbackClock, loop);
+		playback = new Playback(path, client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
 		apply(client, path.sample(0.0D));
 		return 1;
 	}
@@ -310,29 +310,50 @@ public final class CameraDirectorClient {
 	}
 
 	private static void tick(Minecraft client) {
-		// Presentation time must remain independent of FORK's fixed daylight clock.
-		if(client.level!=null&&!client.isPaused()) playbackClock++;
 		if (recording != null && !recordingInCurrentLevel(client)) recording = null;
-		if (playback == null) return;
+		validatePlayback(client);
+	}
+
+	private static boolean validatePlayback(Minecraft client) {
+		if (playback == null) return false;
 		if (client.level == null || client.player == null || playback.level() != client.level || playback.player() != client.player) {
 			stopPlayback(client);
-			return;
+			return false;
 		}
-		// F1 or a settings screen cannot leak overlays into an active take.
 		client.options.hideGui = true;
 		client.options.chatVisibility().set(ChatVisiblity.HIDDEN);
-		long elapsed = playbackClock - playback.startedAt();
-		if (elapsed >= playback.path().durationTicks()) {
+		return true;
+	}
+
+	/** Called before Camera.update aligns the view and builds its culling matrices. */
+	public static void updatePresentationFrame() {
+		Minecraft client = Minecraft.getInstance();
+		if (!validatePlayback(client)) return;
+		double elapsed = playback.clock().advance(System.nanoTime(), client.isPaused());
+		int duration = playback.path().durationTicks();
+		if (elapsed >= duration) {
 			if (!playback.loop()) {
-				apply(client, playback.path().sample(playback.path().durationTicks()));
 				stopPlayback(client);
 				return;
 			}
-			long duration = Math.max(1L, playback.path().durationTicks());
 			elapsed %= duration;
-			playback = new Playback(playback.path(), playback.level(), playback.player(), playbackClock - elapsed, true);
 		}
 		apply(client, playback.path().sample(elapsed));
+	}
+
+	/** Monotonic presentation time in authored 20 Hz ticks; independent of simulation/daylight. */
+	public static final class PresentationClock {
+		private long previousNanos;
+		private long elapsedNanos;
+		private boolean previouslyPaused;
+		public PresentationClock(long now, boolean paused) { previousNanos = now; previouslyPaused = paused; }
+		public double advance(long now, boolean paused) {
+			long delta = now - previousNanos;
+			if (!paused && !previouslyPaused && delta > 0) elapsedNanos += delta;
+			previousNanos = now;
+			previouslyPaused = paused;
+			return elapsedNanos / 50_000_000.0D;
+		}
 	}
 
 	private static void apply(Minecraft client, CameraPose pose) {
@@ -343,13 +364,13 @@ public final class CameraDirectorClient {
 			cameraAnchor = EntityType.MARKER.create(client.level, EntitySpawnReason.COMMAND);
 			if (cameraAnchor == null) return;
 		}
-		if (!created) cameraAnchor.setOldPosAndRot();
 		cameraAnchor.setPos(pose.x(), pose.y(), pose.z());
 		cameraAnchor.setYRot(pose.yaw());
 		cameraAnchor.setXRot(pose.pitch());
+		// The pose is already sampled for this frame: suppress a second entity interpolation.
+		cameraAnchor.setOldPosAndRot();
 		client.options.setCameraType(CameraType.FIRST_PERSON);
 		if (created) {
-			cameraAnchor.setOldPosAndRot();
 			client.level.addFreshEntity(cameraAnchor);
 			setCamera(client, cameraAnchor);
 		}
@@ -485,6 +506,6 @@ public final class CameraDirectorClient {
 	private record Recording(String name, ClientLevel level, long startedAt, ArrayList<CameraKeyframe> frames) {
 	}
 
-	private record Playback(CameraPath path, ClientLevel level, LocalPlayer player, long startedAt, boolean loop) {
+	private record Playback(CameraPath path, ClientLevel level, LocalPlayer player, PresentationClock clock, boolean loop) {
 	}
 }

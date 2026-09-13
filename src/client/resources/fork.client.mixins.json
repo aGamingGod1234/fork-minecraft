@@ -1,11 +1,12 @@
-﻿{
+{
     "required":  true,
     "package":  "dev.fork.gameplay.mixin",
     "compatibilityLevel":  "JAVA_25",
     "client":  [
                    "ForkCameraGuiMixin",
                    "ForkCameraHandMixin",
-                   "ForkRoleSkinMixin"
+                   "ForkRoleSkinMixin",
+                   "ForkCameraFrameMixin"
                ],
     "injectors":  {
                       "defaultRequire":  1
