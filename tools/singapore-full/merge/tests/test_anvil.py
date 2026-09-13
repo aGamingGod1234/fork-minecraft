@@ -250,5 +250,118 @@ class RegionTests(unittest.TestCase):
                     a.read_region(path)
 
 
+
+class StreamingTests(unittest.TestCase):
+    @staticmethod
+    def frozen_writer_bytes(chunks):
+        # Exact pre-stream writer algorithm retained as an independent byte oracle.
+        locations, body, offset = bytearray(a.SECTOR), bytearray(), 2
+        for (cx, cz), document in sorted(chunks.items(), key=lambda item: (item[0][1], item[0][0])):
+            encoded = zlib.compress(a.write_nbt(document), 6)
+            record = struct.pack(">I", len(encoded) + 1) + b"\x02" + encoded
+            count = (len(record) + a.SECTOR - 1) // a.SECTOR
+            index = (cx % 32) + (cz % 32) * 32
+            locations[index * 4:index * 4 + 4] = ((offset << 8) | count).to_bytes(4, "big")
+            body.extend(record)
+            body.extend(bytes(count * a.SECTOR - len(record)))
+            offset += count
+        return bytes(locations) + bytes(a.SECTOR) + body
+
+    def test_stream_matches_frozen_writer_bytes_arbitrary_order(self):
+        import hashlib
+        items = {(-32, -32): chunk(-32, -32), (-1, -1): chunk(-1, -1), (-17, -20): chunk(-17, -20)}
+        expected = self.frozen_writer_bytes(items)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.-1.-1.mca"
+            seen = []
+            def documents():
+                for entry in reversed(list(items.items())):
+                    seen.append(entry[0])
+                    yield entry
+            receipt = a.write_region_stream(path, documents())
+            self.assertEqual(len(seen), 3)
+            self.assertEqual(path.read_bytes(), expected)
+            self.assertEqual(receipt, {"bytes": len(expected), "sha256": hashlib.sha256(expected).hexdigest(), "chunks": 3})
+            self.assertEqual(dict(a.iter_region(path)), items)
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def test_failure_preserves_existing_destination_and_removes_temps(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            path.write_bytes(b"existing destination")
+            def interrupted():
+                yield (0, 0), chunk(0, 0)
+                raise RuntimeError("producer failed")
+            with self.assertRaisesRegex(RuntimeError, "producer failed"):
+                a.write_region_stream(path, interrupted())
+            self.assertEqual(path.read_bytes(), b"existing destination")
+            self.assertEqual(list(Path(directory).iterdir()), [path])
+
+    def test_duplicate_foreign_and_bad_coordinate_fail_without_artifact(self):
+        cases = [
+            [((0, 0), chunk(0, 0)), ((0, 0), chunk(0, 0))],
+            [((0, 0), chunk(0, 0)), ((32, 0), chunk(32, 0))],
+            [((True, 0), chunk(1, 0))],
+            [((0, 0), chunk(1, 0))],
+        ]
+        for entries in cases:
+            with self.subTest(entries=entries[:1]), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "r.0.0.mca"
+                with self.assertRaises(a.NbtError):
+                    a.write_region_stream(path, iter(entries))
+                self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_complete_header_validated_before_first_yield(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            a.write_region(path, {(0, 0): chunk(0, 0)})
+            data = bytearray(path.read_bytes())
+            data[4092:4096] = data[:4]  # Very last header entry overlaps the first.
+            path.write_bytes(data)
+            iterator = a.iter_region(path)
+            with self.assertRaisesRegex(a.NbtError, "Overlapping"):
+                next(iterator)
+
+    def test_invalid_later_header_offset_rejected_before_first_yield(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            a.write_region(path, {(0, 0): chunk(0, 0)})
+            data = bytearray(path.read_bytes())
+            data[4092:4096] = ((0xFFFFFF << 8) | 1).to_bytes(4, "big")
+            path.write_bytes(data)
+            with self.assertRaisesRegex(a.NbtError, "sector location"):
+                next(a.iter_region(path))
+
+    def test_payloads_are_decoded_lazily(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            a.write_region(path, {(0, 0): chunk(0, 0), (1, 0): chunk(1, 0)})
+            data = bytearray(path.read_bytes())
+            second_offset = int.from_bytes(data[4:8], "big") >> 8
+            data[second_offset * a.SECTOR + 4] = 99
+            path.write_bytes(data)
+            iterator = a.iter_region(path)
+            self.assertEqual(next(iterator)[0], (0, 0))
+            with self.assertRaisesRegex(a.NbtError, "compression"):
+                next(iterator)
+
+    def test_reopen_validation_failure_does_not_publish(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            with patch.object(a, "_iter_region_handle", side_effect=a.NbtError("injected verification failure")):
+                with self.assertRaisesRegex(a.NbtError, "verification failure"):
+                    a.write_region_stream(path, iter([((0, 0), chunk(0, 0))]))
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_empty_stream_matches_legacy_empty_region(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "r.0.0.mca"
+            receipt = a.write_region_stream(path, iter(()))
+            self.assertEqual(path.read_bytes(), bytes(8192))
+            self.assertEqual(receipt["chunks"], 0)
+            self.assertEqual(list(a.iter_region(path)), [])
+
+
 if __name__ == "__main__":
     unittest.main()

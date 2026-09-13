@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import gzip
+import hashlib
 import os
 import re
 import struct
@@ -271,75 +272,183 @@ def chunk_coords(document: NbtFile) -> tuple[int, int]:
     return root["xPos"].value, root["zPos"].value
 
 
-def read_region(path) -> dict[tuple[int, int], NbtFile]:
+def _region_locations(handle, path):
+    """Validate the complete location table before exposing any chunk."""
     rx, rz = _region_coords(path)
-    chunks, occupied, total = {}, {0, 1}, 0
-    with open(path, "rb") as handle:
-        size = os.fstat(handle.fileno()).st_size
-        if size < 8192 or size % SECTOR:
-            raise NbtError("Invalid region size/alignment")
-        locations = handle.read(SECTOR)
-        for index in range(1024):
-            entry = int.from_bytes(locations[index * 4:index * 4 + 4], "big")
-            offset, count = entry >> 8, entry & 255
-            if not entry:
-                continue
-            if offset < 2 or not count or (offset + count) * SECTOR > size:
-                raise NbtError("Invalid region sector location")
-            sectors = set(range(offset, offset + count))
-            if occupied.intersection(sectors):
-                raise NbtError("Overlapping region sectors")
-            occupied.update(sectors)
-            handle.seek(offset * SECTOR)
-            length = int.from_bytes(handle.read(4), "big")
-            if length < 2 or length > count * SECTOR - 4:
-                raise NbtError("Invalid compressed chunk length")
-            compression = handle.read(1)[0]
-            encoded = handle.read(length - 1)
-            if compression & 128:
-                raise NbtError("External .mcc chunks are not supported")
-            if compression == 1:
-                raw = _inflate(encoded, 31)
-            elif compression == 2:
-                raw = _inflate(encoded, 15)
-            elif compression == 3:
-                raw = encoded
-            else:
-                raise NbtError("Unsupported Anvil compression: " + str(compression))
-            total += len(raw)
-            if total > MAX_TOTAL_NBT_BYTES:
-                raise NbtError("Region exceeds decoded-data limit")
-            document = read_nbt(raw)
-            coords = (rx * 32 + index % 32, rz * 32 + index // 32)
-            if chunk_coords(document) != coords:
-                raise NbtError("NBT chunk coordinates disagree with region slot")
-            chunks[coords] = document
-    return chunks
+    size = os.fstat(handle.fileno()).st_size
+    if size < 8192 or size % SECTOR:
+        raise NbtError("Invalid region size/alignment")
+    handle.seek(0)
+    locations = handle.read(SECTOR)
+    occupied = {0, 1}
+    entries = []
+    for index in range(1024):
+        entry = int.from_bytes(locations[index * 4:index * 4 + 4], "big")
+        offset, count = entry >> 8, entry & 255
+        if not entry:
+            continue
+        if offset < 2 or not count or (offset + count) * SECTOR > size:
+            raise NbtError("Invalid region sector location")
+        sectors = set(range(offset, offset + count))
+        if occupied.intersection(sectors):
+            raise NbtError("Overlapping region sectors")
+        occupied.update(sectors)
+        entries.append(((rx * 32 + index % 32, rz * 32 + index // 32), offset, count))
+    return entries
 
 
-def write_region(path, chunks: dict[tuple[int, int], NbtFile]):
-    rx, rz = _region_coords(path)
-    locations, body, offset, total = bytearray(SECTOR), bytearray(), 2, 0
-    for coords, document in sorted(chunks.items(), key=lambda pair: (pair[0][1], pair[0][0])):
-        cx, cz = coords
-        if cx // 32 != rx or cz // 32 != rz or chunk_coords(document) != coords:
-            raise NbtError("Chunk coordinates do not belong in target region")
-        raw = write_nbt(document)
+def _iter_region_handle(handle, path):
+    total = 0
+    entries = _region_locations(handle, path)
+    for coords, offset, count in entries:
+        handle.seek(offset * SECTOR)
+        length = int.from_bytes(handle.read(4), "big")
+        if length < 2 or length > count * SECTOR - 4:
+            raise NbtError("Invalid compressed chunk length")
+        compression_data = handle.read(1)
+        if len(compression_data) != 1:
+            raise NbtError("Truncated chunk compression marker")
+        compression = compression_data[0]
+        encoded = handle.read(length - 1)
+        if len(encoded) != length - 1:
+            raise NbtError("Truncated compressed chunk")
+        if compression & 128:
+            raise NbtError("External .mcc chunks are not supported")
+        if compression == 1:
+            raw = _inflate(encoded, 31)
+        elif compression == 2:
+            raw = _inflate(encoded, 15)
+        elif compression == 3:
+            raw = encoded
+        else:
+            raise NbtError("Unsupported Anvil compression: " + str(compression))
         total += len(raw)
         if total > MAX_TOTAL_NBT_BYTES:
             raise NbtError("Region exceeds decoded-data limit")
-        encoded = zlib.compress(raw, 6)
-        record = struct.pack(">I", len(encoded) + 1) + b"\x02" + encoded
-        count = (len(record) + SECTOR - 1) // SECTOR
-        if count > 255 or offset > 0xFFFFFF:
-            raise NbtError("Chunk requires external storage")
-        index = (cx % 32) + (cz % 32) * 32
-        locations[index * 4:index * 4 + 4] = ((offset << 8) | count).to_bytes(4, "big")
-        body.extend(record)
-        body.extend(bytes(count * SECTOR - len(record)))
-        offset += count
-    # Zero timestamps make assembly reproducible; chunk metadata is preserved.
-    _atomic_write(path, bytes(locations) + bytes(SECTOR) + body)
+        document = read_nbt(raw)
+        if chunk_coords(document) != coords:
+            raise NbtError("NBT chunk coordinates disagree with region slot")
+        del raw, encoded
+        yield coords, document
+        del document
+
+
+
+
+def iter_region(path):
+    """Yield (global chunk coordinates, NbtFile), decoding one chunk at a time.
+
+    Every location-table offset and overlap is checked before the first yield.
+    Payload errors are detected as that individual chunk is reached. Consumers
+    must not mutate the source and must exhaust or close the iterator.
+    """
+    with open(path, "rb") as handle:
+        yield from _iter_region_handle(handle, path)
+
+
+def read_region(path) -> dict[tuple[int, int], NbtFile]:
+    return dict(iter_region(path))
+
+
+def write_region_stream(path, chunks):
+    """Write an iterable of (coordinates, NbtFile) with bounded chunk memory.
+
+    Input order is arbitrary. Compressed records are spooled to one temporary
+    file, then copied in canonical region-slot order to a second temporary file.
+    Only the 1024-entry slot table and one chunk payload are retained in memory.
+    The destination is atomically replaced only after the input and output are
+    complete. Existing destinations survive all pre-replacement failures.
+    Returns the final byte length, SHA-256 and chunk count for provenance.
+    """
+    path = Path(path)
+    rx, rz = _region_coords(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    spool_path = output_path = None
+    metadata = {}
+    total = 0
+    try:
+        spool_fd, spool_path = tempfile.mkstemp(prefix=path.name + ".spool.", suffix=".tmp", dir=path.parent)
+        with os.fdopen(spool_fd, "w+b") as spool:
+            for coords, document in chunks:
+                if (not isinstance(coords, (tuple, list)) or len(coords) != 2
+                        or any(type(value) is not int for value in coords)):
+                    raise NbtError("Chunk coordinates must be a pair of integers")
+                cx, cz = coords
+                coords = (cx, cz)
+                if cx // 32 != rx or cz // 32 != rz or chunk_coords(document) != coords:
+                    raise NbtError("Chunk coordinates do not belong in target region")
+                index = (cx % 32) + (cz % 32) * 32
+                if index in metadata:
+                    raise NbtError("Duplicate chunk coordinates")
+                raw = write_nbt(document)
+                total += len(raw)
+                if total > MAX_TOTAL_NBT_BYTES:
+                    raise NbtError("Region exceeds decoded-data limit")
+                nbt_digest = hashlib.sha256(raw).digest()
+                encoded = zlib.compress(raw, 6)
+                del raw
+                record_length = len(encoded) + 5
+                count = (record_length + SECTOR - 1) // SECTOR
+                if count > 255:
+                    raise NbtError("Chunk requires external storage")
+                metadata[index] = (spool.tell(), count, nbt_digest)
+                spool.write(struct.pack(">I", len(encoded) + 1))
+                spool.write(b"\x02")
+                spool.write(encoded)
+                del encoded, document
+                spool.write(bytes(count * SECTOR - record_length))
+            spool.flush()
+            locations = bytearray(SECTOR)
+            offset = 2
+            for index in sorted(metadata):
+                count = metadata[index][1]
+                if offset > 0xFFFFFF:
+                    raise NbtError("Region sector offset exceeds format limit")
+                locations[index * 4:index * 4 + 4] = ((offset << 8) | count).to_bytes(4, "big")
+                offset += count
+            output_fd, output_path = tempfile.mkstemp(prefix=path.name + ".output.", suffix=".tmp", dir=path.parent)
+            digest = hashlib.sha256()
+            with os.fdopen(output_fd, "wb") as output:
+                def emit(data):
+                    output.write(data)
+                    digest.update(data)
+                emit(bytes(locations))
+                emit(bytes(SECTOR))  # Deliberately zero timestamps for reproducibility.
+                for index in sorted(metadata):
+                    position, count, _ = metadata[index]
+                    spool.seek(position)
+                    remaining = count * SECTOR
+                    while remaining:
+                        part = spool.read(min(65536, remaining))
+                        if not part:
+                            raise NbtError("Truncated temporary chunk record")
+                        emit(part)
+                        remaining -= len(part)
+                output.flush()
+                os.fsync(output.fileno())
+        # Validate the completed temporary file before publication, one decoded
+        # tree at a time. Hashing its canonical NBT detects writer corruption.
+        checked = 0
+        with open(output_path, "rb") as verify:
+            for (cx, cz), document in _iter_region_handle(verify, path):
+                index = (cx % 32) + (cz % 32) * 32
+                if index not in metadata or hashlib.sha256(write_nbt(document)).digest() != metadata[index][2]:
+                    raise NbtError("Reopened output chunk differs from input")
+                checked += 1
+                del document
+        if checked != len(metadata):
+            raise NbtError("Reopened output is missing chunks")
+        os.replace(output_path, path)
+        output_path = None
+        return {"bytes": offset * SECTOR, "sha256": digest.hexdigest(), "chunks": len(metadata)}
+    finally:
+        for temporary in (spool_path, output_path):
+            if temporary is not None and os.path.exists(temporary):
+                os.unlink(temporary)
+
+
+def write_region(path, chunks: dict[tuple[int, int], NbtFile]):
+    write_region_stream(path, chunks.items())
 
 
 def _empty(tag):
