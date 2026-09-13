@@ -12,10 +12,11 @@ import runtime_receipt
 
 
 CHUNK_MARKERS = [f"FORK_RUNTIME_CHUNK_{x}_{z}_OK" for z in range(1906, 1922) for x in range(1857, 1873)]
+BLOCK_MARKERS = [f"FORK_RUNTIME_BLOCK_{index}_OK" for index in range(12)]
 LOG = '''[Server thread/INFO]: Starting minecraft server version 26.1.2
 [Server thread/INFO]: Preparing level "Synthetic runtime check"
 [Server thread/INFO]: Done (1.50s)! For help, type "help"
-''' + "\n".join("[Server thread/INFO]: [Server] " + marker for marker in CHUNK_MARKERS) + '''
+''' + "\n".join("[Server thread/INFO]: [Server] " + marker for marker in CHUNK_MARKERS + BLOCK_MARKERS) + '''
 [Server thread/INFO]: Stopping server
 [Server thread/INFO]: Saving chunks for level 'ServerLevel[Synthetic runtime check]'/minecraft:overworld
 [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
@@ -42,6 +43,7 @@ class RuntimeReceiptTests(unittest.TestCase):
                      "java_identity": 'openjdk version "25.0.4.1" SYNTHETIC TEST',
                      "port": 25617, "max_heap_mib": 3072, "minecraft_version": "26.1.2",
                      "expected_chunk_markers": CHUNK_MARKERS,
+                     "expected_block_markers": BLOCK_MARKERS,
                      "process": {"pid": 999999, "exit_code": 0, "observed_alive": False,
                                  "observed_at_utc": datetime.now(timezone.utc).isoformat()}}
 
@@ -75,6 +77,18 @@ class RuntimeReceiptTests(unittest.TestCase):
         result = runtime_receipt.check_runtime_receipt(self.spec)
         self.assertFalse(result["runtimeLoadAccepted"])
         self.assertEqual([CHUNK_MARKERS[0]], result["chunk_load_gate"]["missing"])
+
+    def test_missing_block_sentinel_fails_despite_all_chunks_loaded(self):
+        self.log.write_text(LOG.replace("[Server] " + BLOCK_MARKERS[0], "issued command say " + BLOCK_MARKERS[0]))
+        result = runtime_receipt.check_runtime_receipt(self.spec)
+        self.assertFalse(result["runtimeLoadAccepted"])
+        self.assertEqual(256, len(result["chunk_load_gate"]["found"]))
+        self.assertEqual([BLOCK_MARKERS[0]], result["block_sentinel_gate"]["missing"])
+
+    def test_too_few_or_duplicate_block_sentinels_rejected(self):
+        for markers in (BLOCK_MARKERS[:11], BLOCK_MARKERS[:11] + [BLOCK_MARKERS[0]]):
+            self.spec["expected_block_markers"] = markers
+            self.assertFalse(runtime_receipt.check_runtime_receipt(self.spec)["runtimeLoadAccepted"])
 
     def test_wrong_target_and_incomplete_shutdown_rejected(self):
         self.spec["expected_level_name"] = "Other world"

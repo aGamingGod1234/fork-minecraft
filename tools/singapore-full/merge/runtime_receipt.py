@@ -37,7 +37,8 @@ def check_runtime_receipt(spec: dict[str, Any]) -> dict[str, Any]:
     Required spec keys: candidate_path, candidate_before (snapshot_tree result),
     copied_world_path, log_path, expected_level_name, jar_path, expected_jar_sha256,
     java_identity (nonempty string), port, max_heap_mib, minecraft_version,
-    process={pid, exit_code, observed_alive, observed_at_utc}, expected_chunk_markers.
+    process={pid, exit_code, observed_alive, observed_at_utc}, expected_chunk_markers,
+    expected_block_markers (at least 12 unique server-confirmed block sentinels).
     Optional input_snapshots=[{path,files:{relative_path:sha256}}] checks source tiles too.
     Process observation is supplied by the launcher; this function runs no process.
     """
@@ -45,7 +46,7 @@ def check_runtime_receipt(spec: dict[str, Any]) -> dict[str, Any]:
     report: dict[str, Any] = {
         "schema": "fork.singapore.runtime-load.v1", "checked_at_utc": datetime.now(timezone.utc).isoformat(),
         "runtimeLoadAccepted": False, "visualAccepted": False, "aiAccepted": False,
-        "scope": "Headless server startup/shutdown only; appearance and AI remain untested",
+        "scope": "Headless startup, 256 loaded chunks and actual block sentinels; appearance and AI remain untested",
         "minecraft_version": spec.get("minecraft_version"), "java_identity": spec.get("java_identity"),
         "port": spec.get("port"), "max_heap_mib": spec.get("max_heap_mib"),
         "process": spec.get("process"), "issues": issues,
@@ -119,6 +120,22 @@ def check_runtime_receipt(spec: dict[str, Any]) -> dict[str, Any]:
                                       "missing": sorted(set(expected_chunks) - set(found_chunks))}
         if len(found_chunks) != 256:
             issues.append(f"Only {len(found_chunks)}/256 expected chunks have actual load confirmation")
+        expected_blocks = spec.get("expected_block_markers", [])
+        if (not isinstance(expected_blocks, list) or len(expected_blocks) < 12
+                or any(not isinstance(marker, str) or not re.fullmatch(r"FORK_RUNTIME_BLOCK_[A-Za-z0-9_-]+_OK", marker)
+                       for marker in expected_blocks)
+                or len(set(expected_blocks)) != len(expected_blocks)):
+            issues.append("At least 12 unique expected block-sentinel markers are required")
+            expected_blocks = []
+        found_blocks = []
+        for marker in expected_blocks:
+            found = re.search(r'\[Server\]\s+' + re.escape(marker) + r'\s*$', log, re.MULTILINE)
+            if found and done and stopping and done.end() < found.start() < stopping.start():
+                found_blocks.append(marker)
+        report["block_sentinel_gate"] = {"expected": expected_blocks, "found": found_blocks,
+                                          "missing": sorted(set(expected_blocks) - set(found_blocks))}
+        if len(found_blocks) < 12 or len(found_blocks) != len(expected_blocks):
+            issues.append(f"Only {len(found_blocks)}/{len(expected_blocks)} expected block sentinels are confirmed")
         errors = [{"line": index + 1, "text": line[:1000]} for index, line in enumerate(log.splitlines())
                   if ERROR_PATTERN.search(line)]
         report["log_errors"] = errors[:30]
