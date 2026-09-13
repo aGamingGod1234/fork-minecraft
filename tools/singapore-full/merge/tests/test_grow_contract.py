@@ -334,6 +334,22 @@ class GrowContractTests(unittest.TestCase):
         with self.assertRaisesRegex(GrowContractError, "geometry-only role"):
             _component_role(gate, source, (0, 0, 256, 256), Path(source["world_path"]), writer)
 
+    def test_component_role_cannot_downgrade_to_generic_gate(self):
+        source = self.source("component-downgrade", [0, 0, 256, 256])
+        path = Path(source["structural_gate_path"])
+        original = json.loads(path.read_text())
+        for marker in ({"standaloneStatus": "NOT_STANDALONE"},
+                       {"finalAssembledSafeSpawnRequired": True},
+                       {"componentSpawnAccepted": False},
+                       {"evidence": {"gateModule": {}}}):
+            for role in (None, "standalone"):
+                gate = {**original, **marker}
+                if role is not None:
+                    gate["role"] = role
+                self.write(path, gate)
+                with self.subTest(marker=marker, role=role), self.assertRaisesRegex(GrowContractError, "geometry-only role"):
+                    validate_plan({"schemaVersion": 1, "sources": [source], "spawn_source_id": source["id"]})
+
 
 if __name__ == "__main__":
     unittest.main()
