@@ -357,7 +357,8 @@ tasks.register('packageWindowsDistribution', Zip) {
 def entrypointClassFiles = [
 	layout.buildDirectory.file('classes/java/main/dev/agaminggod/arenaagents/ArenaAgents.class'),
 	layout.buildDirectory.file('classes/java/client/dev/agaminggod/arenaagents/client/ArenaAgentsClient.class'),
-    layout.buildDirectory.file('classes/java/main/dev/fork/integration/ForkEntrypoint.class')
+    layout.buildDirectory.file('classes/java/main/dev/fork/integration/ForkEntrypoint.class'),
+    layout.buildDirectory.file('classes/java/client/dev/fork/gameplay/ForkClient.class')
 ]
 
 tasks.register('verifyEntrypoints') {

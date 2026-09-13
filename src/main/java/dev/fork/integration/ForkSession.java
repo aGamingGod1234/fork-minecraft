@@ -295,7 +295,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         if(!level.getWorldBorder().isWithinBounds(pos)||target.y<level.getMinY()+1||target.y>=level.getMaxY()-2) throw new IllegalArgumentException("Arrival outside world bounds");
         stopCamera(p);
         var ticket=new net.minecraft.server.level.TicketType(200,net.minecraft.server.level.TicketType.FLAG_LOADING);
-        var chunk=new net.minecraft.world.level.ChunkPos(pos);
+        var chunk=new net.minecraft.world.level.ChunkPos(pos.getX() >> 4,pos.getZ() >> 4);
         level.getChunkSource().addTicketWithRadius(ticket,chunk,2);
         travel.put(p.getUUID(),new Travel(target,returning,System.nanoTime()+10_000_000_000L,ticket,chunk));
         travelMessages.put(p.getUUID(),"Checking arrival; Cancel or Return available");
