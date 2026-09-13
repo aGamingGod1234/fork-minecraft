@@ -1,0 +1,13 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawn} from 'node:child_process';
+const dir=path.resolve('assets/fork-world/artifacts/expand-1306'),cache=path.resolve('.work/fork/world/cache-expand-1306'),deadline=Date.parse('2026-09-13T05:19:30Z');
+if(Date.now()>deadline-30000)throw Error('Insufficient time for generation and handoff');
+const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),validation=JSON.parse(fs.readFileSync(dir+'/source-validation.json'));
+const source=dir+'/render-complete.json';if(hash(source)!==validation.renderSha256)throw Error('Input hash mismatch');
+const exe=path.join(process.env.LOCALAPPDATA,'FORK-Tools/arnis-3.2.0/arnis.exe');if(hash(exe)!=='79ccb74c9c0af38b025a24678d301cb4f7036dd49784e8d35bb0d5b4c15a32d6')throw Error('Executable hash mismatch');
+const output=dir+'/world-output';if(fs.existsSync(output))throw Error('No append or duplicate generation');fs.mkdirSync(output);fs.mkdirSync(cache,{recursive:true});
+const args=['--body','earth','--mode','geo-only','--projection','local','--scale','1','--rotation','0','--ground-level','0','--overture','false','--canopy-height','false','--no-3d','--legacy-trees','--mapillary-facades','false','--signage','none','--map-item','false','--interior','false','--world-time','6000','--bbox','1.278400648,103.845399492,1.287599352,103.854600508','--file',source,'--output-dir',output];
+fs.writeFileSync(dir+'/run-settings.json',JSON.stringify({args,executableSha256:hash(exe),sourceSha256:hash(source),deadlineUtc:new Date(deadline).toISOString(),threads:4},null,2));
+const stdout=fs.openSync(cache+'/stdout.log','wx'),stderr=fs.openSync(cache+'/stderr.log','wx');const child=spawn(exe,args,{windowsHide:true,cwd:cache,stdio:['ignore',stdout,stderr],env:{...process.env,RAYON_NUM_THREADS:'4'}});
+const record={job:'expand-1306',pid:child.pid??null,startUtc:new Date().toISOString(),writerStopped:false,exitCode:null,outputPath:output};const save=()=>fs.writeFileSync(cache+'/job.json',JSON.stringify(record,null,2));save();console.log(JSON.stringify(record));
+const timer=setTimeout(()=>{if(child.exitCode===null){record.timedOut=true;save();spawn('C:/Windows/System32/taskkill.exe',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});}},deadline-Date.now());
+child.on('error',e=>{record.error=String(e);save();});child.on('close',(code,signal)=>{clearTimeout(timer);fs.closeSync(stdout);fs.closeSync(stderr);record.exitCode=code;record.signal=signal;record.exitUtc=new Date().toISOString();record.writerStopped=true;record.children=fs.readdirSync(output);save();console.log(JSON.stringify(record));process.exitCode=code===0?0:1;});
