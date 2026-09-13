@@ -131,7 +131,7 @@ public final class CameraDirectorClient {
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
 		captureAndHidePresentation(client);
-		playback = new Playback(path, client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
+		playback = new Playback(new CameraReel(List.of(path)), client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
 		apply(client, path.sample(0.0D));
 	}
 
@@ -174,7 +174,10 @@ public final class CameraDirectorClient {
 						.suggests((context, builder) -> SharedSuggestionProvider.suggest(PATHS.keySet(), builder))
 						.executes(context -> delete(context.getSource(), StringArgumentType.getString(context, "name")))));
 		path.then(ClientCommands.literal("clear").executes(context -> clear(context.getSource())));
-		return ClientCommands.literal("camera").then(path);
+		var reel = ClientCommands.literal("reel");
+        reel.then(ClientCommands.literal("play").then(ClientCommands.literal("fork_showcase").executes(context -> playShowcase(context.getSource()))));
+        reel.then(ClientCommands.literal("stop").executes(context -> stopPlaybackCommand(context.getSource())));
+        return ClientCommands.literal("camera").then(path).then(reel);
 	}
 
 	private static int startRecording(FabricClientCommandSource source, String name) {
@@ -260,12 +263,56 @@ public final class CameraDirectorClient {
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
 		captureAndHidePresentation(client);
-		playback = new Playback(path, client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
+		playback = new Playback(new CameraReel(List.of(path)), client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), loop);
 		apply(client, path.sample(0.0D));
 		return 1;
 	}
 
-	private static int stopPlaybackCommand(FabricClientCommandSource source) {
+	    private static int playShowcase(FabricClientCommandSource source) {
+        Minecraft client = source.getClient();
+        if (client.level == null || client.player == null) return error(source, "You must be in a world to play the showcase.");
+        var paths = new ArrayList<CameraPath>();
+        for (String name : List.of("fork_intro", "fork_city_flythrough", "fork_clinic", "fork_workshop", "fork_courier", "fork_overview")) {
+            CameraPath path = PATHS.get(name);
+            if (path == null || path.durationTicks() < MIN_PLAYBACK_TICKS)
+                return error(source, "Showcase needs a valid camera preset: " + name);
+            paths.add(path);
+        }
+        CameraReel reel = new CameraReel(paths); // Validate every segment before disturbing the current camera.
+        stopPlayback(client);
+        previousCamera = client.getCameraEntity();
+        previousCameraType = client.options.getCameraType();
+        captureAndHidePresentation(client);
+        playback = new Playback(reel, client.level, client.player, new PresentationClock(System.nanoTime(), client.isPaused()), false);
+        apply(client, reel.sample(0));
+        return 1;
+    }
+    /** Hard cuts between immutable authored paths, with one elapsed clock for the whole reel. */
+    public static final class CameraReel {
+        private final List<CameraPath> paths;
+        private final int durationTicks;
+        public CameraReel(List<CameraPath> paths) {
+            this.paths = List.copyOf(paths);
+            if (this.paths.isEmpty()) throw new IllegalArgumentException("A reel needs camera paths");
+            int duration = 0;
+            for (CameraPath path : this.paths) {
+                if (path.durationTicks() < MIN_PLAYBACK_TICKS) throw new IllegalArgumentException("Every reel path needs a positive duration");
+                duration = Math.addExact(duration, path.durationTicks());
+            }
+            durationTicks = duration;
+        }
+        public int durationTicks() { return durationTicks; }
+        public boolean complete(double elapsed) { return elapsed >= durationTicks; }
+        public CameraPose sample(double elapsed) {
+            double local = Math.max(0, elapsed);
+            for (int i = 0; i < paths.size(); i++) {
+                CameraPath path = paths.get(i);
+                if (local < path.durationTicks() || i == paths.size() - 1) return path.sample(local);
+                local -= path.durationTicks();
+            }
+            throw new IllegalStateException("Empty camera reel");
+        }
+    }    private static int stopPlaybackCommand(FabricClientCommandSource source) {
 		if (playback == null) return error(source, "No camera path is playing.");
 		stopPlayback(source.getClient());
 		source.sendFeedback(Component.literal("Camera path stopped; camera returned to the player."));
@@ -330,7 +377,7 @@ public final class CameraDirectorClient {
 		Minecraft client = Minecraft.getInstance();
 		if (!validatePlayback(client)) return;
 		double elapsed = playback.clock().advance(System.nanoTime(), client.isPaused());
-		int duration = playback.path().durationTicks();
+		int duration = playback.reel().durationTicks();
 		if (elapsed >= duration) {
 			if (!playback.loop()) {
 				stopPlayback(client);
@@ -338,7 +385,7 @@ public final class CameraDirectorClient {
 			}
 			elapsed %= duration;
 		}
-		apply(client, playback.path().sample(elapsed));
+		apply(client, playback.reel().sample(elapsed));
 	}
 
 	/** Monotonic presentation time in authored 20 Hz ticks; independent of simulation/daylight. */
@@ -506,6 +553,6 @@ public final class CameraDirectorClient {
 	private record Recording(String name, ClientLevel level, long startedAt, ArrayList<CameraKeyframe> frames) {
 	}
 
-	private record Playback(CameraPath path, ClientLevel level, LocalPlayer player, PresentationClock clock, boolean loop) {
+	private record Playback(CameraReel reel, ClientLevel level, LocalPlayer player, PresentationClock clock, boolean loop) {
 	}
 }

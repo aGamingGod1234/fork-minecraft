@@ -36,6 +36,25 @@ public final class ForkCameraTimingVerification {
         equal(path.durationTicks(), 40);
         equal(path.sample(40).x(), 20);
         equal(path.sample(40.5 % path.durationTicks()).x(), path.sample(0.5).x());
+        var durations = new int[]{100,140,100,100,100,160};
+        var paths = new java.util.ArrayList<CameraPath>();
+        for(int i=0;i<6;i++) paths.add(new CameraPath("s"+i,List.of(new CameraKeyframe(0,i*1000,1,0,0,0),new CameraKeyframe(durations[i],i*1000+10,1,0,0,0))));
+        var reel = new dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.CameraReel(paths);
+        paths.clear();
+        equal(reel.durationTicks(),700);
+        if(reel.sample(99.9).x()>=11 || reel.sample(239.9).x()>=1011) throw new AssertionError("Cross-cut interpolation");
+        equal(reel.sample(100).x(),1000); equal(reel.sample(240).x(),2000);
+        if(reel.complete(699.9)||!reel.complete(700)) throw new AssertionError("Exact reel end");
+        var rc=new PresentationClock(0,false);
+        equal(reel.sample(rc.advance(27_000_000_000L,false)).x(),5000);
+        equal(rc.advance(28_000_000_000L,true),540);
+        equal(rc.advance(40_000_000_000L,false),540);
+        if(!reel.complete(rc.advance(48_000_000_000L,false))) throw new AssertionError("Resume same clock");
+        equal(reel.sample(new PresentationClock(0,false).advance(0,false)).x(),0);
+        boolean rejected=false;
+        try { new dev.agaminggod.arenaagents.client.camera.CameraDirectorClient.CameraReel(List.of(new CameraPath("zero",List.of(new CameraKeyframe(0,0,0,0,0,0))))); } catch(IllegalArgumentException expected){rejected=true;}
+        if(!rejected) throw new AssertionError("Reject zero duration");
+        System.out.println("PASS immutable six-shot reel, cuts99.9/100 and239.9/240,700tick end,multisegment stall,pause/resume,fresh restart,zero duration rejection");
         System.out.println("PASS fractional frames, stalled frame duration, pause/resume, fresh replay, yaw boundary, authored duration and loop sampling");
     }
 }
