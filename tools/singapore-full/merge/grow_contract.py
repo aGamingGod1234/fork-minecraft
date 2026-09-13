@@ -423,6 +423,9 @@ def _multi_coverage(component, entry, evidence, path, evidence_sha, core, writer
 
 
 def _coverage(component, entry, core, writer_hash, writer_inputs=None):
+    if isinstance(entry, dict) and entry.get("status") == "rendered_subset_preview":
+        from grow_preview import validate_preview
+        return validate_preview(component, entry, list(core), writer_hash, writer_inputs)
     if not isinstance(entry, dict) or entry.get("status") not in ("included", "pass", "no_features"):
         raise GrowContractError(f"{component} coverage must be included/pass/no_features with evidence")
     path = Path(entry["evidence_path"]).resolve(strict=True)

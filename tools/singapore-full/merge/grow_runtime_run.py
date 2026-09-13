@@ -102,7 +102,7 @@ def main():
     try:
         with console_path.open("wb") as console:
             process = subprocess.Popen(command, cwd=attempt_root, stdin=subprocess.PIPE,
-                stdout=console, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW)
+                stdout=console, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS)
             guard.assign(process)
             kernel = ctypes.WinDLL("kernel32", use_last_error=True)
             kernel.SetProcessAffinityMask.argtypes = [wintypes.HANDLE, ctypes.c_size_t]

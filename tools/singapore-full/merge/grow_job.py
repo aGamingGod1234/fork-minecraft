@@ -56,7 +56,7 @@ def main():
     try:
         with (root / "stdout.log").open("wb") as stdout, (root / "stderr.log").open("wb") as stderr:
             process = subprocess.Popen(request["command"], stdout=stdout, stderr=stderr,
-                creationflags=subprocess.CREATE_NO_WINDOW, cwd=request.get("cwd"))
+                creationflags=subprocess.CREATE_NO_WINDOW | subprocess.BELOW_NORMAL_PRIORITY_CLASS, cwd=request.get("cwd"))
             guard.assign(process)
             if not kernel.SetProcessAffinityMask(int(process._handle), 256):
                 raise OSError(ctypes.get_last_error(), "Cannot assign approved CPU offset8")

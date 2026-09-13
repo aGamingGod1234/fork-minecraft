@@ -76,6 +76,8 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
     plan = read_json(plan_path)
     accepted = validate_plan(plan)
     sources = accepted["sources"]
+    subset_preview = any(record.get("status") == "rendered_subset_preview"
+                         for source in sources for record in source["coverage"].values())
     spawn_id = plan.get("spawn_source_id")
     matches = [source for source in sources if source["id"] == spawn_id]
     if len(matches) != 1:
@@ -117,7 +119,7 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
     # Recheck destination immediately before the one-way new-save promotion.
     validate_destination(world, manifest, merged_root=merged_root)
     report = {"schemaVersion": 1, "kind": "exact-core-grown-world",
-              "status": "STRUCTURAL_PASS_RUNTIME_PENDING", "world": str(world),
+              "status": "SOURCE_SUBSET_PREVIEW_RUNTIME_PENDING" if subset_preview else "STRUCTURAL_PASS_RUNTIME_PENDING", "world": str(world),
               "createdUtc": datetime.now(timezone.utc).isoformat(),
               "planPath": str(Path(plan_path).resolve()), "planSha256": plan_hash,
               "jobLease": lease, "spawnSourceId": spawn_id,
@@ -127,6 +129,9 @@ def assemble(plan_path, world, manifest, lease_path, *, merged_root=MERGED_ROOT)
               "worldName": world_name,
               "sources": sources, "regions": region_report,
               "verification": checked, "assemblyAccepted": True, "runtimeLoadAccepted": False,
+              "sourceSubsetPreviewAccepted": subset_preview,
+              "sourceComplete": False, "routeComplete": False, "fullFidelity": False,
+              "globalSourceGeometryComplete": False,
               "actualGroundAccepted": False,
               "clientVisualAccepted": False, "completeSingaporeAccepted": False}
     os.rename(_fs_path(staging_world), _fs_path(world))

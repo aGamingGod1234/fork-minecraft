@@ -163,13 +163,21 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
             source_versions.add(source_data["DataVersion"].value)
             if identity == spawn_source_id:
                 source_spawns[identity] = source_data["spawn"].value
-            _evidence(source["writer_manifest_path"], source["writer_manifest_sha256"])
+            writer = _evidence(source["writer_manifest_path"], source["writer_manifest_sha256"])
             structural = _evidence(source["structural_gate_path"], source["structural_gate_sha256"])
             _need(structural.get("status") == "PASS", "Source structural gate is not PASS: " + identity)
             component_only = _component_status(source, structural, spawn_source_id)
             coverage = {}
             for component in ("roads", "water"):
                 record = source["coverage"][component]
+                if record.get("status") == "rendered_subset_preview":
+                    from grow_preview import validate_preview
+                    subset = validate_preview(component, record, bounds,
+                        source["writer_manifest_sha256"], writer.get("inputs"))
+                    coverage[component] = {"status": "RENDERED_SUBSET", "featureCount": subset["feature_count"],
+                        "evidence_sha256": subset["evidence_sha256"], "classification_sha256": subset["classification_sha256"],
+                        "sourceComplete": False, "routeComplete": False, "fullFidelity": False}
+                    continue
                 proof = _evidence(record["evidence_path"], record["evidence_sha256"])
                 _need(record["status"] in ("included", "pass", "no_features"), "Coverage metadata not accepted")
                 _need(proof.get("component") == component and proof.get("status") in ("PASS", "NO_FEATURES")
