@@ -390,7 +390,7 @@ public final class ForkSession implements ForkServerAdapter.Court, ForkCheckpoin
         var view=new ForkView(e.state(),archive==null?null:archive.state(),receipts.isEmpty()?List.of():receipts.getLast().effects(),
             receipts.stream().map(r->r.state().allocation().name()).toList(),archive==null?List.of():archive.receipts().stream().map(r->r.state().allocation().name()).toList(),e.pending()!=null,e.paused(),
             GoalControl.mayControl(p.createCommandSourceStack()),atCourt(p),travelWindow()&&atCourt(p)&&travel.isEmpty(),travel.containsKey(p.getUUID()),
-            visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places);
+            visualIssue+" "+providerIssue+" "+travelMessages.getOrDefault(p.getUUID(),""),locator(),places,ready());
         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p,new ForkStatusPayload(ForkEntrypoint.JSON.toJson(view)));
     }
     private void broadcast(String text) { server.getPlayerList().broadcastSystemMessage(Component.literal(text),false); }

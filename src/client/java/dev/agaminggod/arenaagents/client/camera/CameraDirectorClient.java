@@ -287,6 +287,11 @@ public final class CameraDirectorClient {
         apply(client, reel.sample(0));
         return 1;
     }
+    public static void validateTimedTake(List<String> names,List<Integer> durations) {
+        var paths=names.stream().map(n->{var p=PATHS.get(n);if(p==null)throw new IllegalArgumentException("Missing corrected camera preset: "+n);return p;}).toList();
+        new CameraReel(paths,durations);
+    }
+    public static boolean ownsTimedTake(PresentationClock clock) { return playback!=null&&playback.clock()==clock; }
     public static PresentationClock playTimedTake(List<String> names,List<Integer> durations) {
         var client=Minecraft.getInstance();
         if(client.level==null||client.player==null)throw new IllegalStateException("Join the Singapore world first");

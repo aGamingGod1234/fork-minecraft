@@ -17,6 +17,7 @@ public final class ForkFilmClient {
     private static boolean owned;
     private static Object preparedLevel;
     public static void acceptView(){version++;}
+    public static long viewVersion(){return version;}
     public static void register(){
         ClientCommandRegistrationCallback.EVENT.register((dispatcher,registry)->dispatcher.register(ClientCommands.literal("camera").then(ClientCommands.literal("film")
             .then(ClientCommands.literal("start").executes(c->{
@@ -26,10 +27,10 @@ public final class ForkFilmClient {
                 clock=new CameraDirectorClient.PresentationClock(System.nanoTime(),client.isPaused());
                 apply(sequence.start(ForkClient.view(),version,0));return sequence.active()?1:0;
             }))
-            .then(ClientCommands.literal("take").executes(c->{if(sequence.active()) {notice("Wait for preparation, or stop it first.");return 0;}source=c.getSource();try{boolean ready=preparedLevel==c.getSource().getClient().level&&ForkProductCapture.valid(sequence.a(),ForkEngine.Power.CLINIC)&&ForkProductCapture.valid(sequence.b(),ForkEngine.Power.WORKSHOP);if(!ready)notice("Camera-only take: no prepared real A/B comparison is available. Use /camera film prepare first for results.");ForkProductCapture.start(ready?sequence.a():null,ready?sequence.b():null);return 1;}catch(Exception e){notice(e.getMessage());return 0;}}))
+            .then(ClientCommands.literal("take").executes(c->{if(sequence.active()) {notice("Wait for preparation, or stop it first.");return 0;}source=c.getSource();try{boolean ready=preparedLevel==c.getSource().getClient().level&&ForkProductCapture.valid(sequence.a(),ForkEngine.Power.CLINIC)&&ForkProductCapture.valid(sequence.b(),ForkEngine.Power.WORKSHOP);if(!ready)notice("Product take: three LIVE agents will be verified first. No completed A/B comparison is cached; its slots show product footage without invented results.");ForkProductCapture.start(ready?sequence.a():null,ready?sequence.b():null);return 1;}catch(Exception e){notice(e.getMessage());return 0;}}))
             .then(ClientCommands.literal("prepare").executes(c->{if(sequence.active()||ForkProductCapture.active())return 0;var client=c.getSource().getClient();source=c.getSource();level=client.level;player=client.player;owned=false;clock=new CameraDirectorClient.PresentationClock(System.nanoTime(),client.isPaused());apply(sequence.prepare(ForkClient.view(),version,0));return sequence.active()?1:0;}))
             .then(ClientCommands.literal("stop").executes(c->{if(ForkProductCapture.active())ForkProductCapture.stop();else apply(sequence.stop());return 1;}))
-            .then(ClientCommands.literal("status").executes(c->{notice("Film: "+sequence.phase());return 1;})))));
+            .then(ClientCommands.literal("status").executes(c->{notice("Film: "+sequence.phase()+" | Take: "+ForkProductCapture.status());return 1;})))));
         ClientTickEvents.END_CLIENT_TICK.register(client->{
             ForkProductCapture.tick();
             if(!sequence.active())return;
@@ -37,7 +38,7 @@ public final class ForkFilmClient {
             long now=(long)(clock.advance(System.nanoTime(),client.isPaused())*50);
             apply(sequence.update(ForkClient.view(),version,now,CameraDirectorClient.cleanPlaybackActive()));
         });
-        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{if(sequence.active())apply(sequence.stop());});
+        ClientPlayConnectionEvents.DISCONNECT.register((handler,client)->{ForkProductCapture.stop();if(sequence.active())apply(sequence.stop());});
     }
     private static void apply(List<ForkFilmSequence.Action> actions){
         var client=Minecraft.getInstance();
