@@ -29,6 +29,22 @@ foreach($file in Get-ChildItem -LiteralPath $mods -Filter '*.jar' -File -ErrorAc
 }
 $world=Join-Path (Join-Path $target 'saves') $WorldName
 if(Test-Path -LiteralPath $world){throw 'Destination world exists; choose a new WorldName.'}
+$journalSource=Join-Path $root 'data\presentation-journal'
+$journalTarget=Join-Path $target 'config\fork\presentation-journal'
+$journalAlreadyInstalled=$false
+if(Test-Path -LiteralPath $journalSource){
+ $journalFiles=@(Get-ChildItem -LiteralPath $journalSource -File)
+ if($journalFiles.Count -ne 14 -or @($journalFiles|Where-Object{$_.Name -notmatch '^(receipt-|archive-|INITIAL-).*\.json$'}).Count){throw 'Unexpected presentation-journal package files.'}
+ if(Test-Path -LiteralPath $journalTarget){
+  $installed=@(Get-ChildItem -LiteralPath $journalTarget -Recurse -File)
+  if($installed.Count -ne $journalFiles.Count){throw 'Existing presentation journal differs. Use a fresh dedicated instance; it will not be overwritten.'}
+  foreach($file in $journalFiles){
+   $destination=Join-Path $journalTarget $file.Name
+   if(!(Test-Path -LiteralPath $destination -PathType Leaf) -or (Get-FileHash -LiteralPath $destination).Hash -ne (Get-FileHash -LiteralPath $file.FullName).Hash){throw 'Existing presentation journal differs. Use a fresh dedicated instance; it will not be overwritten.'}
+  }
+  $journalAlreadyInstalled=$true
+ }
+}
 $copies=@()
 foreach($name in $allowed){$copies+=@{source=(Join-Path (Join-Path $root 'mods') $name);destination=(Join-Path $mods $name)}}
 $copies+=@{source=(Join-Path $root 'data\court-v1.json');destination=(Join-Path $target 'config\fork-court.json')}
@@ -49,6 +65,11 @@ if($NodePath){
 foreach($copy in $copies){New-Item -ItemType Directory -Force -Path (Split-Path -Parent $copy.destination)|Out-Null;if(!(Test-Path -LiteralPath $copy.destination)){Copy-Item -LiteralPath $copy.source -Destination $copy.destination}}
 $pristine=Join-Path $root 'world\INITIAL'
 if(Test-Path -LiteralPath $pristine){New-Item -ItemType Directory -Force -Path (Split-Path -Parent $world)|Out-Null;Copy-Item -LiteralPath $pristine -Destination $world -Recurse}
+if(Test-Path -LiteralPath $journalSource){
+ if($journalAlreadyInstalled){Write-Output 'Matching historical LIVE journal already installed; keeping its verified files.'}
+ else{New-Item -ItemType Directory -Path $journalTarget -Force|Out-Null;foreach($file in $journalFiles){Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $journalTarget $file.Name)}}
+ Write-Output 'Historical LIVE replay journal installed at config/fork/presentation-journal; no JVM argument is required.'
+}
 if($nodeCopy){
  New-Item -ItemType Directory -Force -Path $nodeCopy.target|Out-Null
  foreach($pair in @(@{source=$nodeCopy.executable;name='node.exe'},@{source=$nodeCopy.license;name='LICENSE'})){
