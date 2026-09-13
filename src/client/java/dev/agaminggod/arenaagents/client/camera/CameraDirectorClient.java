@@ -37,6 +37,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +53,13 @@ public final class CameraDirectorClient {
 	private static Marker cameraAnchor;
 	private static Entity previousCamera;
 	private static CameraType previousCameraType;
+	private static Boolean previousHideGui;
+	private static ChatVisiblity previousChatVisibility;
 	private static boolean registered;
 	private static long playbackClock;
 	public static List<String> presetNames() { return List.copyOf(PATHS.keySet()); }
+	/** Render guards use playback state, never the user's identity or saved preferences. */
+	public static boolean cleanPlaybackActive() { return playback != null; }
 
 	private CameraDirectorClient() {
 	}
@@ -125,9 +130,9 @@ public final class CameraDirectorClient {
 		stopPlayback(client);
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
+		captureAndHidePresentation(client);
 		playback = new Playback(path, client.level, client.player, playbackClock, loop);
 		apply(client, path.sample(0.0D));
-		guiFeedback("Playing camera path '" + path.name() + "'" + (loop ? " on loop." : "."), false);
 	}
 
 	public static void stopPlaybackFromGui() {
@@ -137,6 +142,7 @@ public final class CameraDirectorClient {
 	}
 
 	private static void guiFeedback(String message, boolean error) {
+		if(cleanPlaybackActive()) return;
 		Minecraft client = Minecraft.getInstance();
 		if (client.gui != null) client.gui.setOverlayMessage(Component.literal(message), true);
 	}
@@ -253,9 +259,9 @@ public final class CameraDirectorClient {
 		stopPlayback(client);
 		previousCamera = client.getCameraEntity();
 		previousCameraType = client.options.getCameraType();
+		captureAndHidePresentation(client);
 		playback = new Playback(path, client.level, client.player, playbackClock, loop);
 		apply(client, path.sample(0.0D));
-		source.sendFeedback(Component.literal("Playing camera path '" + name + "'" + (loop ? " on loop" : "") + ". Use /camera path stop-playback to return."));
 		return 1;
 	}
 
@@ -312,6 +318,9 @@ public final class CameraDirectorClient {
 			stopPlayback(client);
 			return;
 		}
+		// F1 or a settings screen cannot leak overlays into an active take.
+		client.options.hideGui = true;
+		client.options.chatVisibility().set(ChatVisiblity.HIDDEN);
 		long elapsed = playbackClock - playback.startedAt();
 		if (elapsed >= playback.path().durationTicks()) {
 			if (!playback.loop()) {
@@ -355,8 +364,11 @@ public final class CameraDirectorClient {
 	}
 
 	private static void stopPlayback(Minecraft client) {
-		if (playback == null && cameraAnchor == null && previousCamera == null && previousCameraType == null) return;
+		if (playback == null && cameraAnchor == null && previousCamera == null && previousCameraType == null && previousHideGui == null) return;
 		playback = null;
+		// Restore before touching the camera entity, including disconnect/world-loss paths.
+		if(previousHideGui != null) { client.options.hideGui=previousHideGui; previousHideGui=null; }
+		if(previousChatVisibility != null) { client.options.chatVisibility().set(previousChatVisibility); previousChatVisibility=null; }
 		if (cameraAnchor != null) {
 			cameraAnchor.remove(Entity.RemovalReason.DISCARDED);
 			cameraAnchor = null;
@@ -371,6 +383,13 @@ public final class CameraDirectorClient {
 			client.options.setCameraType(previousCameraType);
 			previousCameraType = null;
 		}
+	}
+
+	private static void captureAndHidePresentation(Minecraft client) {
+		previousHideGui=client.options.hideGui;
+		previousChatVisibility=client.options.chatVisibility().get();
+		client.options.hideGui=true;
+		client.options.chatVisibility().set(ChatVisiblity.HIDDEN);
 	}
 
 	private static void load(Minecraft client) {

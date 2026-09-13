@@ -1,4 +1,4 @@
-{
+﻿{
     "schemaVersion":  1,
     "id":  "arenaagents",
     "version":  "${version}",
@@ -21,6 +21,10 @@
                    "arenaagents.mixins.json",
                    {
                        "config":  "arenaagents.client.mixins.json",
+                       "environment":  "client"
+                   },
+                   {
+                       "config":  "fork.client.mixins.json",
                        "environment":  "client"
                    }
                ],
