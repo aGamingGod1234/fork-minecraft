@@ -23,6 +23,7 @@ else{$CameraJson=Join-Path $repo 'media\edit\camera-paths-city-1024.json'}
 $journalFiles=@();$journalHashes=@{}
 if($PresentationJournalDigest -and !$PresentationJournalDirectory){throw 'Journal digest requires its source directory.'}
 if($PresentationJournalDirectory){
+ if(!$CameraSha256){throw 'Presentation journals require explicit matched camera input.'}
  if($PresentationJournalDigest -notmatch '^[a-fA-F0-9]{64}$'){throw 'Explicit journals require the reviewed source digest.'}
  $journalFiles=@(Get-ChildItem -LiteralPath $PresentationJournalDirectory -File|Where-Object{$_.Name -match '^(receipt-|archive-|INITIAL-).*\.json$'})
  if($journalFiles.Count -ne 14 -or @($journalFiles|Where-Object Name -like 'receipt-*').Count -ne 12 -or @($journalFiles|Where-Object Name -like 'archive-*').Count -ne 1 -or @($journalFiles|Where-Object Name -like 'INITIAL-*').Count -ne 1){throw 'Expected twelve receipts, one archive and one INITIAL.'}
