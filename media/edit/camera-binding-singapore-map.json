@@ -1,0 +1,36 @@
+{
+    "schema":  "fork-cinematic-map-binding-1",
+    "utc":  "2026-09-13T05:30:01.7566567Z",
+    "worldDisplayName":  "FORK - Singapore Map",
+    "worldArchiveSha256":  "9B8D0AE9B0B003A21A0C6961A3A439769DA40AE40CBB9CCB7C1C05E60CCB1243",
+    "presetPath":  "media/edit/camera-paths-singapore-map.json",
+    "presetSha256":  "0CBE0E56E7EA2F69F3F3855CED0D7744C67A7C0A6A10595D7BEED036766FA743",
+    "names":  [
+                  "fork_map_overview",
+                  "fork_map_reveal"
+              ],
+    "verticalFovDegrees":  50,
+    "aspect":  "16:9",
+    "renderDistanceChunks":  16,
+    "landTopY":  67,
+    "marker":  [
+                   145,
+                   70,
+                   173
+               ],
+    "islandSizeBlocks":  [
+                             220,
+                             111.73245217391306
+                         ],
+    "mode":  "Separate cartographic miniature, never whole-island1:1 gameplay",
+    "sourceSvgLfSha256":  "1278885D5AC330939F9C6E50F2815DC7D422FF1B4DB2EF8A4C47E67CB4D21446",
+    "sourceSvgCrlfSha256":  "F4D4EAABE1FB6732BDD6C0061FB9E639959CB5F6D8D8D3431AB5D3BB8CB8A7E5",
+    "sourceLineEndingReconciliationPassed":  true,
+    "liveFramingPassed":  false,
+    "filmSlotSeconds":  [
+                            7,
+                            10
+                        ],
+    "operator":  "Use map-specific path names only in separate map world; capture fullA/B beforeworldswitch",
+    "profileWriter":  "Main only; mergepaths byname"
+}

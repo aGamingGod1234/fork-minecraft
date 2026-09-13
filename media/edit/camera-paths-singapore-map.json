@@ -1,0 +1,19 @@
+{
+  "paths": [
+    {
+      "name": "fork_map_overview",
+      "keyframes": [
+        {"tick":0,"x":128,"y":220,"z":128,"yaw":180,"pitch":90},
+        {"tick":120,"x":128,"y":220,"z":128,"yaw":180,"pitch":90}
+      ]
+    },
+    {
+      "name": "fork_map_reveal",
+      "keyframes": [
+        {"tick":0,"x":145.5,"y":150,"z":173.5,"yaw":180,"pitch":90},
+        {"tick":40,"x":128,"y":220,"z":128,"yaw":180,"pitch":90},
+        {"tick":100,"x":128,"y":220,"z":128,"yaw":180,"pitch":90}
+      ]
+    }
+  ]
+}
