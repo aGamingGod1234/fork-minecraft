@@ -1,0 +1,102 @@
+{
+  "schema": "fork-locator-1",
+  "createdUtc": "2026-09-13T02:57:17.308Z",
+  "source": {
+    "name": "Natural Earth Admin 0 Countries",
+    "version": "5.1.1",
+    "scaleDenominator": 10000000,
+    "officialPage": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/",
+    "dataUrl": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.1/geojson/ne_10m_admin_0_countries.geojson",
+    "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+    "bytes": 13287234,
+    "filter": "ADM0_A3 == SGP",
+    "featureCount": 1,
+    "geometryType": "Polygon",
+    "polygonCount": 1,
+    "ringCount": 1,
+    "vertexCount": 40,
+    "license": "Public domain",
+    "licenseUrl": "https://www.naturalearthdata.com/about/terms-of-use/",
+    "attribution": "Made with Natural Earth.",
+    "sourceSurveyDate": null,
+    "selectedInputSha256": "977833dafb31df857d574ba5b47dc8f85d659fadce25251a993475d6cbc50133",
+    "gitBlobSha1": "5ebc66e25fc1af01edaebe9375c546655e04cf1e",
+    "retainedTermsSummary": {
+      "path": "docs/fork-world/LOCATOR-CREDITS.txt",
+      "sha256": "f7f6a960af5e8e62515a68cbe88d1a5fa5ea786fc73d08f27915e8b29589f215"
+    }
+  },
+  "coordinates": {
+    "crs": "OGC:CRS84",
+    "datum": "WGS84",
+    "axisOrder": [
+      "longitude_deg",
+      "latitude_deg"
+    ],
+    "bboxLngLat": [
+      103.640391,
+      1.264309,
+      104.003429,
+      1.448635
+    ],
+    "bboxMinLatMinLngMaxLatMaxLng": [
+      1.264309,
+      103.640391,
+      1.448635,
+      104.003429
+    ],
+    "displayProjection": "local equirectangular, standard parallel = bbox midpoint latitude",
+    "standardParallelDegrees": 1.356472,
+    "svgProject": {
+      "scalePixelsPerDegreeLatitude": 3168.600431271186,
+      "x0": 80,
+      "y0": 257.9722784527537,
+      "northLatitude": 1.448635,
+      "westLongitude": 103.640391,
+      "longitudeCosine": 0.9997197625829903
+    },
+    "simplification": "None beyond upstream geometry; SVG coordinates rounded to 0.001 pixel."
+  },
+  "coverage": {
+    "geographicLocator": "Complete single-polygon SGP source feature; generalized main-island locator, displayed without cropping.",
+    "limitations": [
+      "Generalized 1:10m source, not current survey/coastline authority.",
+      "The source SGP feature has one polygon and no separate offshore-island outlines. Pulau Ubin, Pulau Tekong, Sentosa and Pedra Branca are not individually depicted; no offshore inset is included.",
+      "No full-island or district Minecraft coverage accepted.",
+      "No authentic floorplans verified."
+    ],
+    "playable": {
+      "layoutId": "fork-court-v1",
+      "label": "Fictional 16 x 16 block scored court",
+      "courtShapeSha256": "538149df807a946101e7f8a14806aa3464b874ad4b3ae626451291ca2f3d9e14",
+      "dimension": "minecraft:overworld",
+      "origin": [
+        0,
+        64,
+        0
+      ],
+      "relativeBoundsInclusive": [
+        0,
+        0,
+        0,
+        15,
+        15,
+        15
+      ],
+      "geographicCourtAnchor": null,
+      "courtMapMarker": false,
+      "livePlacementAccepted": false
+    }
+  },
+  "outputs": [
+    {
+      "path": "data/fork-world/locator/singapore-ne-5.1.1.geojson",
+      "sha256": "0bfc317f244a0134660985a51196a0cec328e0c1906967513858ccd197d72a80"
+    },
+    {
+      "path": "assets/fork-world/locator/singapore-locator.svg",
+      "sha256": "1915b3dffc084c49d75bf84b823cae001ecfc55e165a591692b63b6600225085"
+    }
+  ],
+  "usage": "Static locator only. Cinematic renders and integrates on Laptop. Do not add a geographic court marker until Main accepts that anchor."
+}

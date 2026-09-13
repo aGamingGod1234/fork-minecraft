@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">Singapore locator and fictional FORK court</title>
+<desc id="desc">Natural Earth Admin 0 version 5.1.1 generalized Singapore outline. Locator only, not playable coverage. The separate fictional 16 by 16 block court has no accepted geographic position. Small islands and offshore features may be omitted by the source. No court map marker is shown.</desc>
+<rect width="1920" height="1080" fill="#101e29"/>
+<g font-family="Arial,Helvetica,sans-serif" fill="#f1f5ef">
+<text x="88" y="90" font-size="24" letter-spacing="5" fill="#9eb1b8">FORK / PLACE</text>
+<text x="84" y="188" font-size="88" font-weight="700">Singapore</text>
+<text x="90" y="237" font-size="28" fill="#aec1c8">Generalized main-island locator</text>
+<g fill="#88cfc5" stroke="#c3ece0" stroke-width="2" fill-rule="evenodd"><path id="sgp-part-0" d="M1094.916,440.281 L1173.802,458.202 L1217.624,474.448 L1230.000,493.916 L1193.394,554.899 L1139.514,619.750 L1074.551,671.582 L1003.401,692.597 L925.291,701.234 L863.423,724.957 L752.572,800.899 L734.269,817.918 L725.247,828.748 L708.750,835.839 L668.019,842.028 L590.683,840.481 L552.528,830.681 L536.287,811.730 L509.222,768.279 L443.486,738.110 L364.343,719.672 L296.545,712.324 L158.886,715.933 L102.944,702.267 L80.000,658.430 L93.666,608.407 L188.272,474.448 L201.935,414.495 L217.662,380.714 L253.236,344.485 L295.256,318.955 L325.675,313.927 L394.763,322.954 L465.913,313.927 L554.077,271.768 L601.250,257.972 L685.549,262.871 L766.751,289.430 L1005.206,408.563 L1094.916,440.281 Z"/></g>
+<g transform="translate(1180 280)"><path d="M0 55 V0 M-10 15 L0 0 L10 15" fill="none" stroke="#aec1c8" stroke-width="3"/><text x="-10" y="-15" font-size="24">N</text></g>
+<path d="M1320 280 V840" stroke="#3c505b" stroke-width="2"/>
+<text x="1390" y="340" font-size="24" letter-spacing="3" fill="#9eb1b8">SCORED PLAY AREA</text>
+<text x="1390" y="412" font-size="48" font-weight="700">Fictional court</text>
+<text x="1390" y="471" font-size="34">16 × 16 blocks</text>
+<text x="1390" y="560" font-size="27" fill="#aec1c8">Clinic · workshop · generator</text>
+<text x="1390" y="644" font-size="27" fill="#aec1c8">No accepted geographic</text>
+<text x="1390" y="682" font-size="27" fill="#aec1c8">position or map marker.</text>
+<text x="1390" y="776" font-size="27" fill="#88cfc5">Locator ≠ playable coverage</text>
+<text x="88" y="930" font-size="27" fill="#c2d0d5">Main-island outline only. Offshore islands are not depicted.</text>
+<text x="88" y="973" font-size="23" fill="#9eb1b8">Pedra Branca is not separately depicted. No full-island Minecraft coverage is claimed.</text>
+<text x="88" y="1030" font-size="23" fill="#9eb1b8">Made with Natural Earth · Admin 0 v5.1.1 · 1:10m · Public domain · naturalearthdata.com</text>
+</g></svg>

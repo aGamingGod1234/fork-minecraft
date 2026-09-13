@@ -1,0 +1,11 @@
+﻿Made with Natural Earth.
+Source: Natural Earth Admin 0 Countries, 1:10m, version 5.1.1.
+Primary data: https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.1/geojson/ne_10m_admin_0_countries.geojson
+Official source/version page: https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-admin-0-countries/
+Terms: https://www.naturalearthdata.com/about/terms-of-use/
+
+Natural Earth states that its raster and vector data are in the public domain, with modification and redistribution permitted. Attribution is optional under those terms; FORK retains attribution on its locator and in its source manifest. Terms checked 13 September 2026.
+
+Modification: select the Singapore ADM0_A3=SGP feature, retain all geometry coordinates, project to a local equirectangular SVG display, add labels and coverage caveats. The displayed outline is generalized source geometry, not a current coastline survey. No authentic floorplans or complete offshore-island coverage are asserted. This locator does not establish Minecraft playable coverage.
+
+The scored FORK court is fictional and has no accepted geographic position. Its map marker must remain absent until Main accepts a geographic anchor. No new raster imagery, external textures or video are included.

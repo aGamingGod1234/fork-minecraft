@@ -1,0 +1,11 @@
+{
+  "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+  "bytes": 13287234,
+  "url": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.1/geojson/ne_10m_admin_0_countries.geojson",
+  "gitBlobSha1": "5ebc66e25fc1af01edaebe9375c546655e04cf1e",
+  "version": "5.1.1",
+  "acquisition": "GitHub connector fetched exact upstream blob; selected ADM0_A3 SGP without modifying geometry.",
+  "subsetSha256": "977833dafb31df857d574ba5b47dc8f85d659fadce25251a993475d6cbc50133",
+  "subsetPath": "data/fork-world/locator/source-feature.geojson",
+  "note": "Extracted feature retains upstream geometry and properties; whitespace differs from upstream. Full dataset SHA256 and Git blob SHA1 pin upstream."
+}
