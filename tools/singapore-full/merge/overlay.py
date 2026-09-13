@@ -271,6 +271,8 @@ def write_overlay(runs_paths, world, bounds, level_template, *, max_chunks=512, 
     count = ((bounds[2] - bounds[0]) // 16) * ((bounds[3] - bounds[1]) // 16)
     if count > max_chunks:
         raise ValueError(f"{count} chunks exceed explicit bounded run limit {max_chunks}")
+    if count > 4 and lease_receipt is None:
+        raise ValueError("more than four synthetic fixture chunks requires a coordinator job lease")
     template = read_level_dat(level_template)
     data = template.root.value.get("Data")
     if data is None or data.type_id != 10 or "DataVersion" not in data.value:
@@ -370,6 +372,8 @@ def main():
     world = Path(args.world).resolve()
     if manifest.exists() or world == manifest or world in manifest.parents:
         parser.error("manifest must be a new path outside the output world")
+    if PROJECT_ROOT.resolve() not in manifest.parents:
+        parser.error("manifest must remain within the private full-Singapore project")
     report = write_overlay(args.runs, world, tuple(int(value) for value in args.bounds.split(",")), args.level_template, max_chunks=args.max_chunks, job_lease=args.job_lease)
     manifest.parent.mkdir(parents=True, exist_ok=True)
     with manifest.open("x", encoding="utf-8") as stream:

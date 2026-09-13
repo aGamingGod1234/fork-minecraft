@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 import tempfile
@@ -6,7 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from anvil import Tag, NbtFile, read_region, write_level_dat, read_level_dat
-from overlay import write_overlay, compound, parse_run, pack_indices, MIN_Y
+from overlay import write_overlay, compound, parse_run, pack_indices, MIN_Y, validate_job_lease
 
 
 def block_at(chunks, x, y, z):
@@ -34,9 +35,6 @@ class OverlayTests(unittest.TestCase):
         self.template = self.base / "template.dat"
         write_level_dat(self.template, NbtFile("", compound({"Data": compound({"DataVersion": Tag(3, 3955), "Player": compound({"secret": Tag(8, "fixture")})})})))
 
-    def run(self, result=None):
-        return super().run(result)
-
     def render(self, rows, name="world", bounds=(-16, -16, 16, 16)):
         source = self.base / (name + ".jsonl")
         source.write_text("\n".join(json.dumps(row) for row in rows), encoding="utf-8")
@@ -63,6 +61,9 @@ class OverlayTests(unittest.TestCase):
         self.assertNotIn("Player", read_level_dat(world / "level.dat").root.value["Data"].value)
         self.assertFalse(receipt["assemblyAccepted"])
         self.assertEqual(receipt["groundProfileId"], "flat-provisional-y0-v1")
+        sx, sy, sz = receipt["spawn"]
+        self.assertEqual(block_at(chunks, sx, sy, sz), "minecraft:air")
+        self.assertEqual(block_at(chunks, sx, sy + 1, sz), "minecraft:air")
 
     def test_layer_order_and_input_order_invariant(self):
         low = self.row(0, 0, 1, 3, "minecraft:stone", "road")
@@ -99,6 +100,32 @@ class OverlayTests(unittest.TestCase):
         self.assertEqual(len(packed), 37)
         self.assertEqual(packed[0], (1 << 63) - 1)
         self.assertEqual(pack_indices([15] * 16, 4), [-1])
+
+    def test_partial_terrain_preserves_underlying_ground(self):
+        _, chunks, _ = self.render([self.row(0, 0, 0, 1, "minecraft:sand", "terrain")])
+        self.assertEqual(block_at(chunks, 0, 0, 0), "minecraft:sand")
+        self.assertEqual(block_at(chunks, 0, -1, 0), "minecraft:dirt")
+        self.assertEqual(block_at(chunks, 0, -4, 0), "minecraft:bedrock")
+
+    def test_unknown_block_semantics_rejected(self):
+        with self.assertRaisesRegex(ValueError, "unsupported block"):
+            self.render([self.row(0, 0, 1, 2, "unregistered:fake_material")])
+
+    def test_job_lease_scope_and_expiry(self):
+        now = datetime.now(timezone.utc)
+        root = self.base / "queue" / "jobs" / "fixture" / "attempts" / "one" / "output"
+        lease_path = self.base / "lease.json"
+        lease = {"id": "test", "machine": "Desktop", "approvedBy": "/root/singapore_full_coordinator", "heavyJobSlot": "B",
+                 "cpuThreads": 1, "outputRoot": str(root), "startsUtc": (now - timedelta(minutes=1)).isoformat(),
+                 "expiresUtc": (now + timedelta(minutes=1)).isoformat()}
+        lease_path.write_text(json.dumps(lease))
+        self.assertEqual(validate_job_lease(lease_path, root / "tile" / "world", self.base)["id"], "test")
+        with self.assertRaisesRegex(ValueError, "contain"):
+            validate_job_lease(lease_path, self.base / "other", self.base)
+        lease["expiresUtc"] = (now - timedelta(seconds=1)).isoformat()
+        lease_path.write_text(json.dumps(lease))
+        with self.assertRaisesRegex(ValueError, "not currently valid"):
+            validate_job_lease(lease_path, root / "world", self.base)
 
 
 if __name__ == "__main__":
