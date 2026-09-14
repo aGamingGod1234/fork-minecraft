@@ -18,6 +18,10 @@ COMPONENT_LOADERS = frozenset(("validate-east-world-gate.mjs", "validate-ring-wo
 NATIONAL_KIND = "national-pipeline-structural-result"
 NATIONAL_ADAPTER_SHA = "88b26cb058826f6bc7ecf5aea976110520952220111b58c1a784047386ab7724"
 NATIONAL_AUTHORITY_SHA = "a4ec709268fa3345a9b15111365b6000feb45c1f806e73140c9c599f00e01c49"
+NATIONAL_AUTHORITIES = {
+    "authority.v3.accepted.json": NATIONAL_AUTHORITY_SHA,
+    "authority.v4.accepted.json": "2aca507da0e482dc98fab8b81bde74dcd57fce72ba369bfce9494391f4e1a3ed",
+}
 
 
 class GrowContractError(ValueError):
@@ -229,13 +233,25 @@ def _validate_spawn_selection(plan, sources):
         return None
     selected_id = plan.get("spawn_source_id")
     selected = next((s for s in sources if s["id"] == selected_id), None)
-    if selected is None or selected.get("role") == "assembly-component":
+    national_candidate = (selected is not None and plan.get("spawn_policy") == "verify-national-source-and-final-spawn"
+        and selected.get("component_gate_kind") == NATIONAL_KIND
+        and selected.get("national_verification") == "STRICT_LOADER_PASS"
+        and selected.get("component_spawn_accepted") is True
+        and selected.get("national_raw_oracle_status") == "PASS"
+        and selected.get("national_raw_oracle_errors") == []
+        and selected.get("national_spawn_exception_applied") is False)
+    if selected is None or (selected.get("role") == "assembly-component" and not national_candidate):
         raise GrowContractError("assembly components require plan.spawn_source_id naming a separate standalone safe source")
     # Read only the selected source's actual spawn region before allowing copy.
     import anvil
     from grow_receipt import _spawn_check
     data = anvil.read_level_dat(Path(selected["world_path"]) / "level.dat").root.value["Data"].value
-    return _spawn_check(Path(selected["world_path"]), data, selected)
+    proof = _spawn_check(Path(selected["world_path"]), data, selected)
+    if national_candidate:
+        # The component remains NOT_STANDALONE. This separate actual-NBT proof
+        # must match a second check on the assembled save before promotion.
+        selected["independent_spawn_check"] = proof
+    return proof
 
 
 def _national_role(gate):
@@ -270,16 +286,18 @@ def _national_metadata(gate, source):
             or binding.get("assembledSafeSpawnRequired") is not True or binding.get("assembledRuntimeRequired") is not True
             or execution.get("schemaVersion") != 1 or execution.get("kind") != "national-validation-execution"
             or execution.get("validationRole") != "ASSEMBLY_COMPONENT"
-            or execution.get("validationGateName") != "authority.v3.accepted.json"):
-        raise GrowContractError("National V3 binding/execution role is not accepted")
+            or execution.get("validationGateName") not in NATIONAL_AUTHORITIES):
+        raise GrowContractError("National binding/execution role is not accepted")
     if (Path(binding["gate"]["path"]).resolve(strict=True) != gate_path
             or _sha(binding["gate"]["sha256"], "National gate") != digest(gate_path)
             or _sha(binding["executionSha256"], "National execution") != digest(execution_path)
             or _sha(binding["planBindingSha256"], "National plan") != _sha(gate["planBindingSha256"], "gate plan")):
         raise GrowContractError("National retained binding differs from gate/execution/plan")
-    authority_path = (Path(execution["queueRoot"]) / "validation" / "authority.v3.accepted.json").resolve(strict=True)
-    if digest(authority_path) != NATIONAL_AUTHORITY_SHA:
-        raise GrowContractError("exact approved National V3 authority pin required")
+    authority_name = execution["validationGateName"]
+    authority_sha = NATIONAL_AUTHORITIES[authority_name]
+    authority_path = (Path(execution["queueRoot"]) / "validation" / authority_name).resolve(strict=True)
+    if digest(authority_path) != authority_sha:
+        raise GrowContractError("exact approved National authority pin required")
     authority = load(authority_path)
     if any(execution.get(field) != authority.get(field) for field in ("validatorArtifacts", "validators", "executable")):
         raise GrowContractError("National execution differs from complete approved authority inventory")
@@ -324,7 +342,7 @@ def _national_metadata(gate, source):
     if len(adapters) != 1:
         raise GrowContractError("exact approved National V3 adapter pin required")
     provenance = {"national_binding_path": str(binding_path), "national_binding_sha256": digest(binding_path),
-                  "national_authority_path": str(authority_path), "national_authority_sha256": NATIONAL_AUTHORITY_SHA,
+                  "national_authority_path": str(authority_path), "national_authority_sha256": authority_sha,
                   "national_execution_path": str(execution_path), "national_execution_sha256": digest(execution_path),
                   "national_request_path": str(request_path), "national_request_sha256": request_hash,
                   "national_plan_binding_sha256": gate["planBindingSha256"],

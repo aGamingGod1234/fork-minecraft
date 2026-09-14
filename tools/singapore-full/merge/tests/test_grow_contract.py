@@ -409,7 +409,7 @@ class GrowContractTests(unittest.TestCase):
         self.assertEqual(_coverage("water", source["coverage"]["water"], [0, 0, 16, 16], writer),
                          _coverage("water", source["coverage"]["water"], (0, 0, 16, 16), writer))
 
-    def national_fixture(self):
+    def national_fixture(self, version="v3"):
         source = self.source("national", [0, 0, 1024, 1024])
         root = Path(source["writer_manifest_path"]).parent
         def record(path):
@@ -427,14 +427,14 @@ class GrowContractTests(unittest.TestCase):
         request_path = self.write(root / "request.json", request)
         execution = {"schemaVersion": 1, "kind": "national-validation-execution", "validationRole": "ASSEMBLY_COMPONENT",
                      "queueRoot": str(root),
-                     "validationGateName": "authority.v3.accepted.json", "request": record(request_path),
+                     "validationGateName": f"authority.{version}.accepted.json", "request": record(request_path),
                      "validatorArtifacts": [record(adapter)], "validators": {"oracle": record(adapter), "settings": record(adapter)},
                      "executable": record(executable)}
         execution_path = self.write(root / "execution.json", execution)
         (root / "validation").mkdir()
-        authority = self.write(root / "validation/authority.v3.accepted.json",
+        authority = self.write(root / f"validation/authority.{version}.accepted.json",
                                {field: execution[field] for field in ("validatorArtifacts", "validators", "executable")})
-        self.authority_patch = patch("grow_contract.NATIONAL_AUTHORITY_SHA", digest(authority))
+        self.authority_patch = patch.dict("grow_contract.NATIONAL_AUTHORITIES", {f"authority.{version}.accepted.json": digest(authority)})
         self.authority_patch.start()
         self.addCleanup(self.authority_patch.stop)
         writer = Path(source["writer_manifest_path"])
@@ -497,9 +497,35 @@ class GrowContractTests(unittest.TestCase):
             oracle.write_text("changed proof")
             with self.assertRaisesRegex(GrowContractError, "raw oracle proof bytes"):
                 _national_metadata(gate, source)
-        with patch("grow_contract.NATIONAL_AUTHORITY_SHA", "0" * 64):
+        with patch.dict("grow_contract.NATIONAL_AUTHORITIES", {"authority.v3.accepted.json": "0" * 64}):
             with self.assertRaisesRegex(GrowContractError, "authority pin"):
                 _national_metadata(gate, source)
+
+    def test_v4_authority_requires_its_own_exact_pin(self):
+        gate, source, writer, outputs, adapter_sha = self.national_fixture("v4")
+        with patch("grow_contract.NATIONAL_ADAPTER_SHA", adapter_sha):
+            _national_metadata(gate, source)
+            with patch.dict("grow_contract.NATIONAL_AUTHORITIES", {"authority.v4.accepted.json": "0" * 64}):
+                with self.assertRaisesRegex(GrowContractError, "authority pin"):
+                    _national_metadata(gate, source)
+
+    def test_national_spawn_requires_explicit_policy_and_actual_nbt(self):
+        source = {"id":"national", "world_path":str(self.root), "role":"assembly-component",
+            "component_gate_kind":"national-pipeline-structural-result", "national_verification":"STRICT_LOADER_PASS",
+            "component_spawn_accepted":True,"national_raw_oracle_status":"PASS","national_raw_oracle_errors":[],
+            "national_spawn_exception_applied":False}
+        policy={"spawn_source_id":"national","spawn_policy":"verify-national-source-and-final-spawn"}
+        with patch("anvil.read_level_dat", return_value=SimpleNamespace(root=SimpleNamespace(value={"Data":SimpleNamespace(value={})}))), \
+             patch("grow_receipt._spawn_check", return_value={"safe":True}) as check:
+            self.assertEqual({"safe":True}, _validate_spawn_selection(policy,[source]))
+            check.assert_called_once()
+            self.assertEqual({"safe":True},source["independent_spawn_check"])
+            check.side_effect=ValueError("Spawn feet/head are obstructed")
+            with self.assertRaisesRegex(ValueError,"obstructed"):
+                _validate_spawn_selection(policy,[source])
+        for changes in ({"component_spawn_accepted":False},{"national_spawn_exception_applied":True},
+                        {"national_verification":"unchecked"}):
+            with self.assertRaises(GrowContractError):_validate_spawn_selection(policy,[{**source,**changes}])
 
     def test_national_cannot_downgrade_role_or_accept_other_oracle_errors(self):
         gate, source, writer, outputs, adapter_sha = self.national_fixture()

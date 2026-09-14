@@ -95,10 +95,10 @@ class GrowRuntimeTests(unittest.TestCase):
                 grow_runtime.prepare_runtime_plan(self.source, [0, 0, 16, 16], self.sentinels,
                                                   attempt_root=self.root / "other-attempt")
 
-    def test_only_six_explicit_production_bindings(self):
+    def test_only_registered_production_bindings(self):
         self.override.stop()
         try:
-            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1", "cbd-south-v1"}, set(grow_runtime.RUNTIME_BINDINGS))
+            self.assertEqual({"lim-chu-kang-v1", "changi-v1", "cbd-east-v1", "cbd-east-v2", "cbd-east-ring-v1", "cbd-south-v1", "national-preview-v1"}, set(grow_runtime.RUNTIME_BINDINGS))
             for district, (source, attempt) in grow_runtime.RUNTIME_BINDINGS.items():
                 self.assertEqual(package.OUTPUT_ROOT / ("grow-" + district) / "world", source)
                 self.assertEqual(package.OUTPUT_ROOT.parent / "runtime-check" / district, attempt)

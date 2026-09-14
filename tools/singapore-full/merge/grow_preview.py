@@ -198,7 +198,7 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
     _require(report.get("outputSha256") == runs_hash, "Report runs mismatch")
     if component == "water":
         scan = _validate_empty_inland_scan(evidence, report, core) if is_empty else None
-        found_inland, observed = False, Counter()
+        found_inland, observed, observed_total = False, Counter(), 0
         with open(_fs_path(runs_path), encoding="utf-8-sig") as stream:
             for line in stream:
                 if not line.strip():
@@ -211,15 +211,18 @@ def validate_preview(component, entry, core_bounds, writer_hash, writer_inputs=N
                 if is_empty:
                     x, z, layer = run.get("x"), run.get("z"), run.get("layer")
                     _require(type(x) is int and type(z) is int and type(layer) is int
-                             and core[0] <= x < core[2] and core[1] <= z < core[3],
-                             "Empty inland input is not entirely core-clipped")
-                    _require(layer != 30, "Empty inland input actually emits layer-30 water")
-                    observed[str(layer)] += 1
+                             and render[0] <= x < render[2] and render[1] <= z < render[3],
+                             "Consumed inland input extends outside its declared render bounds")
+                    observed_total += 1
+                    if core[0] <= x < core[2] and core[1] <= z < core[3]:
+                        _require(layer != 30, "Empty inland core actually emits layer-30 water")
+                        observed[str(layer)] += 1
                 elif run.get("layer") == 30:
                     found_inland = True
                     break
         if is_empty:
-            _require(sum(observed.values()) == scan["allRuns"]
+            _require(observed_total == scan["allRuns"]
+                     and sum(observed.values()) == scan["coreRuns"]
                      and observed == Counter(scan["layers"]),
                      "Full consumed-run recount contradicts empty scan")
         else:
@@ -468,7 +471,7 @@ def validate_multi_water_preview(entry, core_bounds, writer_hash, writer_inputs,
 
 
 def _validate_empty_inland_scan(evidence, report, core):
-    """Validate a complete scan of a core-clipped input, not source absence."""
+    """Validate all input bytes and the owned-core subset, not source absence."""
     _require(evidence.get("emptyInlandSubset") is True
              and evidence.get("sourceWaterAbsenceProven") is False
              and evidence.get("sourceCoverageComplete") is False,
@@ -499,15 +502,15 @@ def _validate_empty_inland_scan(evidence, report, core):
              "Empty inland scan did not bind all consumed bytes")
     count = scan.get("allRuns")
     _require(type(count) is int and count >= 0
-             and type(scan.get("coreRuns")) is int and scan["coreRuns"] == count
+             and type(scan.get("coreRuns")) is int and 0 <= scan["coreRuns"] <= count
              and type(report.get("runCount")) is int and report["runCount"] == count,
-             "Empty inland scan must cover the complete core-clipped input")
+             "Empty inland scan must cover the entire input and a bounded core subset")
     layers = scan.get("layers")
     _require(isinstance(layers, dict)
              and all(isinstance(key, str) and key.lstrip("-").isdigit()
                      and str(int(key)) == key and type(value) is int and value >= 0
                      for key, value in layers.items())
-             and sum(layers.values()) == count and layers.get("30", 0) == 0,
+             and sum(layers.values()) == scan["coreRuns"] and layers.get("30", 0) == 0,
              "Empty inland scan has unaccounted or emitted water layers")
     inland = scan.get("inlandWater", {})
     _require(inland.get("emittedFeatureIds") == []

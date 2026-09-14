@@ -110,7 +110,9 @@ def _component_status(source, structural, spawn_source_id):
             or "componentDisposition" in structural or "assemblyComponentAccepted" in structural):
         from grow_contract import _national_role, _national_metadata
         role = _national_role(structural)
-        _need(source["id"] != spawn_source_id, "A National assembly component cannot supply final spawn or configuration")
+        _need(source["id"] != spawn_source_id or
+              (role["component_spawn_accepted"] is True and isinstance(source.get("independent_spawn_check"), dict)),
+              "A National assembly component cannot supply final spawn without a separate actual-NBT safe-spawn proof")
         _need(all(source.get(field) == value for field, value in role.items())
               and source.get("national_verification") == "STRICT_LOADER_PASS",
               "National normalized component role differs from strict verified evidence")
@@ -253,7 +255,11 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
               and data["spawn"].value["dimension"].value == original_spawn["dimension"].value,
               "Selected source's verified modern spawn was not preserved")
         selected = next(source for source in sources if source["id"] == spawn_source_id)
-        _need(selected.get("role") != "assembly-component", "Final configuration source cannot be an assembly component")
+        _need(selected.get("role") != "assembly-component" or
+              (selected.get("component_gate_kind") == "national-pipeline-structural-result"
+               and selected.get("component_spawn_accepted") is True
+               and isinstance(selected.get("independent_spawn_check"), dict)),
+              "Final configuration source requires an independent safe-spawn proof")
         # Both configs must derive solely from the selected safe source. The
         # assembly CLI may change only its display name after copying them.
         original_level = anvil.read_level_dat(Path(selected["world_path"]) / "level.dat")
@@ -264,6 +270,9 @@ def verify_grown_world(world, sources, region_report, spawn_source_id) -> dict[s
         _need(left == right and original_settings == settings,
               "Final configs must preserve the selected safe source; component configs cannot be copied")
         result["spawn"] = _spawn_check(world, data, selected)
+        if "independent_spawn_check" in selected:
+            _need(result["spawn"] == selected["independent_spawn_check"],
+                  "Assembled spawn differs from the independent source-NBT proof")
         result["configurationSourceId"] = spawn_source_id
         result["finalAssembledSafeSpawnRequired"] = any(source.get("role") == "assembly-component" for source in sources)
         result["data_version"] = data["DataVersion"].value

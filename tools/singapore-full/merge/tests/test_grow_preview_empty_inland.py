@@ -75,7 +75,7 @@ class EmptyInlandTests(unittest.TestCase):
 
     def test_partial_scan_is_rejected(self):
         self.scan["coreRuns"] = 0
-        with self.assertRaisesRegex(PreviewEvidenceError, "complete core-clipped"):
+        with self.assertRaisesRegex(PreviewEvidenceError, "unaccounted"):
             self.validate()
 
     def test_writer_source_and_byte_mismatch_rejected(self):
@@ -96,7 +96,20 @@ class EmptyInlandTests(unittest.TestCase):
 
     def test_actual_halo_run_rejected_even_if_scan_claims_core(self):
         self.replace_run({"x": 17, "z": 1, "layer": 40})
-        with self.assertRaisesRegex(PreviewEvidenceError, "not entirely core-clipped"):
+        with self.assertRaisesRegex(PreviewEvidenceError, "recount contradicts"):
+            self.validate()
+
+    def test_halo_water_is_allowed_when_full_scan_excludes_it_from_core(self):
+        self.replace_run({"x": 17, "z": 1, "layer": 30})
+        self.scan.update(coreRuns=0, layers={})
+        result = self.validate()
+        self.assertIs(result["emptyInlandSubset"], True)
+        self.assertIs(result["sourceWaterAbsenceProven"], False)
+
+    def test_runs_outside_render_bounds_are_still_rejected(self):
+        self.replace_run({"x": 33, "z": 1, "layer": 40})
+        self.scan.update(coreRuns=0, layers={})
+        with self.assertRaisesRegex(PreviewEvidenceError, "outside its declared render"):
             self.validate()
 
     def test_actual_layer_recount_must_equal_scan(self):

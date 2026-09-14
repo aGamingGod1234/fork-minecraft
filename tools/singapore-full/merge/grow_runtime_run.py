@@ -22,6 +22,7 @@ JAVA = BASE / "java/jdk-25.0.4.1+1/bin/java.exe"
 JAR = BASE / "minecraft-server-26.1.2/server.jar"
 JAR_SHA = "cd47e7c38328f64768fd17af8fcd8b22496b40b63d4ffee81e71ae059fedcb42"
 DISTRICTS = {
+    "national-preview-v1": ("grow-national-preview-v1", "FORK-Singapore-National-Preview-v1", "Singapore reconstruction preview"),
     "lim-chu-kang-v1": ("grow-lim-chu-kang-v1", "FORK-Lim-Chu-Kang-1024", "Lim Chu Kang"),
     "changi-v1": ("grow-changi-v1", "FORK-Changi-1024", "Changi"),
     "cbd-east-v1": ("grow-cbd-east-v1", "FORK-CBD-East-v1", "Singapore CBD"),
